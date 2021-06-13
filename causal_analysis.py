@@ -18,7 +18,7 @@ set_random_seed(123)
 from keras.models import load_model
 from keras.preprocessing.image import ImageDataGenerator
 
-from visualizer import Visualizer
+from causal_inference import causal_analyzer
 
 import utils_backdoor
 
@@ -182,7 +182,7 @@ def gtsrb_visualize_label_scan_bottom_right_white_4():
     model = load_model(model_file)
 
     # initialize visualizer
-    visualizer = Visualizer(
+    visualizer = causal_analyzer(
         model, intensity_range=INTENSITY_RANGE, regularization=REGULARIZATION,
         input_shape=INPUT_SHAPE,
         init_cost=INIT_COST, steps=STEPS, lr=LR, num_classes=NUM_CLASSES,
