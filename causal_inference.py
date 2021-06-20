@@ -120,7 +120,7 @@ class causal_analyzer:
         self.regularization = regularization
         self.input_shape = input_shape
         self.init_cost = init_cost
-        self.steps = steps
+        self.steps = 1  #steps
         self.mini_batch = mini_batch
         self.lr = lr
         self.num_classes = num_classes
@@ -424,9 +424,36 @@ class causal_analyzer:
         Y_target = to_categorical([y_target] * self.batch_size,
                                   self.num_classes)
 
+
+        # find hidden range
+        for step in range(self.steps):
+            min = []
+            min_p = []
+            max = []
+            max_p = []
+            #self.mini_batch = 2
+            for idx in range(self.mini_batch):
+                X_batch, _ = gen.next()
+                X_batch_perturbed = self.get_perturbed_input(X_batch)
+                min_i, max_i = self.get_h_range(X_batch)
+                min.append(min_i)
+                max.append(max_i)
+
+                min_i, max_i = self.get_h_range(X_batch_perturbed)
+                min_p.append(min_i)
+                max_p.append(max_i)
+
+            min = np.max(np.array(min), axis=0)
+            max = np.max(np.array(max), axis=0)
+
+            min_p = np.max(np.array(min_p), axis=0)
+            max_p = np.max(np.array(max_p), axis=0)
+
+
         # loop start
         for step in range(self.steps):
-
+            ie_batch = []
+            #self.mini_batch = 2
             for idx in range(self.mini_batch):
                 X_batch, _ = gen.next()
                 if X_batch.shape[0] != Y_target.shape[0]:
@@ -434,7 +461,7 @@ class causal_analyzer:
                                               self.num_classes)
 
                 X_batch_perturbed = self.get_perturbed_input(X_batch)
-
+                '''
                 pre_layer5 = self.model1.predict(X_batch)
                 pre_final = self.model2.predict(pre_layer5)
                 pre_class_ori = np.argmax(pre_final,axis=1)
@@ -445,10 +472,78 @@ class causal_analyzer:
 
                 overall_pre = self.model.predict(X_batch)
                 overall_class = np.argmax(overall_pre, axis=1)
+                '''
+                # find hidden neuron interval
 
+                # find
+                ie_batch.append(self.get_ie_do_h(X_batch, min, max))
+
+            ie_mean = np.mean(np.array(ie_batch),axis=0)
+
+            np.savetxt("results/ori.txt", ie_mean, fmt="%s")
+
+            ie_batch = []
+            #self.mini_batch = 2
+            for idx in range(self.mini_batch):
+                X_batch, _ = gen.next()
+                if X_batch.shape[0] != Y_target.shape[0]:
+                    Y_target = to_categorical([y_target] * X_batch.shape[0],
+                                              self.num_classes)
+
+                X_batch_perturbed = self.get_perturbed_input(X_batch)
+                '''
+                pre_layer5 = self.model1.predict(X_batch)
+                pre_final = self.model2.predict(pre_layer5)
+                pre_class_ori = np.argmax(pre_final,axis=1)
+
+                pre_layer5 = self.model1.predict(X_batch_perturbed)
+                pre_final = self.model2.predict(pre_layer5)
+                pre_class_per = np.argmax(pre_final,axis=1)
+
+                overall_pre = self.model.predict(X_batch)
+                overall_class = np.argmax(overall_pre, axis=1)
+                '''
+                # find hidden neuron interval
+
+
+                # find
+                ie_batch.append(self.get_ie_do_h(X_batch_perturbed, min_p, max_p))
+
+            ie_mean = np.mean(np.array(ie_batch),axis=0)
+
+            np.savetxt("results/per.txt", ie_mean, fmt="%s")
 
             # save log
-            logs.append((step,
-                         pre_class_ori, pre_class_per))
+            #logs.append((step,
+            #             pre_class_ori, pre_class_per))
 
     pass
+
+    # return
+    def get_ie_do_h(self, x, min, max):
+        pre_layer5 = self.model1.predict(x)
+
+        ie = []
+
+        hidden_min = min
+        hidden_max = max
+        num_step = 16
+
+        for i in range (len(pre_layer5[0])):
+            ie_i = []
+            for h_val in np.linspace(hidden_min[i], hidden_max[i], num_step):
+                do_hidden = pre_layer5
+                do_hidden[:, i] = h_val
+                pre_final = self.model2.predict(do_hidden)
+                ie_i.append(np.mean(pre_final,axis=0))
+            ie.append(np.mean(np.array(ie_i),axis=0))
+        return np.array(ie)
+
+
+    def get_h_range(self, x):
+        pre_layer5 = self.model1.predict(x)
+
+        max = np.max(pre_layer5,axis=0)
+        min = np.min(pre_layer5, axis=0)
+
+        return min, max
