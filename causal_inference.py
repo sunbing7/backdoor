@@ -19,6 +19,27 @@ import utils_backdoor
 
 from decimal import Decimal
 
+import os
+import sys
+import time
+from keras.preprocessing import image
+
+##############################
+#        PARAMETERS          #
+##############################
+
+RESULT_DIR = 'results'  # directory for storing results
+IMG_FILENAME_TEMPLATE = 'gtsrb_visualize_%s_label_%d.png'  # image filename template for visualization results
+
+# input size
+IMG_ROWS = 32
+IMG_COLS = 32
+IMG_COLOR = 3
+INPUT_SHAPE = (IMG_ROWS, IMG_COLS, IMG_COLOR)
+MASK_SHAPE = (IMG_ROWS, IMG_COLS)
+
+NUM_CLASSES = 43  # total number of classes in the model
+
 
 class causal_analyzer:
 
@@ -282,6 +303,59 @@ class causal_analyzer:
 
         return (model1, model2)
 
+    def get_perturbed_input(self, x):
+
+        mask_flatten = []
+        pattern_flatten = []
+
+        mask = []
+        pattern = []
+
+        y_label = 33
+        mask_filename = IMG_FILENAME_TEMPLATE % ('mask', y_label)
+        if os.path.isfile('%s/%s' % (RESULT_DIR, mask_filename)):
+            img = image.load_img(
+                '%s/%s' % (RESULT_DIR, mask_filename),
+                color_mode='grayscale',
+                target_size=INPUT_SHAPE)
+            mask = image.img_to_array(img)
+            mask /= 255
+            mask = mask[:, :, 0]
+
+        pattern_filename = IMG_FILENAME_TEMPLATE % ('pattern', y_label)
+        if os.path.isfile('%s/%s' % (RESULT_DIR, pattern_filename)):
+            img = image.load_img(
+                '%s/%s' % (RESULT_DIR, pattern_filename),
+                color_mode='rgb',
+                target_size=INPUT_SHAPE)
+            pattern = image.img_to_array(img)
+
+        filtered = np.multiply(x, np.expand_dims(np.subtract(np.ones((MASK_SHAPE)), mask), axis=2))
+
+        fusion = np.multiply(pattern, np.expand_dims(mask, axis=2))
+
+        x_out = np.add(filtered, fusion)
+
+        #test
+        '''
+        utils_backdoor.dump_image(x[0],
+                                  'results/ori_img0.png',
+                                  'png')
+        utils_backdoor.dump_image(x_out[0],
+                                  'results/img0.png',
+                                  'png')
+        
+        utils_backdoor.dump_image(np.expand_dims(mask, axis=2) * 255,
+                                  'results/mask_test.png',
+                                  'png')
+        utils_backdoor.dump_image(pattern, 'results/pattern_test.png', 'png')
+
+        fusion = np.multiply(pattern, np.expand_dims(mask, axis=2))
+
+        utils_backdoor.dump_image(fusion, 'results/fusion_test.png', 'png')
+        '''
+        return x_out
+
     def reset_opt(self):
 
         K.set_value(self.opt.iterations, 0)
@@ -343,27 +417,8 @@ class causal_analyzer:
 
     def visualize(self, gen, y_target, pattern_init, mask_init):
 
-        # since we use a single optimizer repeatedly, we need to reset
-        # optimzier's internal states before running the optimization
-        self.reset_state(pattern_init, mask_init)
-
-        # best optimization results
-        mask_best = None
-        mask_upsample_best = None
-        pattern_best = None
-        reg_best = float('inf')
-
         # logs and counters for adjusting balance cost
         logs = []
-        cost_set_counter = 0
-        cost_up_counter = 0
-        cost_down_counter = 0
-        cost_up_flag = False
-        cost_down_flag = False
-
-        # counter for early stop
-        early_stop_counter = 0
-        early_stop_reg_best = reg_best
 
         # vectorized target
         Y_target = to_categorical([y_target] * self.batch_size,
@@ -372,119 +427,28 @@ class causal_analyzer:
         # loop start
         for step in range(self.steps):
 
-            # record loss for all mini-batches
-            loss_ce_list = []
-            loss_reg_list = []
-            loss_list = []
-            loss_acc_list = []
             for idx in range(self.mini_batch):
                 X_batch, _ = gen.next()
                 if X_batch.shape[0] != Y_target.shape[0]:
                     Y_target = to_categorical([y_target] * X_batch.shape[0],
                                               self.num_classes)
-                (loss_ce_value,
-                    loss_reg_value,
-                    loss_value,
-                    loss_acc_value) = self.train([X_batch, Y_target])
-                loss_ce_list.extend(list(loss_ce_value.flatten()))
-                loss_reg_list.extend(list(loss_reg_value.flatten()))
-                loss_list.extend(list(loss_value.flatten()))
-                loss_acc_list.extend(list(loss_acc_value.flatten()))
 
-            avg_loss_ce = np.mean(loss_ce_list)
-            avg_loss_reg = np.mean(loss_reg_list)
-            avg_loss = np.mean(loss_list)
-            avg_loss_acc = np.mean(loss_acc_list)
+                X_batch_perturbed = self.get_perturbed_input(X_batch)
 
-            # check to save best mask or not
-            if avg_loss_acc >= self.attack_succ_threshold and avg_loss_reg < reg_best:
-                mask_best = K.eval(self.mask_tensor)
-                mask_best = mask_best[0, ..., 0]
-                mask_upsample_best = K.eval(self.mask_upsample_tensor)
-                mask_upsample_best = mask_upsample_best[0, ..., 0]
-                pattern_best = K.eval(self.pattern_raw_tensor)
-                reg_best = avg_loss_reg
+                pre_layer5 = self.model1.predict(X_batch)
+                pre_final = self.model2.predict(pre_layer5)
+                pre_class_ori = np.argmax(pre_final,axis=1)
 
-            # verbose
-            if self.verbose != 0:
-                if self.verbose == 2 or step % (self.steps // 10) == 0:
-                    print('step: %3d, cost: %.2E, attack: %.3f, loss: %f, ce: %f, reg: %f, reg_best: %f' %
-                          (step, Decimal(self.cost), avg_loss_acc, avg_loss,
-                           avg_loss_ce, avg_loss_reg, reg_best))
+                pre_layer5 = self.model1.predict(X_batch_perturbed)
+                pre_final = self.model2.predict(pre_layer5)
+                pre_class_per = np.argmax(pre_final,axis=1)
+
+                overall_pre = self.model.predict(X_batch)
+                overall_class = np.argmax(overall_pre, axis=1)
+
 
             # save log
             logs.append((step,
-                         avg_loss_ce, avg_loss_reg, avg_loss, avg_loss_acc,
-                         reg_best, self.cost))
+                         pre_class_ori, pre_class_per))
 
-            # check early stop
-            if self.early_stop:
-                # only terminate if a valid attack has been found
-                if reg_best < float('inf'):
-                    if reg_best >= self.early_stop_threshold * early_stop_reg_best:
-                        early_stop_counter += 1
-                    else:
-                        early_stop_counter = 0
-                early_stop_reg_best = min(reg_best, early_stop_reg_best)
-
-                if (cost_down_flag and
-                        cost_up_flag and
-                        early_stop_counter >= self.early_stop_patience):
-                    print('early stop')
-                    break
-
-            # check cost modification
-            if self.cost == 0 and avg_loss_acc >= self.attack_succ_threshold:
-                cost_set_counter += 1
-                if cost_set_counter >= self.patience:
-                    self.cost = self.init_cost
-                    K.set_value(self.cost_tensor, self.cost)
-                    cost_up_counter = 0
-                    cost_down_counter = 0
-                    cost_up_flag = False
-                    cost_down_flag = False
-                    print('initialize cost to %.2E' % Decimal(self.cost))
-            else:
-                cost_set_counter = 0
-
-            if avg_loss_acc >= self.attack_succ_threshold:
-                cost_up_counter += 1
-                cost_down_counter = 0
-            else:
-                cost_up_counter = 0
-                cost_down_counter += 1
-
-            if cost_up_counter >= self.patience:
-                cost_up_counter = 0
-                if self.verbose == 2:
-                    print('up cost from %.2E to %.2E' %
-                          (Decimal(self.cost),
-                           Decimal(self.cost * self.cost_multiplier_up)))
-                self.cost *= self.cost_multiplier_up
-                K.set_value(self.cost_tensor, self.cost)
-                cost_up_flag = True
-            elif cost_down_counter >= self.patience:
-                cost_down_counter = 0
-                if self.verbose == 2:
-                    print('down cost from %.2E to %.2E' %
-                          (Decimal(self.cost),
-                           Decimal(self.cost / self.cost_multiplier_down)))
-                self.cost /= self.cost_multiplier_down
-                K.set_value(self.cost_tensor, self.cost)
-                cost_down_flag = True
-
-            if self.save_tmp:
-                self.save_tmp_func(step)
-
-        # save the final version
-        if mask_best is None or self.save_last:
-            mask_best = K.eval(self.mask_tensor)
-            mask_best = mask_best[0, ..., 0]
-            mask_upsample_best = K.eval(self.mask_upsample_tensor)
-            mask_upsample_best = mask_upsample_best[0, ..., 0]
-            pattern_best = K.eval(self.pattern_raw_tensor)
-
-        if self.return_logs:
-            return pattern_best, mask_best, mask_upsample_best, logs
-        else:
-            return pattern_best, mask_best, mask_upsample_best
+    pass
