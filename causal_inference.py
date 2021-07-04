@@ -13,7 +13,7 @@ from keras.utils import to_categorical
 from keras.layers import UpSampling2D, Cropping2D
 from keras.layers import Input
 from keras import Model
-
+import pyswarms as ps
 
 import utils_backdoor
 
@@ -95,10 +95,11 @@ class causal_analyzer:
     # whether input image has been preprocessed or not
     RAW_INPUT_FLAG = False
 
-    def __init__(self, model, intensity_range, regularization, input_shape,
+    REP_N          = 5
+
+    def __init__(self, model, generator, input_shape,
                  init_cost, steps, mini_batch, lr, num_classes,
                  upsample_size=UPSAMPLE_SIZE,
-                 attack_succ_threshold=ATTACK_SUCC_THRESHOLD,
                  patience=PATIENCE, cost_multiplier=COST_MULTIPLIER,
                  reset_cost_to_zero=RESET_COST_TO_ZERO,
                  mask_min=MASK_MIN, mask_max=MASK_MAX,
@@ -110,22 +111,19 @@ class causal_analyzer:
                  early_stop_threshold=EARLY_STOP_THRESHOLD,
                  early_stop_patience=EARLY_STOP_PATIENCE,
                  save_tmp=SAVE_TMP, tmp_dir=TMP_DIR,
-                 raw_input_flag=RAW_INPUT_FLAG):
+                 raw_input_flag=RAW_INPUT_FLAG,
+                 rep_n=REP_N):
 
-        assert intensity_range in {'imagenet', 'inception', 'mnist', 'raw'}
-        assert regularization in {None, 'l1', 'l2'}
 
         self.model = model
-        self.intensity_range = intensity_range
-        self.regularization = regularization
         self.input_shape = input_shape
+        self.gen = generator
         self.init_cost = init_cost
         self.steps = 1  #steps
         self.mini_batch = mini_batch
         self.lr = lr
         self.num_classes = num_classes
         self.upsample_size = upsample_size
-        self.attack_succ_threshold = attack_succ_threshold
         self.patience = patience
         self.cost_multiplier_up = cost_multiplier
         self.cost_multiplier_down = cost_multiplier ** 1.5
@@ -148,136 +146,8 @@ class causal_analyzer:
         self.tmp_dir = tmp_dir
         self.raw_input_flag = raw_input_flag
 
-        mask_size = np.ceil(np.array(input_shape[0:2], dtype=float) /
-                            upsample_size)
-        mask_size = mask_size.astype(int)
-        self.mask_size = mask_size
-        mask = np.zeros(self.mask_size)
-        pattern = np.zeros(input_shape)
-        mask = np.expand_dims(mask, axis=2)
-
-        mask_tanh = np.zeros_like(mask)
-        pattern_tanh = np.zeros_like(pattern)
-
-        # prepare mask related tensors
-        self.mask_tanh_tensor = K.variable(mask_tanh)
-        mask_tensor_unrepeat = (K.tanh(self.mask_tanh_tensor) /
-                                (2 - self.epsilon) +
-                                0.5)
-        mask_tensor_unexpand = K.repeat_elements(
-            mask_tensor_unrepeat,
-            rep=self.img_color,
-            axis=2)
-        self.mask_tensor = K.expand_dims(mask_tensor_unexpand, axis=0)
-        upsample_layer = UpSampling2D(
-            size=(self.upsample_size, self.upsample_size))
-        mask_upsample_tensor_uncrop = upsample_layer(self.mask_tensor)
-        uncrop_shape = K.int_shape(mask_upsample_tensor_uncrop)[1:]
-        cropping_layer = Cropping2D(
-            cropping=((0, uncrop_shape[0] - self.input_shape[0]),
-                      (0, uncrop_shape[1] - self.input_shape[1])))
-        self.mask_upsample_tensor = cropping_layer(
-            mask_upsample_tensor_uncrop)
-        reverse_mask_tensor = (K.ones_like(self.mask_upsample_tensor) -
-                               self.mask_upsample_tensor)
-
-        def keras_preprocess(x_input, intensity_range):
-
-            if intensity_range is 'raw':
-                x_preprocess = x_input
-
-            elif intensity_range is 'imagenet':
-                # 'RGB'->'BGR'
-                x_tmp = x_input[..., ::-1]
-                # Zero-center by mean pixel
-                mean = K.constant([[[103.939, 116.779, 123.68]]])
-                x_preprocess = x_tmp - mean
-
-            elif intensity_range is 'inception':
-                x_preprocess = (x_input / 255.0 - 0.5) * 2.0
-
-            elif intensity_range is 'mnist':
-                x_preprocess = x_input / 255.0
-
-            else:
-                raise Exception('unknown intensity_range %s' % intensity_range)
-
-            return x_preprocess
-
-        def keras_reverse_preprocess(x_input, intensity_range):
-
-            if intensity_range is 'raw':
-                x_reverse = x_input
-
-            elif intensity_range is 'imagenet':
-                # Zero-center by mean pixel
-                mean = K.constant([[[103.939, 116.779, 123.68]]])
-                x_reverse = x_input + mean
-                # 'BGR'->'RGB'
-                x_reverse = x_reverse[..., ::-1]
-
-            elif intensity_range is 'inception':
-                x_reverse = (x_input / 2 + 0.5) * 255.0
-
-            elif intensity_range is 'mnist':
-                x_reverse = x_input * 255.0
-
-            else:
-                raise Exception('unknown intensity_range %s' % intensity_range)
-
-            return x_reverse
-
-        # prepare pattern related tensors
-        self.pattern_tanh_tensor = K.variable(pattern_tanh)
-        self.pattern_raw_tensor = (
-            (K.tanh(self.pattern_tanh_tensor) / (2 - self.epsilon) + 0.5) *
-            255.0)
-
-        # prepare input image related tensors
-        # ignore clip operation here
-        # assume input image is already clipped into valid color range
-        input_tensor = K.placeholder(model.input_shape)
-        if self.raw_input_flag:
-            input_raw_tensor = input_tensor
-        else:
-            input_raw_tensor = keras_reverse_preprocess(
-                input_tensor, self.intensity_range)
-
-        # IMPORTANT: MASK OPERATION IN RAW DOMAIN
-        X_adv_raw_tensor = (
-            reverse_mask_tensor * input_raw_tensor +
-            self.mask_upsample_tensor * self.pattern_raw_tensor)
-
-        X_adv_tensor = keras_preprocess(X_adv_raw_tensor, self.intensity_range)
-
-        output_tensor = model(X_adv_tensor)
-        y_true_tensor = K.placeholder(model.output_shape)
-
-        self.loss_acc = categorical_accuracy(output_tensor, y_true_tensor)
-
-        self.loss_ce = categorical_crossentropy(output_tensor, y_true_tensor)
-
-        if self.regularization is None:
-            self.loss_reg = K.constant(0)
-        elif self.regularization is 'l1':
-            self.loss_reg = (K.sum(K.abs(self.mask_upsample_tensor)) /
-                             self.img_color)
-        elif self.regularization is 'l2':
-            self.loss_reg = K.sqrt(K.sum(K.square(self.mask_upsample_tensor)) /
-                                   self.img_color)
-
-        cost = self.init_cost
-        self.cost_tensor = K.variable(cost)
-        self.loss = self.loss_ce + self.loss_reg * self.cost_tensor
-
-        self.opt = Adam(lr=self.lr, beta_1=0.5, beta_2=0.9)
-        self.updates = self.opt.get_updates(
-            params=[self.pattern_tanh_tensor, self.mask_tanh_tensor],
-            loss=self.loss)
-        self.train = K.function(
-            [input_tensor, y_true_tensor],
-            [self.loss_ce, self.loss_reg, self.loss, self.loss_acc],
-            updates=self.updates)
+        self.rep_n = rep_n       # number of neurons to repair
+        self.r_weight = None
 
         # split the model for causal inervention
         '''
@@ -356,6 +226,9 @@ class causal_analyzer:
         '''
         return x_out
 
+    def injection_func(self, mask, pattern, adv_img):
+        return mask * pattern + (1 - mask) * adv_img
+
     def reset_opt(self):
 
         K.set_value(self.opt.iterations, 0)
@@ -415,15 +288,7 @@ class causal_analyzer:
 
         pass
 
-    def visualize(self, gen, y_target, pattern_init, mask_init):
-
-        # logs and counters for adjusting balance cost
-        logs = []
-
-        # vectorized target
-        Y_target = to_categorical([y_target] * self.batch_size,
-                                  self.num_classes)
-
+    def analyze(self, gen):
 
         # find hidden range
         for step in range(self.steps):
@@ -433,7 +298,7 @@ class causal_analyzer:
             max_p = []
             #self.mini_batch = 2
             for idx in range(self.mini_batch):
-                X_batch, _ = gen.next()
+                X_batch, Y_batch = gen.next()
                 X_batch_perturbed = self.get_perturbed_input(X_batch)
                 min_i, max_i = self.get_h_range(X_batch)
                 min.append(min_i)
@@ -443,45 +308,76 @@ class causal_analyzer:
                 min_p.append(min_i)
                 max_p.append(max_i)
 
-            min = np.max(np.array(min), axis=0)
+                #p_prediction = self.model.predict(X_batch_perturbed)
+
+                #ori_predict = np.argmax(self.model.predict(X_batch), axis=1)
+                #labels = np.argmax(Y_batch, axis=1)
+                #predict = np.argmax(p_prediction, axis=1)
+
+            min = np.min(np.array(min), axis=0)
             max = np.max(np.array(max), axis=0)
 
-            min_p = np.max(np.array(min_p), axis=0)
+            min_p = np.min(np.array(min_p), axis=0)
             max_p = np.max(np.array(max_p), axis=0)
 
-
+            '''
+            max_cmp = np.transpose([max, max_p, max_p - max])
+            min_cmp = np.transpose([min, min_p, min - min_p])
+            
+            print("max:\n")
+            for item in max_cmp:
+                print(item)
+            print("min:\n")
+            for item in min_cmp:
+                print(item)
+            '''
         # loop start
+
         for step in range(self.steps):
+            #'''
             ie_batch = []
             #self.mini_batch = 2
             for idx in range(self.mini_batch):
                 X_batch, _ = gen.next()
-                if X_batch.shape[0] != Y_target.shape[0]:
-                    Y_target = to_categorical([y_target] * X_batch.shape[0],
-                                              self.num_classes)
 
-                X_batch_perturbed = self.get_perturbed_input(X_batch)
-                '''
-                pre_layer5 = self.model1.predict(X_batch)
-                pre_final = self.model2.predict(pre_layer5)
-                pre_class_ori = np.argmax(pre_final,axis=1)
+                #X_batch_perturbed = self.get_perturbed_input(X_batch)
 
-                pre_layer5 = self.model1.predict(X_batch_perturbed)
-                pre_final = self.model2.predict(pre_layer5)
-                pre_class_per = np.argmax(pre_final,axis=1)
-
-                overall_pre = self.model.predict(X_batch)
-                overall_class = np.argmax(overall_pre, axis=1)
-                '''
                 # find hidden neuron interval
 
                 # find
-                ie_batch.append(self.get_ie_do_h(X_batch, min, max))
+                ie_batch.append(self.get_ie_do_h(X_batch, np.minimum(min_p, min), np.maximum(max_p, max)))
 
             ie_mean = np.mean(np.array(ie_batch),axis=0)
 
             np.savetxt("results/ori.txt", ie_mean, fmt="%s")
 
+            # ie_mean dim: 512 * 43
+            # find tarted class: diff of each column
+            col_diff = np.max(ie_mean, axis=0) - np.min(ie_mean, axis=0)
+            col_diff = np.transpose([np.arange(len(col_diff)), col_diff])
+            ind = np.argsort(col_diff[:, 1])[::-1]
+            col_diff = col_diff[ind]
+
+            np.savetxt("results/col_diff.txt", col_diff, fmt="%s")
+
+            '''    
+            print("Target class:\n")
+            for item in col_diff:
+                print(item)
+            '''
+            row_diff = np.max(ie_mean, axis=1) - np.min(ie_mean, axis=1)
+            row_diff = np.transpose([np.arange(len(row_diff)), row_diff])
+            ind = np.argsort(row_diff[:, 1])[::-1]
+            row_diff = row_diff[ind]
+
+            np.savetxt("results/row_diff.txt", row_diff, fmt="%s")
+            '''
+            print("Target class:\n")
+            for item in row_diff:
+                print(item)
+            '''
+
+            '''
             ie_batch = []
             #self.mini_batch = 2
             for idx in range(self.mini_batch):
@@ -491,31 +387,27 @@ class causal_analyzer:
                                               self.num_classes)
 
                 X_batch_perturbed = self.get_perturbed_input(X_batch)
-                '''
-                pre_layer5 = self.model1.predict(X_batch)
-                pre_final = self.model2.predict(pre_layer5)
-                pre_class_ori = np.argmax(pre_final,axis=1)
-
-                pre_layer5 = self.model1.predict(X_batch_perturbed)
-                pre_final = self.model2.predict(pre_layer5)
-                pre_class_per = np.argmax(pre_final,axis=1)
-
-                overall_pre = self.model.predict(X_batch)
-                overall_class = np.argmax(overall_pre, axis=1)
-                '''
-                # find hidden neuron interval
-
 
                 # find
-                ie_batch.append(self.get_ie_do_h(X_batch_perturbed, min_p, max_p))
+                ie_batch.append(self.get_ie_do_h(X_batch_perturbed, X_batch_perturbed, np.minimum(min_p, min), np.maximum(max_p, max)))
 
             ie_mean = np.mean(np.array(ie_batch),axis=0)
 
             np.savetxt("results/per.txt", ie_mean, fmt="%s")
+            '''
 
-            # save log
-            #logs.append((step,
-            #             pre_class_ori, pre_class_per))
+            # row_diff contains sensitive neurons: top self.rep_n
+            # index
+            self.rep_index = []
+            result = self.pso_test([])
+            print("before repair: {}".format(result))
+
+            self.rep_index = row_diff[:,:1][:self.rep_n,:]
+
+            self.repair()
+
+            result = self.pso_test(self.r_weight)
+            print("after repair: {}".format(result))
 
     pass
 
@@ -532,13 +424,58 @@ class causal_analyzer:
         for i in range (len(pre_layer5[0])):
             ie_i = []
             for h_val in np.linspace(hidden_min[i], hidden_max[i], num_step):
-                do_hidden = pre_layer5
+                do_hidden = pre_layer5.copy()
                 do_hidden[:, i] = h_val
                 pre_final = self.model2.predict(do_hidden)
                 ie_i.append(np.mean(pre_final,axis=0))
             ie.append(np.mean(np.array(ie_i),axis=0))
         return np.array(ie)
 
+    # get ie of targeted class
+    def get_tie_do_h(self, x, t_dix, min, max):
+        pre_layer5 = self.model1.predict(x)
+
+        ie = []
+
+        hidden_min = min
+        hidden_max = max
+        num_step = 16
+
+        for i in range (len(pre_layer5[0])):
+            ie_i = []
+            for h_val in np.linspace(hidden_min[i], hidden_max[i], num_step):
+                do_hidden = pre_layer5.copy()
+                do_hidden[:, i] = h_val
+                pre_final = self.model2.predict(do_hidden)
+                ie_i.append(np.mean(pre_final,axis=0)[t_dix])
+            ie.append(np.array(ie_i))
+
+        return np.array(ie)
+
+    # return
+    def get_die_do_h(self, x, x_p, min, max):
+        pre_layer5 = self.model1.predict(x)
+        pre_layer5_p = self.model1.predict(x_p)
+        ie = []
+
+        hidden_min = min
+        hidden_max = max
+        num_step = 16
+
+        for i in range (len(pre_layer5[0])):
+            ie_i = []
+            for h_val in np.linspace(hidden_min[i], hidden_max[i], num_step):
+                do_hidden = pre_layer5.copy()
+                do_hidden[:, i] = h_val
+                pre_final = self.model2.predict(do_hidden)
+                pre_final_ori = self.model2.predict(pre_layer5_p)
+                ie_i.append(np.mean(np.absolute(pre_final - pre_final_ori),axis=0))
+            ie.append(np.mean(np.array(ie_i),axis=0))
+        return np.array(ie)
+
+    # return
+    def get_final(self, x, x_p, min, max):
+        return np.mean(self.model.predict(x),axis=0)
 
     def get_h_range(self, x):
         pre_layer5 = self.model1.predict(x)
@@ -547,3 +484,132 @@ class causal_analyzer:
         min = np.min(pre_layer5, axis=0)
 
         return min, max
+
+    def repair(self):
+        # repair
+        print('Start reparing...')
+        options = {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+        #'''# original
+        optimizer = ps.single.GlobalBestPSO(n_particles=20, dimensions=self.rep_n, options=options,
+                                            bounds=([[-1.0] * self.rep_n, [1.0] * self.rep_n]),
+                                            init_pos=np.zeros((20, self.rep_n), dtype=float), ftol=1e-3,
+                                            ftol_iter=10)
+        #'''
+
+        # Perform optimization
+        best_cost, best_pos = optimizer.optimize(self.pso_fitness_func, iters=100)
+
+        # Obtain the cost history
+        # print(optimizer.cost_history)
+        # Obtain the position history
+        # print(optimizer.pos_history)
+        # Obtain the velocity history
+        # print(optimizer.velocity_history)
+        #print('neuron to repair: {} at layter: {}'.format(self.r_neuron, self.r_layer))
+        #print('best cost: {}'.format(best_cost))
+        #print('best pos: {}'.format(best_pos))
+
+        self.r_weight = best_pos
+
+        return best_pos
+
+    # optimization target perturbed sample has the same label as clean sample
+    def pso_fitness_func(self, weight):
+
+        result = []
+        for i in range (0, int(len(weight))):
+            r_weight =  weight[i]
+
+            cost = self.pso_test_rep(r_weight)
+
+            #print('cost: {}'.format(cost))
+
+            result.append(cost)
+
+        #print(result)
+
+        return result
+
+
+    def pso_test_rep(self, r_weight):
+
+        #result = []
+        result = 0.0
+        tot_count = 0
+        # per particle
+        for idx in range(self.mini_batch):
+            X_batch, Y_batch = self.gen.next()
+            X_batch_perturbed = self.get_perturbed_input(X_batch)
+
+            p_prediction = self.model1.predict(X_batch_perturbed)
+
+            do_hidden = p_prediction.copy()
+
+            for i in range (0, len(self.rep_index)):
+                rep_idx = int(self.rep_index[i])
+                do_hidden[:, rep_idx] = (1.0 + r_weight[i]) * p_prediction[:, rep_idx]
+
+            p_prediction = self.model2.predict(do_hidden)
+
+            # cost is the difference
+            #cost = np.abs(p_prediction - Y_batch)
+            #cost = np.mean(cost,axis=0)
+            #result.append(cost)
+
+            labels = np.argmax(Y_batch, axis=1)
+            predict = np.argmax(p_prediction, axis=1)
+
+            cost = np.sum(labels != predict)
+            result = result + cost
+            tot_count = tot_count + len(labels)
+
+        #result = np.mean(np.array(result),axis=0)
+        #result = np.sum(result)
+        result = result / tot_count
+        return result
+
+    def pso_test(self, r_weight):
+        result = 0.0
+        tot_count = 0
+        if len(self.rep_index) != 0:
+
+            # per particle
+            for idx in range(self.mini_batch):
+                X_batch, Y_batch = self.gen.next()
+                X_batch_perturbed = self.get_perturbed_input(X_batch)
+
+                p_prediction = self.model1.predict(X_batch_perturbed)
+
+                do_hidden = p_prediction.copy()
+
+                for i in range (0, len(self.rep_index)):
+                    rep_idx = int(self.rep_index[i])
+                    do_hidden[:, rep_idx] = (1.0 + r_weight[i]) * p_prediction[:, rep_idx]
+
+                p_prediction = self.model2.predict(do_hidden)
+
+                labels = np.argmax(Y_batch, axis=1)
+                predict = np.argmax(p_prediction, axis=1)
+
+                # cost is the difference
+                diff = np.sum(labels != predict)
+                result = result + diff
+                tot_count = tot_count + len(labels)
+            result = result / tot_count
+        else:
+            # per particle
+            for idx in range(self.mini_batch):
+                X_batch, Y_batch = self.gen.next()
+                X_batch_perturbed = self.get_perturbed_input(X_batch)
+
+                p_prediction = self.model.predict(X_batch_perturbed)
+
+                labels = np.argmax(Y_batch, axis=1)
+                predict = np.argmax(p_prediction, axis=1)
+
+                # cost is the difference
+                diff = np.sum(labels != predict)
+                result = result + diff
+                tot_count = tot_count + len(labels)
+            result = result / tot_count
+        return result

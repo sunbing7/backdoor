@@ -112,36 +112,18 @@ def build_data_loader(X, Y):
     return generator
 
 
-def visualize_trigger_w_mask(visualizer, gen, y_target,
-                             save_pattern_flag=True):
+def trigger_analyzer(analyzer, gen):
 
     visualize_start_time = time.time()
 
-    # initialize with random mask
-    pattern = np.random.random(INPUT_SHAPE) * 255.0
-    mask = np.random.random(MASK_SHAPE)
-
     # execute reverse engineering
-    pattern, mask, mask_upsample, logs = visualizer.visualize(
-        gen=gen, y_target=y_target, pattern_init=pattern, mask_init=mask)
-
-    # meta data about the generated mask
-    print('pattern, shape: %s, min: %f, max: %f' %
-          (str(pattern.shape), np.min(pattern), np.max(pattern)))
-    print('mask, shape: %s, min: %f, max: %f' %
-          (str(mask.shape), np.min(mask), np.max(mask)))
-    print('mask norm of label %d: %f' %
-          (y_target, np.sum(np.abs(mask_upsample))))
+    analyzer.analyze(gen)
 
     visualize_end_time = time.time()
     print('visualization cost %f seconds' %
           (visualize_end_time - visualize_start_time))
 
-    if save_pattern_flag:
-        save_pattern(pattern, mask_upsample, y_target)
-
-    return pattern, mask_upsample, logs
-
+    return
 
 def save_pattern(pattern, mask, y_target):
 
@@ -181,36 +163,32 @@ def gtsrb_visualize_label_scan_bottom_right_white_4():
     model_file = '%s/%s' % (MODEL_DIR, MODEL_FILENAME)
     model = load_model(model_file)
 
-    # initialize visualizer
-    visualizer = causal_analyzer(
-        model, intensity_range=INTENSITY_RANGE, regularization=REGULARIZATION,
+    # initialize analyzer
+    analyzer = causal_analyzer(
+        model,
+        test_generator,
         input_shape=INPUT_SHAPE,
         init_cost=INIT_COST, steps=STEPS, lr=LR, num_classes=NUM_CLASSES,
         mini_batch=MINI_BATCH,
         upsample_size=UPSAMPLE_SIZE,
-        attack_succ_threshold=ATTACK_SUCC_THRESHOLD,
         patience=PATIENCE, cost_multiplier=COST_MULTIPLIER,
         img_color=IMG_COLOR, batch_size=BATCH_SIZE, verbose=2,
         save_last=SAVE_LAST,
         early_stop=EARLY_STOP, early_stop_threshold=EARLY_STOP_THRESHOLD,
         early_stop_patience=EARLY_STOP_PATIENCE)
 
-    log_mapping = {}
-
     # y_label list to analyze
     y_target_list = list(range(NUM_CLASSES))
     y_target_list.remove(Y_TARGET)
     y_target_list = [Y_TARGET] + y_target_list
+
+    y_target_list = [33]
     for y_target in y_target_list:
 
         print('processing label %d' % y_target)
 
-        _, _, logs = visualize_trigger_w_mask(
-            visualizer, test_generator, y_target=y_target,
-            save_pattern_flag=True)
-
-        log_mapping[y_target] = logs
-
+        trigger_analyzer(
+            analyzer, test_generator)
     pass
 
 
