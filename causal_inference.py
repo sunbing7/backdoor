@@ -289,7 +289,7 @@ class causal_analyzer:
         pass
 
     def analyze(self, gen):
-
+        #'''
         # find hidden range
         for step in range(self.steps):
             min = []
@@ -319,18 +319,7 @@ class causal_analyzer:
 
             min_p = np.min(np.array(min_p), axis=0)
             max_p = np.max(np.array(max_p), axis=0)
-
-            '''
-            max_cmp = np.transpose([max, max_p, max_p - max])
-            min_cmp = np.transpose([min, min_p, min - min_p])
-            
-            print("max:\n")
-            for item in max_cmp:
-                print(item)
-            print("min:\n")
-            for item in min_cmp:
-                print(item)
-            '''
+        #'''
         # loop start
 
         for step in range(self.steps):
@@ -360,54 +349,28 @@ class causal_analyzer:
 
             np.savetxt("results/col_diff.txt", col_diff, fmt="%s")
 
-            '''    
-            print("Target class:\n")
-            for item in col_diff:
-                print(item)
-            '''
             row_diff = np.max(ie_mean, axis=1) - np.min(ie_mean, axis=1)
             row_diff = np.transpose([np.arange(len(row_diff)), row_diff])
             ind = np.argsort(row_diff[:, 1])[::-1]
             row_diff = row_diff[ind]
 
             np.savetxt("results/row_diff.txt", row_diff, fmt="%s")
-            '''
-            print("Target class:\n")
-            for item in row_diff:
-                print(item)
-            '''
-
-            '''
-            ie_batch = []
-            #self.mini_batch = 2
-            for idx in range(self.mini_batch):
-                X_batch, _ = gen.next()
-                if X_batch.shape[0] != Y_target.shape[0]:
-                    Y_target = to_categorical([y_target] * X_batch.shape[0],
-                                              self.num_classes)
-
-                X_batch_perturbed = self.get_perturbed_input(X_batch)
-
-                # find
-                ie_batch.append(self.get_ie_do_h(X_batch_perturbed, X_batch_perturbed, np.minimum(min_p, min), np.maximum(max_p, max)))
-
-            ie_mean = np.mean(np.array(ie_batch),axis=0)
-
-            np.savetxt("results/per.txt", ie_mean, fmt="%s")
-            '''
-
+            #'''
             # row_diff contains sensitive neurons: top self.rep_n
             # index
             self.rep_index = []
-            result = self.pso_test([])
-            print("before repair: {}".format(result))
+            result, acc = self.pso_test([])
+            print("before repair: attack SR: {}, BE acc: {}".format(result, acc))
 
             self.rep_index = row_diff[:,:1][:self.rep_n,:]
 
             self.repair()
 
-            result = self.pso_test(self.r_weight)
-            print("after repair: {}".format(result))
+            #self.rep_index = [461, 395, 491, 404, 288]
+            #self.r_weight = [-0.18905582,  0.01341141, -0.77978556, -0.18878982,  1.38543663]
+
+            result, acc = self.pso_test(self.r_weight)
+            print("after repair: attack SR: {}, BE acc: {}".format(result, acc))
 
     pass
 
@@ -491,8 +454,8 @@ class causal_analyzer:
         options = {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
         #'''# original
         optimizer = ps.single.GlobalBestPSO(n_particles=20, dimensions=self.rep_n, options=options,
-                                            bounds=([[-1.0] * self.rep_n, [1.0] * self.rep_n]),
-                                            init_pos=np.zeros((20, self.rep_n), dtype=float), ftol=1e-3,
+                                            bounds=([[-2.0] * self.rep_n, [2.0] * self.rep_n]),
+                                            init_pos=np.ones((20, self.rep_n), dtype=float), ftol=1e-3,
                                             ftol_iter=10)
         #'''
 
@@ -547,7 +510,7 @@ class causal_analyzer:
 
             for i in range (0, len(self.rep_index)):
                 rep_idx = int(self.rep_index[i])
-                do_hidden[:, rep_idx] = (1.0 + r_weight[i]) * p_prediction[:, rep_idx]
+                do_hidden[:, rep_idx] = (r_weight[i]) * p_prediction[:, rep_idx]
 
             p_prediction = self.model2.predict(do_hidden)
 
@@ -570,6 +533,7 @@ class causal_analyzer:
 
     def pso_test(self, r_weight):
         result = 0.0
+        correct = 0.0
         tot_count = 0
         if len(self.rep_index) != 0:
 
@@ -578,30 +542,41 @@ class causal_analyzer:
                 X_batch, Y_batch = self.gen.next()
                 X_batch_perturbed = self.get_perturbed_input(X_batch)
 
+                o_prediction = self.model1.predict(X_batch)
                 p_prediction = self.model1.predict(X_batch_perturbed)
 
                 do_hidden = p_prediction.copy()
+                o_hidden = o_prediction.copy()
 
                 for i in range (0, len(self.rep_index)):
                     rep_idx = int(self.rep_index[i])
-                    do_hidden[:, rep_idx] = (1.0 + r_weight[i]) * p_prediction[:, rep_idx]
+                    do_hidden[:, rep_idx] = (r_weight[i]) * p_prediction[:, rep_idx]
+                    o_hidden[:, rep_idx] = (r_weight[i]) * o_prediction[:, rep_idx]
 
                 p_prediction = self.model2.predict(do_hidden)
+                o_prediction = self.model2.predict(o_hidden)
 
                 labels = np.argmax(Y_batch, axis=1)
                 predict = np.argmax(p_prediction, axis=1)
+                o_predict = np.argmax(o_prediction, axis=1)
 
                 # cost is the difference
                 diff = np.sum(labels != predict)
                 result = result + diff
                 tot_count = tot_count + len(labels)
+
+                o_correct = np.sum(labels == o_predict)
+                correct = correct + o_correct
+
             result = result / tot_count
+            correct = correct / tot_count
         else:
             # per particle
             for idx in range(self.mini_batch):
                 X_batch, Y_batch = self.gen.next()
                 X_batch_perturbed = self.get_perturbed_input(X_batch)
 
+                o_prediction = np.argmax(self.model.predict(X_batch), axis=1)
                 p_prediction = self.model.predict(X_batch_perturbed)
 
                 labels = np.argmax(Y_batch, axis=1)
@@ -610,6 +585,10 @@ class causal_analyzer:
                 # cost is the difference
                 diff = np.sum(labels != predict)
                 result = result + diff
+
+                o_correct = np.sum(labels == o_prediction)
+                correct = correct + o_correct
                 tot_count = tot_count + len(labels)
             result = result / tot_count
-        return result
+            correct = correct / tot_count
+        return result, correct

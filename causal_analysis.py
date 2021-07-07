@@ -22,6 +22,8 @@ from causal_inference import causal_analyzer
 
 import utils_backdoor
 
+import sys
+
 
 ##############################
 #        PARAMETERS          #
@@ -202,8 +204,9 @@ def main():
 
 
 if __name__ == '__main__':
-
+    #sys.stdout = open('file', 'w')
     start_time = time.time()
     main()
     elapsed_time = time.time() - start_time
     print('elapsed time %s s' % elapsed_time)
+    #sys.stdout.close()
