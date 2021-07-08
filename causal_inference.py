@@ -40,6 +40,9 @@ MASK_SHAPE = (IMG_ROWS, IMG_COLS)
 
 NUM_CLASSES = 43  # total number of classes in the model
 
+CALSAL_STEP = 4
+
+TEST_ONLY = 1
 
 class causal_analyzer:
 
@@ -148,6 +151,7 @@ class causal_analyzer:
 
         self.rep_n = rep_n       # number of neurons to repair
         self.r_weight = None
+        self.target = 33
 
         # split the model for causal inervention
         '''
@@ -289,7 +293,7 @@ class causal_analyzer:
         pass
 
     def analyze(self, gen):
-        #'''
+        '''
         # find hidden range
         for step in range(self.steps):
             min = []
@@ -319,11 +323,11 @@ class causal_analyzer:
 
             min_p = np.min(np.array(min_p), axis=0)
             max_p = np.max(np.array(max_p), axis=0)
-        #'''
+        '''
         # loop start
 
         for step in range(self.steps):
-            #'''
+            '''
             ie_batch = []
             #self.mini_batch = 2
             for idx in range(self.mini_batch):
@@ -334,7 +338,8 @@ class causal_analyzer:
                 # find hidden neuron interval
 
                 # find
-                ie_batch.append(self.get_ie_do_h(X_batch, np.minimum(min_p, min), np.maximum(max_p, max)))
+                #ie_batch.append(self.get_ie_do_h(X_batch, np.minimum(min_p, min), np.maximum(max_p, max)))
+                ie_batch.append(self.get_tie_do_h(X_batch, self.target, np.minimum(min_p, min), np.maximum(max_p, max)))
 
             ie_mean = np.mean(np.array(ie_batch),axis=0)
 
@@ -355,21 +360,22 @@ class causal_analyzer:
             row_diff = row_diff[ind]
 
             np.savetxt("results/row_diff.txt", row_diff, fmt="%s")
-            #'''
+            '''
             # row_diff contains sensitive neurons: top self.rep_n
             # index
             self.rep_index = []
-            result, acc = self.pso_test([])
+            result, acc = self.pso_test([], self.target)
             print("before repair: attack SR: {}, BE acc: {}".format(result, acc))
 
-            self.rep_index = row_diff[:,:1][:self.rep_n,:]
+            #self.rep_index = row_diff[:,:1][:self.rep_n,:]
+            #print("repair index: {}".format(self.rep_index.T))
 
-            self.repair()
+            #self.repair()
 
-            #self.rep_index = [461, 395, 491, 404, 288]
-            #self.r_weight = [-0.18905582,  0.01341141, -0.77978556, -0.18878982,  1.38543663]
+            self.rep_index = [461, 395, 491, 404, 219]
+            self.r_weight = [-0.13325777,  0.08095828, -0.80547224, -0.59831971, -0.23067632]
 
-            result, acc = self.pso_test(self.r_weight)
+            result, acc = self.pso_test(self.r_weight, self.target)
             print("after repair: attack SR: {}, BE acc: {}".format(result, acc))
 
     pass
@@ -377,19 +383,21 @@ class causal_analyzer:
     # return
     def get_ie_do_h(self, x, min, max):
         pre_layer5 = self.model1.predict(x)
-
+        l_shape = pre_layer5.shape
         ie = []
 
-        hidden_min = min
-        hidden_max = max
-        num_step = 16
+        hidden_min = min.reshape(-1)
+        hidden_max = max.reshape(-1)
+        num_step = CALSAL_STEP
 
-        for i in range (len(pre_layer5[0])):
+        _pre_layer5 = np.reshape(pre_layer5, (len(pre_layer5), -1))
+
+        for i in range (len(_pre_layer5[0])):
             ie_i = []
             for h_val in np.linspace(hidden_min[i], hidden_max[i], num_step):
-                do_hidden = pre_layer5.copy()
+                do_hidden = _pre_layer5.copy()
                 do_hidden[:, i] = h_val
-                pre_final = self.model2.predict(do_hidden)
+                pre_final = self.model2.predict(do_hidden.reshape(l_shape))
                 ie_i.append(np.mean(pre_final,axis=0))
             ie.append(np.mean(np.array(ie_i),axis=0))
         return np.array(ie)
@@ -397,19 +405,21 @@ class causal_analyzer:
     # get ie of targeted class
     def get_tie_do_h(self, x, t_dix, min, max):
         pre_layer5 = self.model1.predict(x)
-
+        l_shape = pre_layer5.shape
         ie = []
 
-        hidden_min = min
-        hidden_max = max
-        num_step = 16
+        hidden_min = min.reshape(-1)
+        hidden_max = max.reshape(-1)
+        num_step = CALSAL_STEP
 
-        for i in range (len(pre_layer5[0])):
+        _pre_layer5 = np.reshape(pre_layer5, (len(pre_layer5), -1))
+
+        for i in range (len(_pre_layer5[0])):
             ie_i = []
             for h_val in np.linspace(hidden_min[i], hidden_max[i], num_step):
-                do_hidden = pre_layer5.copy()
+                do_hidden = _pre_layer5.copy()
                 do_hidden[:, i] = h_val
-                pre_final = self.model2.predict(do_hidden)
+                pre_final = self.model2.predict(do_hidden.reshape(l_shape))
                 ie_i.append(np.mean(pre_final,axis=0)[t_dix])
             ie.append(np.array(ie_i))
 
@@ -419,6 +429,7 @@ class causal_analyzer:
     def get_die_do_h(self, x, x_p, min, max):
         pre_layer5 = self.model1.predict(x)
         pre_layer5_p = self.model1.predict(x_p)
+
         ie = []
 
         hidden_min = min
@@ -454,7 +465,7 @@ class causal_analyzer:
         options = {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
         #'''# original
         optimizer = ps.single.GlobalBestPSO(n_particles=20, dimensions=self.rep_n, options=options,
-                                            bounds=([[-2.0] * self.rep_n, [2.0] * self.rep_n]),
+                                            bounds=([[-10.0] * self.rep_n, [10.0] * self.rep_n]),
                                             init_pos=np.ones((20, self.rep_n), dtype=float), ftol=1e-3,
                                             ftol_iter=10)
         #'''
@@ -505,14 +516,17 @@ class causal_analyzer:
             X_batch_perturbed = self.get_perturbed_input(X_batch)
 
             p_prediction = self.model1.predict(X_batch_perturbed)
+            l_shape = p_prediction.shape
 
-            do_hidden = p_prediction.copy()
+            _p_prediction = np.reshape(p_prediction, (len(p_prediction), -1))
+
+            do_hidden = _p_prediction.copy()
 
             for i in range (0, len(self.rep_index)):
                 rep_idx = int(self.rep_index[i])
-                do_hidden[:, rep_idx] = (r_weight[i]) * p_prediction[:, rep_idx]
+                do_hidden[:, rep_idx] = (r_weight[i]) * _p_prediction[:, rep_idx]
 
-            p_prediction = self.model2.predict(do_hidden)
+            p_prediction = self.model2.predict(do_hidden.reshape(l_shape))
 
             # cost is the difference
             #cost = np.abs(p_prediction - Y_batch)
@@ -531,7 +545,7 @@ class causal_analyzer:
         result = result / tot_count
         return result
 
-    def pso_test(self, r_weight):
+    def pso_test(self, r_weight, target):
         result = 0.0
         correct = 0.0
         tot_count = 0
@@ -545,24 +559,30 @@ class causal_analyzer:
                 o_prediction = self.model1.predict(X_batch)
                 p_prediction = self.model1.predict(X_batch_perturbed)
 
-                do_hidden = p_prediction.copy()
-                o_hidden = o_prediction.copy()
+                _p_prediction = np.reshape(p_prediction, (len(p_prediction), -1))
+                _o_prediction = np.reshape(o_prediction, (len(o_prediction), -1))
+
+                l_shape = p_prediction.shape
+
+                do_hidden = _p_prediction.copy()
+                o_hidden = _o_prediction.copy()
 
                 for i in range (0, len(self.rep_index)):
                     rep_idx = int(self.rep_index[i])
-                    do_hidden[:, rep_idx] = (r_weight[i]) * p_prediction[:, rep_idx]
-                    o_hidden[:, rep_idx] = (r_weight[i]) * o_prediction[:, rep_idx]
+                    do_hidden[:, rep_idx] = (r_weight[i]) * _p_prediction[:, rep_idx]
+                    o_hidden[:, rep_idx] = (r_weight[i]) * _o_prediction[:, rep_idx]
 
-                p_prediction = self.model2.predict(do_hidden)
-                o_prediction = self.model2.predict(o_hidden)
+                p_prediction = self.model2.predict(do_hidden.reshape(l_shape))
+                o_prediction = self.model2.predict(o_hidden.reshape(l_shape))
 
                 labels = np.argmax(Y_batch, axis=1)
                 predict = np.argmax(p_prediction, axis=1)
                 o_predict = np.argmax(o_prediction, axis=1)
 
                 # cost is the difference
-                diff = np.sum(labels != predict)
-                result = result + diff
+                attack_success = np.sum(predict == target * np.ones(predict.shape))
+                #diff = np.sum(labels != predict)
+                result = result + attack_success
                 tot_count = tot_count + len(labels)
 
                 o_correct = np.sum(labels == o_predict)
@@ -583,8 +603,9 @@ class causal_analyzer:
                 predict = np.argmax(p_prediction, axis=1)
 
                 # cost is the difference
-                diff = np.sum(labels != predict)
-                result = result + diff
+                attack_success = np.sum(predict == target * np.ones(predict.shape))
+                #diff = np.sum(labels != predict)
+                result = result + attack_success
 
                 o_correct = np.sum(labels == o_prediction)
                 correct = correct + o_correct
