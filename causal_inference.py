@@ -9,7 +9,7 @@ from keras import backend as K
 from keras.losses import categorical_crossentropy
 from keras.metrics import categorical_accuracy
 from keras.optimizers import Adam
-from keras.utils import to_categorical
+from tensorflow.keras.utils import to_categorical
 from keras.layers import UpSampling2D, Cropping2D
 from keras.layers import Input
 from keras import Model

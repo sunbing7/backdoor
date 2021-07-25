@@ -35,6 +35,7 @@ DATA_DIR = 'data'  # data folder
 DATA_FILE = 'gtsrb_dataset_int.h5'  # dataset file
 MODEL_DIR = 'models'  # model directory
 MODEL_FILENAME = 'gtsrb_bottom_right_white_4_target_33.h5'  # model file
+#MODEL_FILENAME = 'trojaned_face_model_wm.h5'
 RESULT_DIR = 'results'  # directory for storing results
 # image filename template for visualization results
 IMG_FILENAME_TEMPLATE = 'gtsrb_visualize_%s_label_%d.png'
@@ -154,7 +155,7 @@ def save_pattern(pattern, mask, y_target):
     pass
 
 
-def gtsrb_visualize_label_scan_bottom_right_white_4():
+def start_analysis():
 
     print('loading dataset')
     X_test, Y_test = load_dataset()
@@ -198,7 +199,7 @@ def main():
 
     os.environ["CUDA_VISIBLE_DEVICES"] = DEVICE
     utils_backdoor.fix_gpu_memory()
-    gtsrb_visualize_label_scan_bottom_right_white_4()
+    start_analysis()
 
     pass
 

@@ -46,6 +46,10 @@ def construct_mask_corner(image_row=32, image_col=32, pattern_size=4, margin=1, 
 
     mask[image_row - margin - pattern_size:image_row - margin, image_col - margin - pattern_size:image_col - margin,
     :] = 1
-    pattern[image_row - margin - pattern_size:image_row - margin,
-    image_col - margin - pattern_size:image_col - margin, :] = [255., 255., 255.]
+    if channel_num == 3:
+        pattern[image_row - margin - pattern_size:image_row - margin,
+        image_col - margin - pattern_size:image_col - margin, :] = [255., 255., 255.]
+    elif channel_num == 1:
+        pattern[image_row - margin - pattern_size:image_row - margin,
+        image_col - margin - pattern_size:image_col - margin, :] = [1.]
     return mask, pattern
