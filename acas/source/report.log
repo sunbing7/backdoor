@@ -1,0 +1,187 @@
+2021-07-25 21:03:11,616 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:24: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-07-25 21:03:11,617 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:25: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-07-25 21:03:11,618 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:29: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-07-25 21:03:11,619 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:30: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-07-25 21:16:18,407 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:24: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-07-25 21:16:18,410 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:25: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-07-25 21:16:18,411 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:29: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-07-25 21:16:18,444 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:30: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-07-25 21:16:42,586 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-07-25 21:18:17,430 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:24: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-07-25 21:18:17,431 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:25: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-07-25 21:18:17,432 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:29: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-07-25 21:18:17,435 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:30: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-07-25 21:18:17,486 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-07-25 21:19:56,369 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-07-25 21:22:42,668 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:24: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-07-25 21:22:42,669 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:25: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-07-25 21:22:42,670 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:29: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-07-25 21:22:42,671 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:30: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-07-25 21:22:42,719 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-07-25 21:22:43,074 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-07-25 21:22:43,652 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-07-25 21:23:06,338 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:24: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-07-25 21:23:06,338 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:25: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-07-25 21:23:06,339 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:29: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-07-25 21:23:06,340 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:30: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-07-25 21:23:06,387 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-07-25 21:23:06,718 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-07-25 21:23:07,344 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-07-25 21:24:11,108 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:24: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-07-25 21:24:11,116 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:25: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-07-25 21:24:11,117 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:29: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-07-25 21:24:11,120 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:30: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-07-25 21:24:11,169 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-07-25 21:24:11,521 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-07-25 21:24:12,100 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-07-25 21:25:33,057 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:24: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-07-25 21:25:33,059 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:25: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-07-25 21:25:33,060 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:29: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-07-25 21:25:33,062 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:30: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-07-25 21:25:33,128 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-07-25 21:25:33,494 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-07-25 21:25:34,076 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-07-25 21:29:20,770 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:24: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-07-25 21:29:20,771 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:25: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-07-25 21:29:20,771 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:29: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-07-25 21:29:20,778 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:30: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-07-25 21:29:20,866 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-07-25 21:29:21,356 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-07-25 21:30:01,576 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:24: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-07-25 21:30:01,577 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:25: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-07-25 21:30:01,577 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:29: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-07-25 21:30:01,579 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:30: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-07-25 21:30:01,623 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-07-25 21:30:01,974 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-07-25 21:30:02,596 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-07-25 21:30:07,450 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.0, best pos: [1.04281825 0.44789554 1.25725852 2.39790136 0.60452989]
+2021-07-25 21:31:12,838 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:24: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-07-25 21:31:12,839 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:25: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-07-25 21:31:12,839 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:29: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-07-25 21:31:12,843 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:30: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-07-25 21:31:12,932 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-07-25 21:31:13,181 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-07-25 21:49:12,929 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:24: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-07-25 21:49:12,930 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:25: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-07-25 21:49:12,931 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:29: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-07-25 21:49:12,932 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:30: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-07-25 21:49:12,965 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-07-25 21:49:13,180 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-07-25 21:49:43,508 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-07-25 21:52:35,148 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.2999400958466453, best pos: [2.2081752  2.13385225 2.22763431 1.78105003 1.54965114]
+2021-07-25 22:03:26,983 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:24: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-07-25 22:03:26,985 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:25: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-07-25 22:03:26,986 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:29: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-07-25 22:03:26,987 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:30: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-07-25 22:03:27,045 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-07-25 22:03:27,284 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-07-25 22:06:51,702 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:24: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-07-25 22:06:51,704 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:25: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-07-25 22:06:51,705 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:29: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-07-25 22:06:51,707 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:30: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-07-25 22:06:51,754 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-07-25 22:06:51,981 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-07-25 22:07:23,748 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-07-25 22:15:26,778 - pyswarms.single.global_best - INFO - Optimization finished | best cost: -0.6978833865814696, best pos: [ 3.38887937  0.68569877  1.57650737 -9.90663733  2.45636487]
+2021-07-25 22:22:26,540 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:24: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-07-25 22:22:26,541 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:25: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-07-25 22:22:26,542 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:29: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-07-25 22:22:26,548 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/acas/source/utils_backdoor.py:30: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-07-25 22:22:26,618 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-07-25 22:22:26,866 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-07-25 22:23:27,489 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-07-25 22:31:24,198 - pyswarms.single.global_best - INFO - Optimization finished | best cost: -0.29532747603833864, best pos: [ 3.38887937  0.68569877  1.57650737 -9.90663733  2.45636487]

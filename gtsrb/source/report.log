@@ -1,0 +1,72 @@
+2021-07-24 15:23:25,772 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/gtsrb/source/utils_backdoor.py:23: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-07-24 15:23:25,773 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/gtsrb/source/utils_backdoor.py:24: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-07-24 15:23:25,773 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/gtsrb/source/utils_backdoor.py:28: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-07-24 15:23:25,778 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/gtsrb/source/utils_backdoor.py:29: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-07-24 15:23:26,338 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:72: The name tf.get_default_graph is deprecated. Please use tf.compat.v1.get_default_graph instead.
+
+2021-07-24 15:23:26,339 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:515: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2021-07-24 15:23:26,346 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:4048: The name tf.random_uniform is deprecated. Please use tf.random.uniform instead.
+
+2021-07-24 15:23:26,383 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:3878: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
+
+2021-07-24 15:23:26,519 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:172: The name tf.get_default_session is deprecated. Please use tf.compat.v1.get_default_session instead.
+
+2021-07-24 15:23:26,519 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:188: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-07-24 15:23:26,520 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:197: The name tf.is_variable_initialized is deprecated. Please use tf.compat.v1.is_variable_initialized instead.
+
+2021-07-24 15:23:26,598 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:204: The name tf.variables_initializer is deprecated. Please use tf.compat.v1.variables_initializer instead.
+
+2021-07-24 15:23:26,729 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/optimizers.py:782: The name tf.train.Optimizer is deprecated. Please use tf.compat.v1.train.Optimizer instead.
+
+2021-07-24 15:23:26,735 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:3218: The name tf.log is deprecated. Please use tf.math.log instead.
+
+2021-07-24 15:23:26,859 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/tensorflow_core/python/ops/math_grad.py:1424: where (from tensorflow.python.ops.array_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.where in 2.0, which has the same broadcast rule as np.where
+2021-07-24 15:23:27,057 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:984: The name tf.assign_add is deprecated. Please use tf.compat.v1.assign_add instead.
+
+2021-07-24 15:23:27,061 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:971: The name tf.assign is deprecated. Please use tf.compat.v1.assign instead.
+
+2021-07-24 15:25:21,048 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/gtsrb/source/utils_backdoor.py:23: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-07-24 15:25:21,049 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/gtsrb/source/utils_backdoor.py:24: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-07-24 15:25:21,050 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/gtsrb/source/utils_backdoor.py:28: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-07-24 15:25:21,051 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/gtsrb/source/utils_backdoor.py:29: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-07-24 15:25:21,242 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:72: The name tf.get_default_graph is deprecated. Please use tf.compat.v1.get_default_graph instead.
+
+2021-07-24 15:25:21,242 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:515: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+2021-07-24 15:25:21,244 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:4048: The name tf.random_uniform is deprecated. Please use tf.random.uniform instead.
+
+2021-07-24 15:25:21,277 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:3878: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
+
+2021-07-24 15:25:21,445 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:172: The name tf.get_default_session is deprecated. Please use tf.compat.v1.get_default_session instead.
+
+2021-07-24 15:25:21,445 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:188: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-07-24 15:25:21,445 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:197: The name tf.is_variable_initialized is deprecated. Please use tf.compat.v1.is_variable_initialized instead.
+
+2021-07-24 15:25:21,476 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:204: The name tf.variables_initializer is deprecated. Please use tf.compat.v1.variables_initializer instead.
+
+2021-07-24 15:25:21,571 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/optimizers.py:782: The name tf.train.Optimizer is deprecated. Please use tf.compat.v1.train.Optimizer instead.
+
+2021-07-24 15:25:21,577 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:3218: The name tf.log is deprecated. Please use tf.math.log instead.
+
+2021-07-24 15:25:21,649 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/tensorflow_core/python/ops/math_grad.py:1424: where (from tensorflow.python.ops.array_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.where in 2.0, which has the same broadcast rule as np.where
+2021-07-24 15:25:21,801 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:984: The name tf.assign_add is deprecated. Please use tf.compat.v1.assign_add instead.
+
+2021-07-24 15:25:21,806 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/venv_new/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:971: The name tf.assign is deprecated. Please use tf.compat.v1.assign instead.
+
+2021-07-24 15:26:20,089 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-07-24 15:34:29,355 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.22278225806451613, best pos: [-0.80293995  0.15416521  0.2990029  -0.66319138  0.32642539]
