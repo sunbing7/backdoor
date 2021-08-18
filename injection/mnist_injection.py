@@ -18,6 +18,7 @@ from keras.models import Sequential
 sys.path.append("../")
 import utils_backdoor
 from injection_utils import *
+import tensorflow
 
 DATA_DIR = '../data'  # data folder
 DATA_FILE = 'mnist_dataset.h5'  # dataset file
@@ -95,6 +96,23 @@ def infect_X(img, tgt):
     adv_img = np.copy(raw_img)
 
     adv_img = injection_func(mask, pattern, adv_img)
+
+    utils_backdoor.dump_image(raw_img*255,
+                              'results/ori_img_test.png',
+                              'png')
+    utils_backdoor.dump_image(adv_img*255,
+                              'results/img_test.png',
+                              'png')
+
+    utils_backdoor.dump_image(mask*255,
+                              'results/mask_test_.png',
+                              'png')
+    utils_backdoor.dump_image(pattern*255, 'results/pattern_test_.png', 'png')
+
+    fusion = np.multiply(pattern, mask)
+
+    utils_backdoor.dump_image(fusion*255, 'results/fusion_test_.png', 'png')
+
     return adv_img, tensorflow.keras.utils.to_categorical(tgt, num_classes=NUM_CLASSES)
 
 

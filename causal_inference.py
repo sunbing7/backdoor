@@ -9,7 +9,7 @@ from keras import backend as K
 from keras.losses import categorical_crossentropy
 from keras.metrics import categorical_accuracy
 from keras.optimizers import Adam
-from tensorflow.keras.utils import to_categorical
+from keras.utils import to_categorical
 from keras.layers import UpSampling2D, Cropping2D
 from keras.layers import Input
 from keras import Model
@@ -369,11 +369,13 @@ class causal_analyzer:
 
             #self.rep_index = row_diff[:,:1][:self.rep_n,:]
             #print("repair index: {}".format(self.rep_index.T))
-
+            self.rep_index = [461, 395, 491, 404, 219]
+            self.r_weight = [-0.30822008,  0.7510451,  -0.81789604, -0.28144606, -0.11024098]
+            print("repair index: {}".format(self.rep_index))
             #self.repair()
 
-            self.rep_index = [461, 395, 491, 404, 219]
-            self.r_weight = [-0.13325777,  0.08095828, -0.80547224, -0.59831971, -0.23067632]
+            #self.rep_index = [461, 395, 491, 404, 219]
+            #self.r_weight = [-0.13325777,  0.08095828, -0.80547224, -0.59831971, -0.23067632]
 
             result, acc = self.pso_test(self.r_weight, self.target)
             print("after repair: attack SR: {}, BE acc: {}".format(result, acc))
@@ -580,7 +582,10 @@ class causal_analyzer:
                 o_predict = np.argmax(o_prediction, axis=1)
 
                 # cost is the difference
-                attack_success = np.sum(predict == target * np.ones(predict.shape))
+                o_target = (labels == target * np.ones(predict.shape))
+                pre_target = (predict == target * np.ones(predict.shape))
+                attack_success = np.sum(predict == target * np.ones(predict.shape)) - np.sum(o_target & pre_target)
+                #attack_success = np.sum(predict == target * np.ones(predict.shape))
                 #diff = np.sum(labels != predict)
                 result = result + attack_success
                 tot_count = tot_count + len(labels)

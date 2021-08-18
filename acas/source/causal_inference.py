@@ -101,6 +101,7 @@ class causal_analyzer:
 
     def analyze(self, dd_gen, cex_gen):
         #'''
+        ana_start_t = time.time()
         # find hidden range
         for step in range(self.steps):
             min = []
@@ -187,13 +188,18 @@ class causal_analyzer:
             row_diff1 = row_diff1[ind]
 
             np.savetxt("../results/row_diff1.txt", row_diff1, fmt="%s")
+
+            ana_start_t = time.time() - ana_start_t
+            print('fault localization time: {}s'.format(ana_start_t))
             #'''
+            rep_t = time.time()
+
             # row_diff contains sensitive neurons: top self.rep_n
             # index
             self.rep_index = []
             result, acc = self.pso_test([], self.target)
             print("before repair: attack SR: {}, BE acc: {}".format(result, acc))
-
+            #'''
             rep_idx = row_diff[:,:1][:self.rep_n,:].tolist()
             rep1_idx = row_diff1[:,:1][:self.rep_n,:].tolist()
 
@@ -205,14 +211,16 @@ class causal_analyzer:
 
             self.rep_index = row_diff[:,:1][:self.rep_n,:]
             print("repair index: {}".format(self.rep_index.T))
-
+            '''
+            self.rep_index = [4,  0, 33, 35, 14]
+            print("repair index: {}".format(self.rep_index))
+            '''
             self.repair()
-
-            #self.rep_index = [461, 395, 491, 404, 219]
-            #self.r_weight = [-0.13325777,  0.08095828, -0.80547224, -0.59831971, -0.23067632]
+            rep_t = time.time() - rep_t
 
             result, acc = self.pso_test(self.r_weight, self.target)
             print("after repair: attack SR: {}, BE acc: {}".format(result, acc))
+            print('PSO time: {}s'.format(rep_t))
 
     pass
 
@@ -301,6 +309,7 @@ class causal_analyzer:
     def repair(self):
         # repair
         print('Start reparing...')
+        print('alpha: {}'.format(self.alpha))
         options = {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
         #'''# original
         optimizer = ps.single.GlobalBestPSO(n_particles=20, dimensions=self.rep_n, options=options,

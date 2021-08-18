@@ -93,7 +93,6 @@ MASK_SHAPE = MASK_SHAPE.astype(int)
 #      END PARAMETERS        #
 ##############################
 
-
 def load_dataset():
     # the data, split between train and test sets
     (x_train, y_train), (x_test, y_test) = tensorflow.keras.datasets.mnist.load_data()
@@ -112,6 +111,7 @@ def load_dataset():
     y_train = tensorflow.keras.utils.to_categorical(y_train, NUM_CLASSES)
     y_test = tensorflow.keras.utils.to_categorical(y_test, NUM_CLASSES)
     return x_test, y_test
+
 
 
 def build_data_loader(X, Y):

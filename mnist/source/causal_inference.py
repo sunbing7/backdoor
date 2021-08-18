@@ -154,6 +154,7 @@ class causal_analyzer:
         self.rep_n = rep_n       # number of neurons to repair
         self.r_weight = None
         self.target = 3
+        self.alpha = 0.3
 
         # split the model for causal inervention
         '''
@@ -297,7 +298,8 @@ class causal_analyzer:
         pass
 
     def analyze(self, gen):
-        #'''
+        '''
+        ana_start_t = time.time()
         # find hidden range
         for step in range(self.steps):
             min = []
@@ -330,11 +332,11 @@ class causal_analyzer:
 
             min_p = np.min(np.array(min_p), axis=0)
             max_p = np.max(np.array(max_p), axis=0)
-        #'''
+        '''
         # loop start
 
         for step in range(self.steps):
-            #'''
+            '''
             ie_batch = []
             #self.mini_batch = 2
             for idx in range(self.mini_batch):
@@ -367,23 +369,34 @@ class causal_analyzer:
             row_diff = row_diff[ind]
 
             np.savetxt("../results/row_diff.txt", row_diff, fmt="%s")
-            #'''
+
+            ana_start_t = time.time() - ana_start_t
+            print('fault localization time: {}s'.format(ana_start_t))
+            '''
+            rep_t = time.time()
             # row_diff contains sensitive neurons: top self.rep_n
             # index
             self.rep_index = []
             result, acc = self.pso_test([], self.target)
             print("before repair: attack SR: {}, BE acc: {}".format(result, acc))
-
+            '''
             self.rep_index = row_diff[:,:1][:self.rep_n,:]
             print("repair index: {}".format(self.rep_index.T))
+            '''
+            self.rep_index = [1563, 1552, 1547, 1331, 1541]
+            print("repair index: {}".format(self.rep_index))
+            #'''
 
             self.repair()
+
+            rep_t = time.time() - rep_t
 
             #self.rep_index = [461, 395, 491, 404, 219]
             #self.r_weight = [-0.13325777,  0.08095828, -0.80547224, -0.59831971, -0.23067632]
 
             result, acc = self.pso_test(self.r_weight, self.target)
             print("after repair: attack SR: {}, BE acc: {}".format(result, acc))
+            print('PSO time: {}s'.format(rep_t))
 
     pass
 
@@ -469,6 +482,7 @@ class causal_analyzer:
     def repair(self):
         # repair
         print('Start reparing...')
+        print('alpha: {}'.format(self.alpha))
         options = {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
         #'''# original
         optimizer = ps.single.GlobalBestPSO(n_particles=20, dimensions=self.rep_n, options=options,
@@ -517,23 +531,29 @@ class causal_analyzer:
         #result = []
         result = 0.0
         tot_count = 0
+        correct = 0
         # per particle
         for idx in range(self.mini_batch):
             X_batch, Y_batch = self.gen.next()
             X_batch_perturbed = self.get_perturbed_input(X_batch)
 
             p_prediction = self.model1.predict(X_batch_perturbed)
+            o_prediction = self.model1.predict(X_batch)
             l_shape = p_prediction.shape
 
             _p_prediction = np.reshape(p_prediction, (len(p_prediction), -1))
+            _o_prediction = np.reshape(o_prediction, (len(o_prediction), -1))
 
             do_hidden = _p_prediction.copy()
+            o_hidden = _o_prediction.copy()
 
             for i in range (0, len(self.rep_index)):
                 rep_idx = int(self.rep_index[i])
                 do_hidden[:, rep_idx] = (r_weight[i]) * _p_prediction[:, rep_idx]
+                o_hidden[:, rep_idx] = (r_weight[i]) * _o_prediction[:, rep_idx]
 
             p_prediction = self.model2.predict(do_hidden.reshape(l_shape))
+            o_prediction = self.model2.predict(o_hidden.reshape(l_shape))
 
             # cost is the difference
             #cost = np.abs(p_prediction - Y_batch)
@@ -542,15 +562,21 @@ class causal_analyzer:
 
             labels = np.argmax(Y_batch, axis=1)
             predict = np.argmax(p_prediction, axis=1)
+            o_predict = np.argmax(o_prediction, axis=1)
+
+            o_correct = np.sum(labels == o_predict)
+            correct = correct + o_correct
 
             cost = np.sum(labels != predict)
             result = result + cost
             tot_count = tot_count + len(labels)
 
-        #result = np.mean(np.array(result),axis=0)
-        #result = np.sum(result)
         result = result / tot_count
-        return result
+        correct = correct / tot_count
+
+        cost = (1.0 - self.alpha) * result - self.alpha * correct
+
+        return cost
 
     def pso_test(self, r_weight, target):
         result = 0.0

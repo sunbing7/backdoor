@@ -188,7 +188,7 @@ def start_analysis():
     y_target_list = [33]
     for y_target in y_target_list:
 
-        print('processing label %d' % y_target)
+        #print('processing label %d' % y_target)
 
         trigger_analyzer(
             analyzer, test_generator)
@@ -199,7 +199,9 @@ def main():
 
     os.environ["CUDA_VISIBLE_DEVICES"] = DEVICE
     utils_backdoor.fix_gpu_memory()
-    start_analysis()
+    for i in range (0, 5):
+        print(i)
+        start_analysis()
 
     pass
 

@@ -199,14 +199,16 @@ def main():
 
     os.environ["CUDA_VISIBLE_DEVICES"] = DEVICE
     utils_backdoor.fix_gpu_memory()
-    start_analysis()
+    for i in range (0, 5):
+        print(i)
+        start_analysis()
 
     pass
 
 
 if __name__ == '__main__':
     #sys.stdout = open('file', 'w')
-    start_time = time.time()
+    start_time =  time.time()
     main()
     elapsed_time = time.time() - start_time
     print('elapsed time %s s' % elapsed_time)
