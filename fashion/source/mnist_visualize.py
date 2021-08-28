@@ -10,20 +10,18 @@ import time
 import numpy as np
 import random
 import tensorflow
-import keras
 from tensorflow import set_random_seed
 random.seed(123)
 np.random.seed(123)
 set_random_seed(123)
 
+import keras
 from keras.models import load_model
 from keras.preprocessing.image import ImageDataGenerator
 
-from causal_inference import causal_analyzer
+from visualizer import Visualizer
 
 import utils_backdoor
-
-import sys
 
 
 ##############################
@@ -32,14 +30,13 @@ import sys
 
 DEVICE = '3'  # specify which GPU to use
 
-#DATA_DIR = '../data'  # data folder
-#DATA_FILE = 'vgg_dataset.h5'  # dataset file
+#DATA_DIR = 'data'  # data folder
+#DATA_FILE = 'gtsrb_dataset_int.h5'  # dataset file
 MODEL_DIR = '../models'  # model directory
-MODEL_FILENAME = 'mnist_backdoor_3.h5'  # model file
-#MODEL_FILENAME = 'trojaned_face_model_wm.h5'
+MODEL_FILENAME = 'fashion_mnist_backdoor_7.h5'  # model file
 RESULT_DIR = '../results'  # directory for storing results
 # image filename template for visualization results
-IMG_FILENAME_TEMPLATE = 'mnist_visualize_%s_label_%d.png'
+IMG_FILENAME_TEMPLATE = 'fashion_visualize_%s_label_%d.png'
 
 # input size
 IMG_ROWS = 28
@@ -48,9 +45,9 @@ IMG_COLOR = 1
 INPUT_SHAPE = (IMG_ROWS, IMG_COLS, IMG_COLOR)
 
 NUM_CLASSES = 10  # total number of classes in the model
-Y_TARGET = 3  # (optional) infected target label, used for prioritizing label scanning
+Y_TARGET = 7  # (optional) infected target label, used for prioritizing label scanning
 
-INTENSITY_RANGE = 'mnist'  # preprocessing method for the task, GTSRB uses raw pixel intensities
+INTENSITY_RANGE = 'mnist'#'raw'  # preprocessing method for the task, GTSRB uses raw pixel intensities
 
 # parameters for optimization
 BATCH_SIZE = 32  # batch size used for optimization
@@ -93,9 +90,23 @@ MASK_SHAPE = MASK_SHAPE.astype(int)
 #      END PARAMETERS        #
 ##############################
 
+'''
+def load_dataset(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
+
+    dataset = utils_backdoor.load_dataset(data_file, keys=['X_test', 'Y_test'])
+
+    X_test = np.array(dataset['X_test'], dtype='float32')
+    Y_test = np.array(dataset['Y_test'], dtype='float32')
+
+    print('X_test shape %s' % str(X_test.shape))
+    print('Y_test shape %s' % str(Y_test.shape))
+
+    return X_test, Y_test
+'''
+
 def load_dataset():
     # the data, split between train and test sets
-    (x_train, y_train), (x_test, y_test) = tensorflow.keras.datasets.mnist.load_data()
+    (x_train, y_train), (x_test, y_test) = keras.datasets.fashion_mnist.load_data()
 
     # Scale images to the [0, 1] range
     x_train = x_train.astype("float32") / 255
@@ -113,7 +124,6 @@ def load_dataset():
     return x_test, y_test
 
 
-
 def build_data_loader(X, Y):
 
     datagen = ImageDataGenerator()
@@ -123,18 +133,36 @@ def build_data_loader(X, Y):
     return generator
 
 
-def trigger_analyzer(analyzer, gen):
+def visualize_trigger_w_mask(visualizer, gen, y_target,
+                             save_pattern_flag=True):
 
     visualize_start_time = time.time()
 
+    # initialize with random mask
+    pattern = np.random.random(INPUT_SHAPE) * 255.0
+    mask = np.random.random(MASK_SHAPE)
+
     # execute reverse engineering
-    analyzer.analyze(gen)
+    pattern, mask, mask_upsample, logs = visualizer.visualize(
+        gen=gen, y_target=y_target, pattern_init=pattern, mask_init=mask)
+
+    # meta data about the generated mask
+    print('pattern, shape: %s, min: %f, max: %f' %
+          (str(pattern.shape), np.min(pattern), np.max(pattern)))
+    print('mask, shape: %s, min: %f, max: %f' %
+          (str(mask.shape), np.min(mask), np.max(mask)))
+    print('mask norm of label %d: %f' %
+          (y_target, np.sum(np.abs(mask_upsample))))
 
     visualize_end_time = time.time()
     print('visualization cost %f seconds' %
           (visualize_end_time - visualize_start_time))
 
-    return
+    if save_pattern_flag:
+        save_pattern(pattern, mask_upsample, y_target)
+
+    return pattern, mask_upsample, logs
+
 
 def save_pattern(pattern, mask, y_target):
 
@@ -163,7 +191,7 @@ def save_pattern(pattern, mask, y_target):
     pass
 
 
-def start_analysis():
+def gtsrb_visualize_label_scan_bottom_right_white_4():
 
     print('loading dataset')
     X_test, Y_test = load_dataset()
@@ -174,32 +202,36 @@ def start_analysis():
     model_file = '%s/%s' % (MODEL_DIR, MODEL_FILENAME)
     model = load_model(model_file)
 
-    # initialize analyzer
-    analyzer = causal_analyzer(
-        model,
-        test_generator,
+    # initialize visualizer
+    visualizer = Visualizer(
+        model, intensity_range=INTENSITY_RANGE, regularization=REGULARIZATION,
         input_shape=INPUT_SHAPE,
         init_cost=INIT_COST, steps=STEPS, lr=LR, num_classes=NUM_CLASSES,
         mini_batch=MINI_BATCH,
         upsample_size=UPSAMPLE_SIZE,
+        attack_succ_threshold=ATTACK_SUCC_THRESHOLD,
         patience=PATIENCE, cost_multiplier=COST_MULTIPLIER,
         img_color=IMG_COLOR, batch_size=BATCH_SIZE, verbose=2,
         save_last=SAVE_LAST,
         early_stop=EARLY_STOP, early_stop_threshold=EARLY_STOP_THRESHOLD,
         early_stop_patience=EARLY_STOP_PATIENCE)
 
+    log_mapping = {}
+
     # y_label list to analyze
     y_target_list = list(range(NUM_CLASSES))
     y_target_list.remove(Y_TARGET)
     y_target_list = [Y_TARGET] + y_target_list
-
-    y_target_list = [Y_TARGET]
     for y_target in y_target_list:
 
-        #print('processing label %d' % y_target)
+        print('processing label %d' % y_target)
 
-        trigger_analyzer(
-            analyzer, test_generator)
+        _, _, logs = visualize_trigger_w_mask(
+            visualizer, test_generator, y_target=y_target,
+            save_pattern_flag=True)
+
+        log_mapping[y_target] = logs
+
     pass
 
 
@@ -207,17 +239,14 @@ def main():
 
     os.environ["CUDA_VISIBLE_DEVICES"] = DEVICE
     utils_backdoor.fix_gpu_memory()
-    for i in range (0, 3):
-        print(i)
-    start_analysis()
+    gtsrb_visualize_label_scan_bottom_right_white_4()
 
     pass
 
 
 if __name__ == '__main__':
-    #sys.stdout = open('file', 'w')
+
     start_time = time.time()
     main()
     elapsed_time = time.time() - start_time
     print('elapsed time %s s' % elapsed_time)
-    #sys.stdout.close()

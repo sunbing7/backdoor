@@ -199,7 +199,7 @@ def main():
 
     os.environ["CUDA_VISIBLE_DEVICES"] = DEVICE
     utils_backdoor.fix_gpu_memory()
-    for i in range (0, 5):
+    for i in range (0, 3):
         print(i)
         start_analysis()
 

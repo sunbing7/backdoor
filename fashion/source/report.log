@@ -2561,99 +2561,343 @@ If using Keras pass *_constraint arguments to layers.
 2021-08-22 11:19:54,705 - pyswarms.single.global_best - INFO - Optimize for 10 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
 2021-08-22 11:22:31,971 - pyswarms.single.global_best - INFO - Optimization finished | best cost: -0.18266129032258063, best pos: [ 0.89746678 -0.21525553  0.70945626 ...  0.65630058 -0.36546787
   0.18611589]
-2021-08-27 20:36:55,870 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/mnist/source/utils_backdoor.py:23: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+2021-08-27 21:01:52,777 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:23: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
 
-2021-08-27 20:36:55,873 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/mnist/source/utils_backdoor.py:24: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+2021-08-27 21:01:52,778 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:24: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
 
-2021-08-27 20:36:55,873 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/mnist/source/utils_backdoor.py:28: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+2021-08-27 21:01:52,781 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:28: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
 
-2021-08-27 20:36:55,890 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/mnist/source/utils_backdoor.py:29: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+2021-08-27 21:01:52,783 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:29: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
 
-2021-08-27 20:36:57,143 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+2021-08-27 21:01:53,687 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
 Instructions for updating:
 If using Keras pass *_constraint arguments to layers.
-2021-08-27 20:36:57,162 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:4070: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
+2021-08-27 21:01:53,696 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:4070: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
 
-2021-08-27 20:36:58,759 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+2021-08-27 21:01:54,806 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
 
-2021-08-28 08:58:23,012 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/mnist/source/utils_backdoor.py:23: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+2021-08-27 21:04:23,209 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 21:05:07,625 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:23: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
 
-2021-08-28 08:58:23,013 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/mnist/source/utils_backdoor.py:24: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+2021-08-27 21:05:07,626 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:24: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
 
-2021-08-28 08:58:23,014 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/mnist/source/utils_backdoor.py:28: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+2021-08-27 21:05:07,627 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:28: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
 
-2021-08-28 08:58:23,015 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/mnist/source/utils_backdoor.py:29: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+2021-08-27 21:05:07,633 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:29: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
 
-2021-08-28 08:58:24,508 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+2021-08-27 21:05:09,210 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
 Instructions for updating:
 If using Keras pass *_constraint arguments to layers.
-2021-08-28 08:58:24,535 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:4070: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
+2021-08-27 21:05:09,223 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:4070: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
 
-2021-08-28 08:58:26,301 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+2021-08-27 21:05:10,307 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
 
-2021-08-28 09:06:23,518 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
-2021-08-28 09:12:21,135 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.0003024193548387122, best pos: [-3.0472378  -3.24864957 -0.93758213 -2.24147486 -1.00023721]
-2021-08-28 09:15:31,362 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/mnist/source/utils_backdoor.py:23: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+2021-08-27 21:07:22,946 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 21:10:10,881 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:23: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
 
-2021-08-28 09:15:31,363 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/mnist/source/utils_backdoor.py:24: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+2021-08-27 21:10:10,882 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:24: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
 
-2021-08-28 09:15:31,364 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/mnist/source/utils_backdoor.py:28: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+2021-08-27 21:10:10,883 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:28: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
 
-2021-08-28 09:15:31,365 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/mnist/source/utils_backdoor.py:29: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+2021-08-27 21:10:10,884 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:29: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
 
-2021-08-28 09:15:32,226 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+2021-08-27 21:10:11,918 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
 Instructions for updating:
 If using Keras pass *_constraint arguments to layers.
-2021-08-28 09:15:32,235 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:4070: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
+2021-08-27 21:10:11,934 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:4070: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
 
-2021-08-28 09:15:33,143 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+2021-08-27 21:10:12,905 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
 
-2021-08-28 09:22:09,478 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
-2021-08-28 09:23:45,742 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/mnist/source/utils_backdoor.py:23: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+2021-08-27 21:11:22,997 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:23: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
 
-2021-08-28 09:23:45,743 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/mnist/source/utils_backdoor.py:24: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+2021-08-27 21:11:22,998 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:24: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
 
-2021-08-28 09:23:45,743 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/mnist/source/utils_backdoor.py:28: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+2021-08-27 21:11:22,998 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:28: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
 
-2021-08-28 09:23:45,745 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/mnist/source/utils_backdoor.py:29: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+2021-08-27 21:11:23,000 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:29: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
 
-2021-08-28 09:23:46,649 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+2021-08-27 21:11:23,803 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
 Instructions for updating:
 If using Keras pass *_constraint arguments to layers.
-2021-08-28 09:23:46,658 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:4070: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
+2021-08-27 21:11:23,813 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:4070: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
 
-2021-08-28 09:23:47,598 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+2021-08-27 21:11:24,832 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
 
-2021-08-28 09:23:48,583 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
-2021-08-28 09:28:56,681 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.0004032258064516237, best pos: [-3.67164888 -1.96723845 -3.26001757 -3.76785655 -2.14859665]
-2021-08-28 09:28:57,792 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
-2021-08-28 09:34:04,057 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.0009072580645161366, best pos: [-2.10150461 -1.06611233 -4.55066745 -1.87060248 -2.82742052]
-2021-08-28 09:34:05,123 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
-2021-08-28 09:40:13,312 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.00040322580645160146, best pos: [-2.78729607 -2.30756973 -2.09481483 -4.02822641  0.48363048]
-2021-08-28 09:40:14,500 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
-2021-08-28 09:45:46,097 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.0010080645161290591, best pos: [-2.12293148 -1.62933955 -2.61362699 -0.71592244 -4.65347269]
-2021-08-28 09:45:47,251 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
-2021-08-28 09:52:00,675 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.0012096774193548709, best pos: [-1.45628185 -0.88298931 -3.07863213 -4.16222141 -1.31699394]
-2021-08-28 09:52:01,860 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
-2021-08-28 09:58:01,785 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.0028225806451612706, best pos: [-3.41076301 -2.60069946  0.54457048 -1.53825209 -1.16439501]
-2021-08-28 09:58:02,972 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
-2021-08-28 10:03:02,814 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.0018442622950819469, best pos: [-2.19566273 -1.23310704 -1.86346254 -2.92987405 -1.74029692]
-2021-08-28 10:03:04,050 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
-2021-08-28 10:05:41,714 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.0911290322580645, best pos: [1.58804525 1.57403871 1.66463545 1.50219469 1.78044955]
-2021-08-28 10:08:25,511 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/mnist/source/utils_backdoor.py:23: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+2021-08-27 21:13:25,299 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 21:21:59,673 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.02704918032786885, best pos: [-1.04349188 -3.20035051  0.46011745 -0.56277498 -1.31942701]
+2021-08-27 21:23:53,345 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:23: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
 
-2021-08-28 10:08:25,513 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/mnist/source/utils_backdoor.py:24: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+2021-08-27 21:23:53,346 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:24: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
 
-2021-08-28 10:08:25,513 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/mnist/source/utils_backdoor.py:28: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+2021-08-27 21:23:53,346 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:28: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
 
-2021-08-28 10:08:25,517 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/mnist/source/utils_backdoor.py:29: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+2021-08-27 21:23:53,347 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:29: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
 
-2021-08-28 10:08:27,123 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+2021-08-27 21:23:54,209 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
 Instructions for updating:
 If using Keras pass *_constraint arguments to layers.
-2021-08-28 10:08:27,135 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:4070: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
+2021-08-27 21:23:54,219 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:4070: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
 
-2021-08-28 10:08:30,165 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+2021-08-27 21:23:55,233 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
 
-2021-08-28 10:08:32,228 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
-2021-08-28 10:19:57,395 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.0018145161290323065, best pos: [-1.91998955 -2.59085058 -1.57329375 -2.82910412 -1.53624599]
+2021-08-27 21:26:03,901 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 21:35:50,082 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.026411290322580633, best pos: [-0.64800893 -3.36283559  0.31766281 -1.00112483 -1.38310768]
+2021-08-27 21:39:24,296 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 21:41:23,632 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:23: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-08-27 21:41:23,635 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:24: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-08-27 21:41:23,635 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:28: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-08-27 21:41:23,643 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:29: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-08-27 21:41:25,521 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-08-27 21:41:25,533 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:4070: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
+
+2021-08-27 21:41:29,506 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-08-27 21:43:59,209 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 21:49:30,212 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.006754032258064513, best pos: [-1.45103766 -4.4644517  -0.5901152  -1.28007982 -2.67664705]
+2021-08-27 21:51:33,096 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 21:57:10,587 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.0064516129032258125, best pos: [-3.08055446 -2.6787864  -3.10179085 -1.06219076  0.66785142]
+2021-08-27 21:59:13,959 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 22:05:32,868 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.005947580645161288, best pos: [-5.63938435  0.80338472 -1.70481229 -2.47675735 -0.77393913]
+2021-08-27 22:07:37,329 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 22:13:05,477 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.012903225806451625, best pos: [-3.74536492 -2.07787879 -1.75126337 -1.29604655 -0.51230049]
+2021-08-27 22:14:52,739 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 22:20:22,784 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.014314516129032251, best pos: [-1.61824767 -1.30760243 -1.53218266 -2.40917096 -1.55285094]
+2021-08-27 22:22:09,233 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 22:27:04,433 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.0127016129032258, best pos: [-0.72493299 -3.80156825 -3.52665956 -1.3457838  -0.67579251]
+2021-08-27 22:28:50,945 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 22:34:49,971 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.018447580645161298, best pos: [-0.94282279 -4.85266049  0.0970219  -2.98237702 -0.88470533]
+2021-08-27 22:36:36,347 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 22:41:27,924 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.018548387096774185, best pos: [-3.37561629 -1.06934906 -1.17114352 -1.28281547 -2.51586107]
+2021-08-27 22:43:14,868 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 22:45:09,104 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.6289314516129032, best pos: [1.57156391 1.47891979 1.5176922  1.49691144 1.10493195]
+2021-08-27 22:46:54,948 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 22:54:23,468 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.02580645161290325, best pos: [-2.98021867  0.11862447 -2.78223153 -0.77312886 -2.39049664]
+2021-08-27 22:56:10,244 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 23:00:47,846 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.026229508196721298, best pos: [-1.35411132 -1.01796893 -3.40780032 -0.97074936 -2.40530629]
+2021-08-27 23:02:35,058 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 23:09:22,541 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.025201612903225822, best pos: [ 0.01182885 -2.10567446 -1.84625198 -3.12883533 -3.46807252]
+2021-08-27 23:11:08,678 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 23:17:41,178 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.030737704918032793, best pos: [-4.55281937e+00 -8.11615042e-01 -2.24527213e+00 -2.94049639e+00
+ -1.48897714e-03]
+2021-08-27 23:19:28,070 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 23:24:35,095 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.03125, best pos: [-1.48373626 -1.77521356 -1.54559564 -3.12420118  0.29129543]
+2021-08-27 23:26:21,903 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 23:31:03,037 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.03326612903225806, best pos: [-9.49788390e-01 -2.36690914e+00 -2.99600210e+00 -9.11567692e-04
+ -1.08354930e+00]
+2021-08-27 23:32:49,467 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 23:34:43,768 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.3933467741935484, best pos: [1.42775725 1.09408869 0.91524869 1.42899103 1.63458274]
+2021-08-27 23:36:29,681 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 23:38:54,485 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.3926229508196722, best pos: [1.61788603 1.32810379 1.55591154 1.93973522 1.85132682]
+2021-08-27 23:40:40,802 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 23:46:24,573 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.037298387096774174, best pos: [-3.59326657  1.19633342 -0.24239772 -4.05801754  0.08407781]
+2021-08-27 23:48:10,863 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 23:51:51,213 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.31199596774193555, best pos: [1.524587   1.39010719 2.177013   1.17028889 1.61186025]
+2021-08-27 23:53:37,821 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-27 23:59:35,589 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.04596774193548385, best pos: [-3.00396528e+00 -8.09654566e-01 -2.39633704e+00 -3.82760565e-01
+  1.11432467e-03]
+2021-08-28 00:01:22,771 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 00:07:17,266 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.04163306451612901, best pos: [-2.35850091 -1.31295268 -1.26079766 -0.34823703 -2.40989034]
+2021-08-28 00:09:03,272 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 00:11:10,047 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.2280241935483871, best pos: [1.82828594 2.10771663 1.45843861 1.52979133 1.33097367]
+2021-08-28 00:12:56,429 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 00:15:54,705 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.2254098360655737, best pos: [1.27153394 0.68916054 1.20201827 0.96141299 0.99963283]
+2021-08-28 00:17:39,969 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 00:23:49,339 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.05342741935483871, best pos: [-1.79735077e+00 -3.23249954e-02 -3.25812439e+00 -3.08719800e-01
+  1.68984084e-03]
+2021-08-28 00:25:36,037 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 00:30:07,080 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.14485887096774192, best pos: [1.26503576 0.42751942 0.85186407 0.78520187 0.67899479]
+2021-08-28 00:31:54,378 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 00:34:29,217 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.14576612903225805, best pos: [2.05393393 2.26809208 1.81953893 1.85534139 1.29074537]
+2021-08-28 00:36:17,622 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 00:38:49,683 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.14294354838709677, best pos: [1.4274298  1.44629409 1.70348872 1.36919615 1.0941234 ]
+2021-08-28 08:27:57,885 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:23: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-08-28 08:27:57,886 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:24: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-08-28 08:27:57,886 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:28: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-08-28 08:27:57,887 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:29: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-08-28 08:27:59,200 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-08-28 08:27:59,208 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:4070: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
+
+2021-08-28 08:28:00,200 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-08-28 08:30:12,313 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 08:34:25,716 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.14485887096774194, best pos: [1.048191   0.99514545 0.84802044 1.32381557 1.00286497]
+2021-08-28 08:36:34,506 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 08:38:58,449 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.14304435483870964, best pos: [0.96781189 0.0208808  0.61327443 0.59149508 0.93463702]
+2021-08-28 08:41:04,515 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 08:44:08,007 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.14143145161290321, best pos: [1.65521996 1.4752968  1.7952137  2.30217172 2.2619124 ]
+2021-08-28 10:26:17,446 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:23: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-08-28 10:26:17,447 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:24: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-08-28 10:26:17,447 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:28: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-08-28 10:26:17,449 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:29: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-08-28 10:26:19,557 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-08-28 10:26:19,585 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:4070: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
+
+2021-08-28 10:26:22,124 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-08-28 10:34:55,645 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 10:38:36,231 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.7870967741935485, best pos: [1.27944161 1.29616435 1.72030372 1.52429288 1.64299512]
+2021-08-28 10:46:46,376 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 10:55:31,725 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.006854838709677425, best pos: [-4.12231186 -1.91323251 -1.62163906  0.32976034 -0.3733238 ]
+2021-08-28 11:01:05,537 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 11:08:14,408 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.006955645161290325, best pos: [-3.67885571 -3.04391237 -2.61263793 -0.40682458 -2.15189123]
+2021-08-28 11:31:00,820 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:23: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-08-28 11:31:00,821 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:24: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-08-28 11:31:00,822 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:28: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-08-28 11:31:00,829 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:29: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-08-28 11:31:02,758 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-08-28 11:31:02,826 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:4070: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
+
+2021-08-28 11:31:14,705 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:23: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-08-28 11:31:14,706 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:24: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-08-28 11:31:14,706 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:28: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-08-28 11:31:14,708 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:29: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-08-28 11:31:15,718 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-08-28 11:31:15,728 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:4070: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
+
+2021-08-28 11:31:16,744 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-08-28 11:31:17,865 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 11:33:15,161 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:23: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-08-28 11:33:15,161 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:24: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-08-28 11:33:15,162 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:28: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-08-28 11:33:15,164 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:29: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-08-28 11:33:16,292 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-08-28 11:33:16,302 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:4070: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
+
+2021-08-28 11:33:17,416 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-08-28 11:33:18,504 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 11:35:51,927 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:23: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-08-28 11:35:51,927 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:24: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-08-28 11:35:51,928 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:28: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-08-28 11:35:51,931 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:29: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-08-28 11:35:53,077 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-08-28 11:35:53,086 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:4070: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
+
+2021-08-28 11:35:54,122 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-08-28 11:35:55,199 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 11:38:25,076 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.7056451612903226, best pos: [0.95791023 1.86913185 1.24741945 1.16580963 2.04182446]
+2021-08-28 11:38:29,121 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 11:41:13,276 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.6953629032258065, best pos: [1.63032735 1.58489268 1.30128232 1.04389045 1.12307939]
+2021-08-28 11:41:17,803 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 11:45:24,027 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.7058467741935485, best pos: [0.90510504 1.98150302 2.40816171 1.07022808 1.95305522]
+2021-08-28 11:47:22,578 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:23: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-08-28 11:47:22,579 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:24: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-08-28 11:47:22,579 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:28: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-08-28 11:47:22,584 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:29: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-08-28 11:47:23,887 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-08-28 11:47:23,935 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:4070: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
+
+2021-08-28 11:47:25,190 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-08-28 11:47:26,355 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 11:49:56,036 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.7837701612903226, best pos: [0.95791023 1.86913185 1.24741945 1.16580963 2.04182446]
+2021-08-28 11:49:59,962 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 11:52:42,606 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.7725806451612904, best pos: [1.63032735 1.58489268 1.30128232 1.04389045 1.12307939]
+2021-08-28 11:52:47,153 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 11:56:55,100 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.7828629032258065, best pos: [0.90510504 1.98150302 2.40816171 1.07022808 1.95305522]
+2021-08-28 12:16:02,052 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:23: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-08-28 12:16:02,053 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:24: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-08-28 12:16:02,053 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:28: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-08-28 12:16:02,056 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:29: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-08-28 12:16:03,796 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-08-28 12:16:03,817 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:4070: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
+
+2021-08-28 12:16:06,014 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-08-28 12:16:08,269 - pyswarms.single.global_best - INFO - Optimize for 100 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 12:21:37,955 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:23: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-08-28 12:21:37,955 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:24: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-08-28 12:21:37,956 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:28: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-08-28 12:21:37,959 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:29: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-08-28 12:21:39,732 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-08-28 12:21:39,753 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:4070: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
+
+2021-08-28 12:21:41,948 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-08-28 12:21:44,039 - pyswarms.single.global_best - INFO - Optimize for 16 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 12:33:50,482 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.027620967741935478, best pos: [ 1.36080642 -0.180093    0.17965709 ...  0.46214379 -0.75755442
+  0.304975  ]
+2021-08-28 12:33:59,530 - pyswarms.single.global_best - INFO - Optimize for 16 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 12:39:00,194 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:23: The name tf.GPUOptions is deprecated. Please use tf.compat.v1.GPUOptions instead.
+
+2021-08-28 12:39:00,194 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:24: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2021-08-28 12:39:00,195 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:28: The name tf.global_variables_initializer is deprecated. Please use tf.compat.v1.global_variables_initializer instead.
+
+2021-08-28 12:39:00,199 - tensorflow - WARNING - From /Users/bing.sun/workspace/AML/pycharm_workspace/backdoor/fashion/source/utils_backdoor.py:29: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+2021-08-28 12:39:02,745 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2021-08-28 12:39:02,781 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:4070: The name tf.nn.max_pool is deprecated. Please use tf.nn.max_pool2d instead.
+
+2021-08-28 12:39:05,667 - tensorflow - WARNING - From /Users/bing.sun/opt/miniconda3/lib/python3.7/site-packages/keras/backend/tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2021-08-28 12:39:06,718 - pyswarms.single.global_best - INFO - Optimize for 9 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 12:45:07,432 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.6381048387096775, best pos: [1.18750349 0.58719036 1.23026345 ... 0.61372469 0.03723365 1.00407584]
+2021-08-28 12:45:15,923 - pyswarms.single.global_best - INFO - Optimize for 9 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 12:48:57,592 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.677016129032258, best pos: [1.20148926 1.67599923 2.55815386 ... 1.29706232 1.53237516 1.61625219]
+2021-08-28 12:49:02,654 - pyswarms.single.global_best - INFO - Optimize for 9 iters with {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+2021-08-28 12:52:23,626 - pyswarms.single.global_best - INFO - Optimization finished | best cost: 0.684475806451613, best pos: [1.60000618 1.28887187 1.85282013 ... 2.65166713 1.41995908 1.53760085]

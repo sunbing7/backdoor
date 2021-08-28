@@ -29,7 +29,7 @@ from keras.preprocessing import image
 ##############################
 
 RESULT_DIR = '../results'  # directory for storing results
-IMG_FILENAME_TEMPLATE = 'mnist_visualize_%s_label_%d.png'  # image filename template for visualization results
+IMG_FILENAME_TEMPLATE = 'fashion_visualize_%s_label_%d.png'  # image filename template for visualization results
 
 # input size
 IMG_ROWS = 28
@@ -98,7 +98,7 @@ class causal_analyzer:
     # whether input image has been preprocessed or not
     RAW_INPUT_FLAG = False
 
-    SPLIT_LAYER = 6
+    SPLIT_LAYER = 9
 
     REP_N          = 5
 
@@ -297,18 +297,18 @@ class causal_analyzer:
 
         pass
 
-    def analyze(self, gen):
+    def analyze_alpha(self, gen):
         alpha_list = [0.9]
 
         for alpha in alpha_list:
             self.alpha = alpha
             print('alpha: {}'.format(alpha))
-            for i in range(0, 1):
+            for i in range(0, 3):
                 print('iteration: {}'.format(i))
                 self.analyze_each(gen)
 
-    def analyze_each(self, gen):
-        '''
+    def analyze(self, gen):
+        #'''
         ana_start_t = time.time()
         # find hidden range
         for step in range(self.steps):
@@ -342,11 +342,11 @@ class causal_analyzer:
 
             min_p = np.min(np.array(min_p), axis=0)
             max_p = np.max(np.array(max_p), axis=0)
-        '''
+        #'''
         # loop start
 
         for step in range(self.steps):
-            '''
+            #'''
             ie_batch = []
             #self.mini_batch = 2
             for idx in range(self.mini_batch):
@@ -382,21 +382,24 @@ class causal_analyzer:
 
             ana_start_t = time.time() - ana_start_t
             print('fault localization time: {}s'.format(ana_start_t))
-            '''
+            #'''
             rep_t = time.time()
             # row_diff contains sensitive neurons: top self.rep_n
             # index
             self.rep_index = []
             result, acc = self.pso_test([], self.target)
             print("before repair: attack SR: {}, BE acc: {}".format(result, acc))
-            '''
+            #'''
             self.rep_index = row_diff[:,:1][:self.rep_n,:]
             print("repair index: {}".format(self.rep_index.T))
             '''
-            self.rep_index = [1563, 1552, 1547, 1331, 1541]
+            #self.rep_index = [1563, 1552, 1547, 1331, 1541]
+            #self.rep_index = (np.random.rand(self.rep_n) * 1152).astype(int)
+            for n in range (0, 1152):
+                self.rep_index.append(n)
 
             print("repair index: {}".format(self.rep_index))
-            #'''
+            '''
 
             self.repair()
 

@@ -36,7 +36,8 @@ DEVICE = '3'  # specify which GPU to use
 INPUT_SHAPE = (5,)
 
 MODEL_DIR = '../models'  # model directory
-MODEL_FILENAME = 'ACASXU_2_9.h5'  # model file
+MODEL_FILENAME = 'ACASXU_3_3.h5'  # model file
+PROPERTY = 'p2_n33'
 
 DATA_DIR = '../data'
 
@@ -54,23 +55,23 @@ MINI_BATCH = DRAWNDOWN_SIZE // BATCH_SIZE
 ##############################
 #      END PARAMETERS        #
 ##############################
-
+#property 2
+#    "bounds": "[(0.6,0.6799), (-0.5,0.5), (-0.5,0.5), (0.45,0.5), (-0.5,-0.45)]",
+#y!0
 def __generate_x():
-    x_0 = np.random.uniform(low=-0.3284228772, high=0.6798577687, size=(BATCH_SIZE, 1))
-    x_1 = np.random.uniform(low=-0.5, high=-0.375, size=(BATCH_SIZE, 1))
-    x_2 = np.random.uniform(low=-0.031847133, high=0.031847133, size=(BATCH_SIZE, 1))
-    x_3 = np.random.uniform(low=-0.045454545, high=0.5, size=(BATCH_SIZE, 1))
-    x_4 = np.random.uniform(low=0., high=0.5, size=(BATCH_SIZE, 1))
+    x_0 = np.random.uniform(low=0.6, high=0.6799, size=(BATCH_SIZE, 1))
+    x_1 = np.random.uniform(low=-0.5, high=0.5, size=(BATCH_SIZE, 1))
+    x_2 = np.random.uniform(low=-0.5, high=0.5, size=(BATCH_SIZE, 1))
+    x_3 = np.random.uniform(low=0.45, high=0.5, size=(BATCH_SIZE, 1))
+    x_4 = np.random.uniform(low=-0.5, high=-0.45, size=(BATCH_SIZE, 1))
     x = np.array([x_0, x_1, x_2, x_3, x_4])
     return np.transpose(x.reshape(5,32))
 
-
 def property_satisfied(pre_y):
     #pre_y = np.argmin(y, axis=1)
-    if pre_y == 0 or pre_y == 1:
+    if pre_y != 0:
         return True
     return False
-
 
 def gen_data_set(model, data_path):
     """generate drawndown and counter example data set"""
@@ -79,6 +80,8 @@ def gen_data_set(model, data_path):
     n_cex = 0
     dd = []
     cex = []
+    dd_saved = 0
+    cex_saved = 0
 
     while True:
         x = __generate_x()
@@ -87,32 +90,40 @@ def gen_data_set(model, data_path):
         pre_y =  np.argmin(y, axis=1)
 
         for i in range (0, BATCH_SIZE):
+            print('n_dd:{}'.format(n_dd))
+            print('n_cex:{}'.format(n_cex))
             if (property_satisfied(pre_y[i])):
                 if n_dd < DRAWNDOWN_SIZE:
                     dd.append(x[i])
                     n_dd = n_dd + 1
             else:
-                cex.append(x[i])
-                n_cex = n_cex + 1
+                if n_cex < COUNTEREG_SIZE:
+                    cex.append(x[i])
+                    n_cex = n_cex + 1
 
-        if n_dd >= DRAWNDOWN_SIZE and n_cex >= COUNTEREG_SIZE:
+        if n_dd >= DRAWNDOWN_SIZE and dd_saved == 0:
+            dd_saved = 1
+            with h5py.File(data_path + '/drawndown.h5', 'w') as f:
+                f.create_dataset("drawndown", data=np.array(dd))
+
+        if n_cex >= COUNTEREG_SIZE and cex_saved == 0:
+            cex_saved = 1
+            with h5py.File(data_path + '/counterexample.h5', 'w') as f:
+                f.create_dataset("counterexample", data=np.array(cex))
+
+        if dd_saved == 1 and cex_saved == 1:
             break
 
-    # save to file
-    with h5py.File(data_path + '/drawndown.h5', 'w') as f:
-        f.create_dataset("drawndown", data=np.array(dd))
-    with h5py.File(data_path + '/counterexample.h5', 'w') as f:
-        f.create_dataset("counterexample", data=np.array(cex))
 
     return n_dd, n_cex
 
 
 def load_dataset(data_path):
 
-    with h5py.File(data_path + '/drawndown.h5', 'r') as hf:
+    with h5py.File(data_path + '/drawndown_' + PROPERTY + '.h5', 'r') as hf:
         dd = hf['drawndown'][:]
 
-    with h5py.File(data_path + '/counterexample.h5', 'r') as hf:
+    with h5py.File(data_path + '/counterexample_' + PROPERTY +'.h5', 'r') as hf:
         cex = hf['counterexample'][:]
 
     print('Dawndown shape %s' % str(dd.shape))
@@ -181,7 +192,9 @@ def main():
 
     os.environ["CUDA_VISIBLE_DEVICES"] = DEVICE
     utils_backdoor.fix_gpu_memory()
-    start_analysis()
+    for i in range (0, 3):
+        print(i)
+        start_analysis()
 
     pass
 

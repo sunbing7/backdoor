@@ -35,11 +35,11 @@ DEVICE = '3'  # specify which GPU to use
 #DATA_DIR = '../data'  # data folder
 #DATA_FILE = 'vgg_dataset.h5'  # dataset file
 MODEL_DIR = '../models'  # model directory
-MODEL_FILENAME = 'mnist_backdoor_3.h5'  # model file
+MODEL_FILENAME = 'fashion_mnist_backdoor_3.h5'  # model file
 #MODEL_FILENAME = 'trojaned_face_model_wm.h5'
 RESULT_DIR = '../results'  # directory for storing results
 # image filename template for visualization results
-IMG_FILENAME_TEMPLATE = 'mnist_visualize_%s_label_%d.png'
+IMG_FILENAME_TEMPLATE = 'fashion_visualize_%s_label_%d.png'
 
 # input size
 IMG_ROWS = 28
@@ -95,7 +95,7 @@ MASK_SHAPE = MASK_SHAPE.astype(int)
 
 def load_dataset():
     # the data, split between train and test sets
-    (x_train, y_train), (x_test, y_test) = tensorflow.keras.datasets.mnist.load_data()
+    (x_train, y_train), (x_test, y_test) = tensorflow.keras.datasets.fashion_mnist.load_data()
 
     # Scale images to the [0, 1] range
     x_train = x_train.astype("float32") / 255
@@ -209,7 +209,7 @@ def main():
     utils_backdoor.fix_gpu_memory()
     for i in range (0, 3):
         print(i)
-    start_analysis()
+        start_analysis()
 
     pass
 
