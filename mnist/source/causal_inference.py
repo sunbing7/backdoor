@@ -188,7 +188,7 @@ class causal_analyzer:
         mask = []
         pattern = []
 
-        y_label = 3
+        y_label = self.target
         mask_filename = IMG_FILENAME_TEMPLATE % ('mask', y_label)
         if os.path.isfile('%s/%s' % (RESULT_DIR, mask_filename)):
             img = image.load_img(

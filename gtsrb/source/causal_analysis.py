@@ -188,7 +188,7 @@ def start_analysis():
     y_target_list = [33]
     for y_target in y_target_list:
 
-        print('processing label %d' % y_target)
+        #print('processing label %d' % y_target)
 
         trigger_analyzer(
             analyzer, test_generator)
@@ -208,7 +208,7 @@ def main():
 
 if __name__ == '__main__':
     #sys.stdout = open('file', 'w')
-    start_time =  time.time()
+    start_time = time.time()
     main()
     elapsed_time = time.time() - start_time
     print('elapsed time %s s' % elapsed_time)

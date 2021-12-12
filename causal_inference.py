@@ -154,7 +154,7 @@ class causal_analyzer:
         self.rep_n = rep_n       # number of neurons to repair
         self.r_weight = None
         self.target = 33
-        self.alpha = 0.5
+        self.alpha = 0.1
 
         # split the model for causal inervention
         '''
@@ -333,7 +333,7 @@ class causal_analyzer:
         for step in range(self.steps):
             #'''
             ie_batch = []
-            self.mini_batch = 2
+            #self.mini_batch = 2
             for idx in range(self.mini_batch):
                 X_batch, _ = gen.next()
 
@@ -379,8 +379,6 @@ class causal_analyzer:
 
             self.rep_index = row_diff[:,:1][:self.rep_n,:]
             print("repair index: {}".format(self.rep_index.T))
-
-            print("repair index: {}".format(self.rep_index))
             self.repair()
 
             rep_t = time.time() - rep_t

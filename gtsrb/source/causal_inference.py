@@ -383,11 +383,12 @@ class causal_analyzer:
             #self.rep_index = [461, 395, 491, 404, 219]
 
             self.rep_index = [461, 395, 491, 404, 219]
-            self.r_weight = [-0.13325777,  0.08095828, -0.80547224, -0.59831971, -0.23067632]
+            #self.r_weight = [-0.30822008,  0.7510451,  -0.81789604, -0.28144606, -0.11024098]
             print("repair index: {}".format(self.rep_index))
-            #'''
+            self.repair()
 
-            #self.repair()
+            #self.rep_index = [461, 395, 491, 404, 219]
+            #self.r_weight = [-0.13325777,  0.08095828, -0.80547224, -0.59831971, -0.23067632]
 
             rep_t = time.time() - rep_t
 
@@ -566,7 +567,7 @@ class causal_analyzer:
         result = result / tot_count
         correct = correct / tot_count
         cost = (1.0 - self.alpha) * result + self.alpha * (1 - correct)
-        return result
+        return cost
 
     def pso_test(self, r_weight, target):
         result = 0.0
@@ -605,8 +606,8 @@ class causal_analyzer:
                 # cost is the difference
                 o_target = (labels == target * np.ones(predict.shape))
                 pre_target = (predict == target * np.ones(predict.shape))
-                #attack_success = np.sum(predict == target * np.ones(predict.shape))
                 attack_success = np.sum(predict == target * np.ones(predict.shape)) - np.sum(o_target & pre_target)
+                #attack_success = np.sum(predict == target * np.ones(predict.shape))
                 #diff = np.sum(labels != predict)
                 result = result + attack_success
                 tot_count = tot_count + len(labels)
