@@ -21,6 +21,7 @@ from keras.preprocessing.image import ImageDataGenerator
 
 from causal_inference import causal_analyzer
 from causal_attribution import causal_attribution
+from class_model import cmv
 
 import utils_backdoor
 
@@ -154,7 +155,7 @@ def trigger_analyzer(analyzer, gen):
     visualize_start_time = time.time()
 
     # execute reverse engineering
-    analyzer.analyze(gen)
+    analyzer.cmv_analyze()
 
     visualize_end_time = time.time()
     print('visualization cost %f seconds' %
@@ -169,21 +170,21 @@ def save_pattern(pattern, mask, y_target):
         os.mkdir(RESULT_DIR)
 
     img_filename = (
-        '%s/%s' % (RESULT_DIR,
-                   IMG_FILENAME_TEMPLATE % ('pattern', y_target)))
+            '%s/%s' % (RESULT_DIR,
+                       IMG_FILENAME_TEMPLATE % ('pattern', y_target)))
     utils_backdoor.dump_image(pattern, img_filename, 'png')
 
     img_filename = (
-        '%s/%s' % (RESULT_DIR,
-                   IMG_FILENAME_TEMPLATE % ('mask', y_target)))
+            '%s/%s' % (RESULT_DIR,
+                       IMG_FILENAME_TEMPLATE % ('mask', y_target)))
     utils_backdoor.dump_image(np.expand_dims(mask, axis=2) * 255,
                               img_filename,
                               'png')
 
     fusion = np.multiply(pattern, np.expand_dims(mask, axis=2))
     img_filename = (
-        '%s/%s' % (RESULT_DIR,
-                   IMG_FILENAME_TEMPLATE % ('fusion', y_target)))
+            '%s/%s' % (RESULT_DIR,
+                       IMG_FILENAME_TEMPLATE % ('fusion', y_target)))
     utils_backdoor.dump_image(fusion, img_filename, 'png')
 
     pass
@@ -191,24 +192,19 @@ def save_pattern(pattern, mask, y_target):
 
 def start_analysis():
 
-    print('loading dataset')
-    #X_test, Y_test = load_dataset_class(1)
-    X_test, Y_test = load_dataset()
+    #print('loading dataset')
+    #X_test, Y_test = load_dataset()
     # transform numpy arrays into data generator
-    test_generator = build_data_loader(X_test, Y_test)
+    #test_generator = build_data_loader(X_test, Y_test)
 
     print('loading model')
     model_file = '%s/%s' % (MODEL_DIR, MODEL_FILENAME)
     model = load_model(model_file)
 
     # initialize analyzer
-    analyzer = causal_attribution(
+    analyzer = cmv(
         model,
-        test_generator,
-        input_shape=INPUT_SHAPE,
-        steps=STEPS, num_classes=NUM_CLASSES,
-        mini_batch=MINI_BATCH,
-        img_color=IMG_COLOR, batch_size=BATCH_SIZE, verbose=2)
+        verbose=True)
 
     # y_label list to analyze
     y_target_list = list(range(NUM_CLASSES))
@@ -221,7 +217,7 @@ def start_analysis():
         #print('processing label %d' % y_target)
 
         trigger_analyzer(
-            analyzer, test_generator)
+            analyzer, None)
     pass
 
 

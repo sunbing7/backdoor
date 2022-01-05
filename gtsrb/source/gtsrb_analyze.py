@@ -10,7 +10,6 @@ import time
 import numpy as np
 import random
 import tensorflow
-import keras
 from tensorflow import set_random_seed
 random.seed(123)
 np.random.seed(123)
@@ -20,7 +19,7 @@ from keras.models import load_model
 from keras.preprocessing.image import ImageDataGenerator
 
 from causal_inference import causal_analyzer
-from causal_attribution import causal_attribution
+from class_model import cmv
 
 import utils_backdoor
 
@@ -33,25 +32,25 @@ import sys
 
 DEVICE = '3'  # specify which GPU to use
 
-#DATA_DIR = '../data'  # data folder
-#DATA_FILE = 'vgg_dataset.h5'  # dataset file
+DATA_DIR = '../data'  # data folder
+DATA_FILE = 'gtsrb_dataset_int.h5'  # dataset file
 MODEL_DIR = '../models'  # model directory
-MODEL_FILENAME = 'mnist_backdoor_3.h5'  # model file
+MODEL_FILENAME = 'gtsrb_bottom_right_white_4_target_33.h5'  # model file
 #MODEL_FILENAME = 'trojaned_face_model_wm.h5'
 RESULT_DIR = '../results'  # directory for storing results
 # image filename template for visualization results
-IMG_FILENAME_TEMPLATE = 'mnist_visualize_%s_label_%d.png'
+IMG_FILENAME_TEMPLATE = 'gtsrb_visualize_%s_label_%d.png'
 
 # input size
-IMG_ROWS = 28
-IMG_COLS = 28
-IMG_COLOR = 1
+IMG_ROWS = 32
+IMG_COLS = 32
+IMG_COLOR = 3
 INPUT_SHAPE = (IMG_ROWS, IMG_COLS, IMG_COLOR)
 
-NUM_CLASSES = 10  # total number of classes in the model
-Y_TARGET = 3  # (optional) infected target label, used for prioritizing label scanning
+NUM_CLASSES = 43  # total number of classes in the model
+Y_TARGET = 33  # (optional) infected target label, used for prioritizing label scanning
 
-INTENSITY_RANGE = 'mnist'  # preprocessing method for the task, GTSRB uses raw pixel intensities
+INTENSITY_RANGE = 'raw'  # preprocessing method for the task, GTSRB uses raw pixel intensities
 
 # parameters for optimization
 BATCH_SIZE = 32  # batch size used for optimization
@@ -94,51 +93,19 @@ MASK_SHAPE = MASK_SHAPE.astype(int)
 #      END PARAMETERS        #
 ##############################
 
-def load_dataset():
-    # the data, split between train and test sets
-    (x_train, y_train), (x_test, y_test) = tensorflow.keras.datasets.mnist.load_data()
 
-    # Scale images to the [0, 1] range
-    x_train = x_train.astype("float32") / 255
-    x_test = x_test.astype("float32") / 255
-    # Make sure images have shape (28, 28, 1)
-    x_train = np.expand_dims(x_train, -1)
-    x_test = np.expand_dims(x_test, -1)
-    print("x_train shape:", x_train.shape)
-    print(x_train.shape[0], "train samples")
-    print(x_test.shape[0], "test samples")
+def load_dataset(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
 
-    # convert class vectors to binary class matrices
-    y_train = tensorflow.keras.utils.to_categorical(y_train, NUM_CLASSES)
-    y_test = tensorflow.keras.utils.to_categorical(y_test, NUM_CLASSES)
-    return x_test, y_test
+    dataset = utils_backdoor.load_dataset(data_file, keys=['X_test', 'Y_test'])
 
-def load_dataset_class(target_class):
-    # the data, split between train and test sets
-    (x_train, y_train), (x_test, y_test) = tensorflow.keras.datasets.mnist.load_data()
+    X_test = np.array(dataset['X_test'], dtype='float32')
+    Y_test = np.array(dataset['Y_test'], dtype='float32')
 
-    # Scale images to the [0, 1] range
-    x_train = x_train.astype("float32") / 255
-    x_test = x_test.astype("float32") / 255
-    # Make sure images have shape (28, 28, 1)
-    x_train = np.expand_dims(x_train, -1)
-    x_test = np.expand_dims(x_test, -1)
-    print("x_train shape:", x_train.shape)
-    print(x_train.shape[0], "train samples")
-    print(x_test.shape[0], "test samples")
+    print('X_test shape %s' % str(X_test.shape))
+    print('Y_test shape %s' % str(Y_test.shape))
 
-    # convert class vectors to binary class matrices
-    y_train = tensorflow.keras.utils.to_categorical(y_train, NUM_CLASSES)
-    y_test = tensorflow.keras.utils.to_categorical(y_test, NUM_CLASSES)
-    x_t_out = []
-    y_t_out = []
-    i = 0
-    for y_i in y_test:
-        if np.argmax(y_i) == target_class:
-            x_t_out.append(x_test[i])
-            y_t_out.append(y_i)
-        i = i + 1
-    return np.asarray(x_t_out), np.asarray(y_t_out)
+    return X_test, Y_test
+
 
 def build_data_loader(X, Y):
 
@@ -154,7 +121,7 @@ def trigger_analyzer(analyzer, gen):
     visualize_start_time = time.time()
 
     # execute reverse engineering
-    analyzer.analyze(gen)
+    analyzer.cmv_analyze()
 
     visualize_end_time = time.time()
     print('visualization cost %f seconds' %
@@ -191,37 +158,32 @@ def save_pattern(pattern, mask, y_target):
 
 def start_analysis():
 
-    print('loading dataset')
-    #X_test, Y_test = load_dataset_class(1)
-    X_test, Y_test = load_dataset()
+    #print('loading dataset')
+    #X_test, Y_test = load_dataset()
     # transform numpy arrays into data generator
-    test_generator = build_data_loader(X_test, Y_test)
+    #test_generator = build_data_loader(X_test, Y_test)
 
     print('loading model')
     model_file = '%s/%s' % (MODEL_DIR, MODEL_FILENAME)
     model = load_model(model_file)
 
     # initialize analyzer
-    analyzer = causal_attribution(
+    analyzer = cmv(
         model,
-        test_generator,
-        input_shape=INPUT_SHAPE,
-        steps=STEPS, num_classes=NUM_CLASSES,
-        mini_batch=MINI_BATCH,
-        img_color=IMG_COLOR, batch_size=BATCH_SIZE, verbose=2)
+        verbose=True)
 
     # y_label list to analyze
     y_target_list = list(range(NUM_CLASSES))
     y_target_list.remove(Y_TARGET)
     y_target_list = [Y_TARGET] + y_target_list
 
-    y_target_list = [Y_TARGET]
+    y_target_list = [33]
     for y_target in y_target_list:
 
         #print('processing label %d' % y_target)
 
         trigger_analyzer(
-            analyzer, test_generator)
+            analyzer, None)
     pass
 
 
@@ -229,7 +191,7 @@ def main():
 
     os.environ["CUDA_VISIBLE_DEVICES"] = DEVICE
     utils_backdoor.fix_gpu_memory()
-    for i in range (0, 3):
+    for i in range (0, 5):
         print(i)
     start_analysis()
 
