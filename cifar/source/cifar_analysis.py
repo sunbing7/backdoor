@@ -233,12 +233,12 @@ def build_data_loader(X, Y):
     return generator
 
 
-def trigger_analyzer(analyzer, gen):
+def trigger_analyzer(analyzer, gen, train_adv_gen=None, test_adv_gen=None):
 
     visualize_start_time = time.time()
 
     # execute reverse engineering
-    analyzer.cmv_analyze(gen)
+    analyzer.cmv_analyze(gen, train_adv_gen, test_adv_gen)
 
     visualize_end_time = time.time()
     print('visualization cost %f seconds' %
@@ -277,11 +277,12 @@ def start_analysis():
 
     print('loading dataset')
     _, _, X_test, Y_test = load_dataset()
-    #x_adv, y_adv = load_adv_testset()
-    #x_train_adv, y_train_adv = load_adv_trainset()
+    x_adv, y_adv = load_adv_testset()
+    x_train_adv, y_train_adv = load_adv_trainset()
     # transform numpy arrays into data generator
     test_generator = build_data_loader(X_test, Y_test)
-
+    adv_test_gen = build_data_loader(x_adv, y_adv)
+    adv_train_gen = build_data_loader(x_train_adv, y_train_adv)
 
     print('loading model')
     model_file = '%s/%s' % (MODEL_DIR, MODEL_FILENAME)
@@ -299,7 +300,7 @@ def start_analysis():
 
     #analyzer.accuracy_test(test_generator)
 
-    trigger_analyzer(analyzer, test_generator)
+    trigger_analyzer(analyzer, test_generator, adv_train_gen, adv_test_gen)
     pass
 
 
