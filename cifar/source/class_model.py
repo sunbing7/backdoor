@@ -41,6 +41,7 @@ class cmv:
         self.layer = [2, 6, 10]
         self.classes = [0,1,2,3,4,5,6,7,8,9]
         self.random_sample = 1 # how many random samples
+        self.top = 0.01 # sfocus on top 5% hidden neurons
         # split the model for causal inervention
         pass
 
@@ -84,7 +85,8 @@ class cmv:
             print('current_class: {}'.format(each_class))
             #self.analyze_eachclass(gen, each_class, train_adv_gen, test_adv_gen)
             #self.plot_eachclass(each_class)
-            self.analyze_eachclass_expand(gen, each_class, train_adv_gen, test_adv_gen)
+            #self.analyze_eachclass_expand(gen, each_class, train_adv_gen, test_adv_gen)
+            self.detect_eachclass_all_layer(each_class)
         pass
 
     def analyze_eachclass(self, gen, cur_class, train_adv_gen, test_adv_gen):
@@ -511,6 +513,95 @@ class cmv:
 
         pass
 
+    def detect_eachclass_expand(self,  cur_class):
+        #hidden_test = self.hidden_permutation_test_all(class_gen, cur_class)
+        hidden_test = []
+        for cur_layer in self.layer:
+            hidden_test_ = np.loadtxt("../results/test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
+            hidden_test.append(hidden_test_)
+        hidden_test = np.array(hidden_test)
+
+        # check common important neuron
+
+        # layer by layer
+        i = 0
+        for cur_layer in self.layer:
+            num_neuron = int(self.top * len(hidden_test[i]))
+
+            # get top self.top from current class
+            temp = hidden_test[i][:, [0, (cur_class + 1)]]
+            ind = np.argsort(temp[:,1])[::-1]
+            temp = temp[ind]
+
+            # find outlier hidden neurons
+            top_num = self.outlier_detection(temp[:, 1], len(temp), verbose=False)
+            num_neuron = top_num
+            print(num_neuron)
+            cur_top = list(temp[0: (num_neuron - 1)][:,0])
+
+
+
+            top_list = []
+            # compare with all other classes
+            for cmp_class in self.classes:
+                #if cmp_class == cur_class:
+                #    continue
+                temp = hidden_test[i][:, [0, (cmp_class + 1)]]
+                ind = np.argsort(temp[:,1])[::-1]
+                temp = temp[ind]
+                cmp_top = list(temp[0: (num_neuron - 1)][:,0])
+                top_list.append(len(set(cmp_top).intersection(cur_top)))
+            i = i + 1
+
+            # top_list x9
+            # find outlier
+            print('layer: {}'.format(cur_layer))
+            self.outlier_detection(top_list, cur_class)
+
+        pass
+
+    def detect_eachclass_all_layer(self,  cur_class):
+        #hidden_test = self.hidden_permutation_test_all(class_gen, cur_class)
+        hidden_test = []
+        for cur_layer in self.layer:
+            hidden_test_ = np.loadtxt("../results/test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
+            #l = np.ones(len(hidden_test_)) * cur_layer
+            hidden_test_ = np.insert(np.array(hidden_test_), 0, cur_layer, axis=1)
+            hidden_test = hidden_test + list(hidden_test_)
+
+        hidden_test = np.array(hidden_test)
+
+        # check common important neuron
+        #num_neuron = int(self.top * len(hidden_test[i]))
+
+        # get top self.top from current class
+        temp = hidden_test[:, [0, 1, (cur_class + 2)]]
+        ind = np.argsort(temp[:,2])[::-1]
+        temp = temp[ind]
+
+        # find outlier hidden neurons
+        top_num = self.outlier_detection(temp[:, 2], len(temp), verbose=False)
+        num_neuron = top_num
+        print('significant neuron: {}'.format(num_neuron))
+        cur_top = list(temp[0: (num_neuron - 1)][:, [0, 1]])
+
+        top_list = []
+        # compare with all other classes
+        for cmp_class in self.classes:
+            #if cmp_class == cur_class:
+            #    continue
+            temp = hidden_test[:, [0, 1, (cmp_class + 2)]]
+            ind = np.argsort(temp[:,2])[::-1]
+            temp = temp[ind]
+            cmp_top = list(temp[0: (num_neuron - 1)][:, [0, 1]])
+            top_list.append(len(np.array([x for x in set(tuple(x) for x in cmp_top) & set(tuple(x) for x in cur_top)])))
+
+
+        # top_list x9
+        # find outlier
+        self.outlier_detection(top_list, cur_class)
+
+        pass
 
     def get_cmv(self):
         weights = self.model.get_layer('dense_2').get_weights()
@@ -1009,6 +1100,36 @@ class cmv:
             #out.append(perm_predict_avg)
 
         return np.array(out)
+
+    def outlier_detection(self, cmp_list, ignore_idx, verbose=True):
+        cmp_list = list(np.array(cmp_list) / max(cmp_list))
+        consistency_constant = 1.4826  # if normal distribution
+        median = np.median(cmp_list)
+        mad = consistency_constant * np.median(np.abs(cmp_list - median))   #median of the deviation
+        min_mad = np.abs(np.min(cmp_list) - median) / mad
+
+        #print('median: %f, MAD: %f' % (median, mad))
+        #print('anomaly index: %f' % min_mad)
+
+        flag_list = []
+        i = 0
+        for cmp in cmp_list:
+            if cmp_list[i] < median:
+                i = i + 1
+                continue
+            if np.abs(cmp_list[i] - median) / mad > 2.8:
+                if i != ignore_idx:
+                    flag_list.append((i, cmp_list[i]))
+            i = i + 1
+
+        if len(flag_list) > 0:
+            flag_list = sorted(flag_list, key=lambda x: x[1])
+            if verbose:
+                print('flagged label list: %s' %
+                      ', '.join(['%d: %2f' % (idx, val)
+                                 for idx, val in flag_list]))
+        return len(flag_list)
+        pass
 
     def accuracy_test(self, gen):
         #'''
