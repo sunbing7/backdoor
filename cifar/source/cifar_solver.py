@@ -23,7 +23,7 @@ DATA_FILE = 'cifar.h5'  # dataset file
 NUM_CLASSES = 10
 BATCH_SIZE = 32
 
-class cmv:
+class solver:
     CLASS_INDEX = 1
     ATTACK_TARGET = 3
     VERBOSE = True
@@ -42,6 +42,7 @@ class cmv:
         self.classes = [0,1,2,3,4,5,6,7,8,9]
         self.random_sample = 1 # how many random samples
         self.top = 0.01 # sfocus on top 5% hidden neurons
+        self.plot = False
         # split the model for causal inervention
         pass
 
@@ -77,7 +78,7 @@ class cmv:
         '''
         return x
 
-    def cmv_analyze(self, gen, train_adv_gen, test_adv_gen):
+    def solve(self, gen, train_adv_gen, test_adv_gen):
         class_list = [0,1,2,3,4,5,6,7,8,9]
 
         for each_class in class_list:
@@ -331,59 +332,59 @@ class cmv:
         # generate cmv now
         #img, _, = self.get_cmv()
         # use pre-generated cmv image
-        img = np.loadtxt("../results/cmv" + str(self.current_class) + ".txt")
-        img = img.reshape(((32,32,3)))
+        #img = np.loadtxt("../results/cmv" + str(self.current_class) + ".txt")
+        #img = img.reshape(((32,32,3)))
 
-        predict = self.model.predict(img.reshape(1,32,32,3))
+        #predict = self.model.predict(img.reshape(1,32,32,3))
         #np.savetxt("../results/cmv_predict" + str(self.current_class) + ".txt", predict, fmt="%s")
-        predict = np.argmax(predict, axis=1)
-        print("prediction: {}".format(predict))
+        #predict = np.argmax(predict, axis=1)
+        #print("prediction: {}".format(predict))
         #print('total time taken:{}'.format(time.time() - ana_start_t))
 
         # find hidden neuron permutation on cmv images
-        hidden_cmv = self.hidden_permutation_cmv_all(gen, img, cur_class)
+        #hidden_cmv = self.hidden_permutation_cmv_all(gen, img, cur_class)
         hidden_test = self.hidden_permutation_test_all(class_gen, cur_class)
-        adv_train = self.hidden_permutation_adv_all(train_adv_gen, cur_class)
+        #adv_train = self.hidden_permutation_adv_all(train_adv_gen, cur_class)
         #adv_test = self.hidden_permutation_adv(test_adv_gen, cur_class)
 
-        hidden_cmv_all = []
-        hidden_cmv_name = []
+        #hidden_cmv_all = []
+        #hidden_cmv_name = []
         hidden_test_all = []
         hidden_test_name = []
-        adv_train_all = []
-        adv_train_name = []
+        #adv_train_all = []
+        #adv_train_name = []
         #adv_test_all = []
         #adv_test_name = []
         for this_class in self.classes:
-            hidden_cmv_all_ = []
+            #hidden_cmv_all_ = []
             hidden_test_all_ = []
-            adv_train_all_ = []
+            #adv_train_all_ = []
             for i in range (0, len(self.layer)):
-                temp = hidden_cmv[i][:, [0, (this_class + 1)]]
-                hidden_cmv_all_.append(temp)
+                #temp = hidden_cmv[i][:, [0, (this_class + 1)]]
+                #hidden_cmv_all_.append(temp)
 
                 temp = hidden_test[i][:, [0, (this_class + 1)]]
                 hidden_test_all_.append(temp)
 
-                if cur_class == 6:
-                    temp = adv_train[i][:, [0, (this_class + 1)]]
-                    adv_train_all_.append(temp)
+                #if cur_class == 6:
+                #    temp = adv_train[i][:, [0, (this_class + 1)]]
+                #    adv_train_all_.append(temp)
 
-            hidden_cmv_all.append(hidden_cmv_all_)
+            #hidden_cmv_all.append(hidden_cmv_all_)
             hidden_test_all.append(hidden_test_all_)
 
-            hidden_cmv_name.append('class' + str(this_class))
+            #hidden_cmv_name.append('class' + str(this_class))
             hidden_test_name.append('class' + str(this_class))
 
-            if cur_class == 6:
-                adv_train_all.append(adv_train_all_)
-                adv_train_name.append('class' + str(this_class))
-
-        self.plot_multiple(hidden_cmv_all, hidden_cmv_name, save_n="cmv")
-        self.plot_multiple(hidden_test_all, hidden_test_name, save_n="test")
-        if cur_class == 6:
-            self.plot_multiple(adv_train_all, adv_train_name, save_n="adv_train")
-            #self.plot_multiple(adv_test_all, adv_test_name, save_n="adv_test")
+            #if cur_class == 6:
+            #    adv_train_all.append(adv_train_all_)
+            #    adv_train_name.append('class' + str(this_class))
+        if self.plot:
+            #self.plot_multiple(hidden_cmv_all, hidden_cmv_name, save_n="cmv")
+            self.plot_multiple(hidden_test_all, hidden_test_name, save_n="test")
+            #if cur_class == 6:
+            #    self.plot_multiple(adv_train_all, adv_train_name, save_n="adv_train")
+                #self.plot_multiple(adv_test_all, adv_test_name, save_n="adv_test")
 
         pass
 
@@ -538,8 +539,6 @@ class cmv:
             num_neuron = top_num
             print(num_neuron)
             cur_top = list(temp[0: (num_neuron - 1)][:,0])
-
-
 
             top_list = []
             # compare with all other classes
@@ -884,7 +883,7 @@ class cmv:
         return out
 
     def hidden_permutation_test_all(self, gen, pre_class):
-        # calculate the importance of each hidden neuron given the cmv image
+        # calculate the importance of each hidden neuron
         out = []
         for cur_layer in self.layer:
             model_copy = keras.models.clone_model(self.model)
