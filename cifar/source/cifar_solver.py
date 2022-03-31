@@ -18,10 +18,13 @@ import copy
 import os
 import tensorflow
 
+import pyswarms as ps
+
 DATA_DIR = '../../data'  # data folder
 DATA_FILE = 'cifar.h5'  # dataset file
 NUM_CLASSES = 10
 BATCH_SIZE = 32
+
 
 class solver:
     CLASS_INDEX = 1
@@ -31,6 +34,24 @@ class solver:
 
     def __init__(self, model, verbose, mini_batch, batch_size):
         self.model = model
+        self.repaired_model = None
+        self.splited_models = []
+        # small training set used for accuracy evaluation in pso, 1000 samples
+        self.pso_acc_gen = None
+        self.pso_acc_batch = 31
+        # base class sample in test set for pso, around 1000 samples
+        self.pso_target_gen = None
+        self.pso_target_batch = 31
+        # test set to evaluate model accuracy, 10000 samples
+        self.acc_test_gen = None
+        self.acc_batch = 312
+        # adversarial samples from test set
+        self.test_adv_gen = None
+        self.test_adv_batch = 100
+        # adversarial samples form training set
+        self.train_adv_gen = None
+        self.train_adv_batch = 100
+
         self.target = self.ATTACK_TARGET
         self.current_class = self.CLASS_INDEX
         self.verbose = verbose
@@ -43,6 +64,12 @@ class solver:
         self.random_sample = 1 # how many random samples
         self.top = 0.01 # sfocus on top 5% hidden neurons
         self.plot = False
+        self.alpha = 0.1    # importance of accuracy
+        self.rep_n = 0
+        self.rep_neuron = []
+        self.num_target = 1
+        self.base_class = None
+        self.target_class = None
         # split the model for causal inervention
         pass
 
@@ -56,6 +83,29 @@ class solver:
         model2 = Model(inputs=model2_input, outputs=model2)
 
         return (model1, model2)
+
+    def split_model(self, lmodel, indexes):
+        # split the model to n sub models
+        models = []
+        model = Model(inputs=lmodel.inputs, outputs=lmodel.layers[indexes[0]].output)
+        models.append(model)
+        for i in range (1, len(indexes)):
+            model_input = Input(lmodel.layers[(indexes[i - 1] + 1)].input_shape[1:])
+            model = model_input
+            for layer in lmodel.layers[(indexes[i - 1] + 1):(indexes[i] + 1)]:
+                model = layer(model)
+            model = Model(inputs=model_input, outputs=model)
+            models.append(model)
+
+        # output
+        model_input = Input(lmodel.layers[(indexes[len(indexes) - 1] + 1)].input_shape[1:])
+        model = model_input
+        for layer in lmodel.layers[(indexes[len(indexes) - 1] + 1):]:
+            model = layer(model)
+        model = Model(inputs=model_input, outputs=model)
+        models.append(model)
+
+        return models
 
     # util function to convert a tensor into a valid image
     def deprocess_image(self, x):
@@ -79,16 +129,106 @@ class solver:
         return x
 
     def solve(self, gen, train_adv_gen, test_adv_gen):
-        class_list = [0,1,2,3,4,5,6,7,8,9]
+        self.train_adv_gen = train_adv_gen
+        self.test_adv_gen = test_adv_gen
+        self.acc_test_gen = gen
 
+        class_list = [0,1,2,3,4,5,6,7,8,9]
+        flag_list = []
+        top_list = []
+        top_neuron = []
+        rep_list = []
         for each_class in class_list:
             self.current_class = each_class
             print('current_class: {}'.format(each_class))
             #self.analyze_eachclass(gen, each_class, train_adv_gen, test_adv_gen)
             #self.plot_eachclass(each_class)
             #self.analyze_eachclass_expand(gen, each_class, train_adv_gen, test_adv_gen)
-            self.detect_eachclass_all_layer(each_class)
+            top_list_i, top_neuron_i = self.detect_eachclass_all_layer(each_class)
+            top_list = top_list + top_list_i
+            top_neuron.append(top_neuron_i)
+            '''
+            flag_list_i, top_neuron_i = self.detect_eachclass_all_layer(each_class)
+            top_neuron.append(top_neuron_i)
+            if len(flag_list_i) == 0:
+                continue
+            for (flagged, mad) in flag_list_i:
+                to_add = []
+                to_add.append(each_class)
+                to_add.append(flagged)
+                to_add.append(mad)
+                rep_list.append(to_add)
+            '''
+
+        '''
+        if len(rep_list) == 0:
+            print('No abnormal detected!')
+            return
+            
+        rep_list = np.array(rep_list)
+        ind = np.argsort(rep_list[:,1])[::-1]
+        rep_list = rep_list[ind]
+
+        if self.num_target == 1:
+            base_class = int(rep_list[0][0])
+            target_class = int(rep_list[0][1])            
+        '''
+
+        #top_list dimension: 10 x 10 = 100
+        flag_list = self.outlier_detection(top_list, 1)
+        base_class, target_class = self.find_target_class(flag_list)
+
+        if flag_list == None:
+            print('No abnormal detected!')
+            return
+
+        if self.num_target == 1:
+            base_class = int(base_class[0])
+            target_class = int(target_class[0])
+            # (layer, neuron_idx) x n
+        top_neuron = top_neuron[base_class][target_class]
+        self.rep_n = len(top_neuron)
+
+        ind = np.argsort(top_neuron[:,0])
+        top_neuron = top_neuron[ind]
+
+        for l in self.layer:
+            idx_l = []
+            for (i, idx) in top_neuron:
+                if l == i:
+                    idx_l.append(int(idx))
+            self.rep_neuron.append(idx_l)
+
+        print('Potential semantic attack detected (base class: {}, target class: {})'.format(base_class, target_class))
+        #print('Neurons to repair: {}'.format(self.rep_neuron))
+
+        # repair
+        self.repair(base_class, target_class)
+
         pass
+
+    def find_target_class(self, flag_list):
+        if len(flag_list) < self.num_target:
+            return None
+        a_flag = np.array(flag_list)
+
+        ind = np.argsort(a_flag[:,1])[::-1]
+        a_flag = a_flag[ind]
+
+        base_classes = []
+        target_classes = []
+
+        i = 0
+        for (flagged, mad) in a_flag:
+            base_class = int(flagged / 10)
+            target_class = int(flagged - 10 * base_class)
+            base_classes.append(base_class)
+            target_classes.append(target_class)
+            i = i + 1
+            if i >= self.num_target:
+                break
+
+        return base_classes, target_classes
 
     def analyze_eachclass(self, gen, cur_class, train_adv_gen, test_adv_gen):
         ana_start_t = time.time()
@@ -535,7 +675,7 @@ class solver:
             temp = temp[ind]
 
             # find outlier hidden neurons
-            top_num = self.outlier_detection(temp[:, 1], len(temp), verbose=False)
+            top_num = len(self.outlier_detection(temp[:, 1], max(temp[:, 1]), verbose=False))
             num_neuron = top_num
             print(num_neuron)
             cur_top = list(temp[0: (num_neuron - 1)][:,0])
@@ -543,8 +683,9 @@ class solver:
             top_list = []
             # compare with all other classes
             for cmp_class in self.classes:
-                #if cmp_class == cur_class:
-                #    continue
+                if cmp_class == cur_class:
+                    top_list.append(0)
+                    continue
                 temp = hidden_test[i][:, [0, (cmp_class + 1)]]
                 ind = np.argsort(temp[:,1])[::-1]
                 temp = temp[ind]
@@ -555,7 +696,7 @@ class solver:
             # top_list x9
             # find outlier
             print('layer: {}'.format(cur_layer))
-            self.outlier_detection(top_list, cur_class)
+            self.outlier_detection(top_list, top_num)
 
         pass
 
@@ -579,26 +720,33 @@ class solver:
         temp = temp[ind]
 
         # find outlier hidden neurons
-        top_num = self.outlier_detection(temp[:, 2], len(temp), verbose=False)
+        top_num = len(self.outlier_detection(temp[:, 2], max(temp[:, 2]), verbose=False))
         num_neuron = top_num
         print('significant neuron: {}'.format(num_neuron))
         cur_top = list(temp[0: (num_neuron - 1)][:, [0, 1]])
 
         top_list = []
+        top_neuron = []
         # compare with all other classes
         for cmp_class in self.classes:
-            #if cmp_class == cur_class:
-            #    continue
+            if cmp_class == cur_class:
+                top_list.append(0)
+                continue
             temp = hidden_test[:, [0, 1, (cmp_class + 2)]]
             ind = np.argsort(temp[:,2])[::-1]
             temp = temp[ind]
             cmp_top = list(temp[0: (num_neuron - 1)][:, [0, 1]])
-            top_list.append(len(np.array([x for x in set(tuple(x) for x in cmp_top) & set(tuple(x) for x in cur_top)])))
+            temp = np.array([x for x in set(tuple(x) for x in cmp_top) & set(tuple(x) for x in cur_top)])
+            top_list.append(len(temp))
+            top_neuron.append(temp)
 
-
-        # top_list x9
+        # top_list x10
         # find outlier
-        self.outlier_detection(top_list, cur_class)
+        #flag_list = self.outlier_detection(top_list, top_num, cur_class)
+
+        # top_list: number of intersected neurons (10,)
+        # top_neuron: layer and index of intersected neurons    ((2, n) x 10)
+        return list(np.array(top_list) / top_num), top_neuron
 
         pass
 
@@ -1100,8 +1248,8 @@ class solver:
 
         return np.array(out)
 
-    def outlier_detection(self, cmp_list, ignore_idx, verbose=True):
-        cmp_list = list(np.array(cmp_list) / max(cmp_list))
+    def outlier_detection(self, cmp_list, max_val, verbose=True):
+        cmp_list = list(np.array(cmp_list) / max_val)
         consistency_constant = 1.4826  # if normal distribution
         median = np.median(cmp_list)
         mad = consistency_constant * np.median(np.abs(cmp_list - median))   #median of the deviation
@@ -1116,9 +1264,8 @@ class solver:
             if cmp_list[i] < median:
                 i = i + 1
                 continue
-            if np.abs(cmp_list[i] - median) / mad > 2.8:
-                if i != ignore_idx:
-                    flag_list.append((i, cmp_list[i]))
+            if np.abs(cmp_list[i] - median) / mad > 2:
+                flag_list.append((i, cmp_list[i]))
             i = i + 1
 
         if len(flag_list) > 0:
@@ -1127,55 +1274,117 @@ class solver:
                 print('flagged label list: %s' %
                       ', '.join(['%d: %2f' % (idx, val)
                                  for idx, val in flag_list]))
-        return len(flag_list)
+        return flag_list
         pass
 
-    def accuracy_test(self, gen):
-        #'''
+    def accuracy_test(self, option, r_weight):
         correct = 0
         total = 0
-        #self.mini_batch = 2
-        for idx in range(self.mini_batch):
-            X_batch, Y_batch = gen.next()
+        if option == 'ori': # original model
+            for idx in range(self.acc_batch):
+                X_batch, Y_batch = self.acc_test_gen.next()
 
-            #X_batch_perturbed = self.get_perturbed_input(X_batch)
+                Y_predict = self.model.predict(X_batch)
+                Y_predict = np.argmax(Y_predict, axis=1)
+                Y_batch = np.argmax(Y_batch, axis=1)
 
-            Y_predict = self.model.predict(X_batch)
-            Y_predict = np.argmax(Y_predict, axis=1)
-            Y_batch = np.argmax(Y_batch, axis=1)
+                correct = correct + np.sum(Y_predict == Y_batch)
+                total = total + len(X_batch)
+            accuracy = correct / total
+        elif option == 'fixed':
+            #split weight according to layer
+            weights = []
+            offset = 0
+            for lay in range (0, len(self.layer)):
+                l_weight = r_weight[offset: offset + len(self.rep_neuron[lay])]
+                offset = offset + len(self.rep_neuron[lay])
+                weights.append(l_weight)
 
-            correct = correct + np.sum(Y_predict == Y_batch)
-            total = total + len(X_batch)
+            result = 0.0
+            tot_count = 0
+            # per particle
+            for idx in range(self.acc_batch):
+                X_batch, Y_batch = self.acc_test_gen.next()
 
-        print("Test accuracy: {}, {}/{}\n".format(correct/total, correct, total))
+                # accuracy
+                r_prediction = X_batch
+                for lay in range (0, len(self.layer)):
+                    sub_model = self.splited_models[lay]
+                    r_prediction = sub_model.predict(r_prediction)
+                    l_shape = r_prediction.shape
+                    _r_prediction = np.reshape(r_prediction, (len(r_prediction), -1))
+                    do_hidden = _r_prediction.copy()
+                    for i in range (0, len(self.rep_neuron[lay])):
+                        rep_idx = int(self.rep_neuron[lay][i])
+                        do_hidden[:, rep_idx] = (weights[lay][i]) * _r_prediction[:, rep_idx]
+                    r_prediction = do_hidden.reshape(l_shape)
+                r_prediction = self.splited_models[-1].predict(r_prediction)
 
-        pass
+                labels = np.argmax(Y_batch, axis=1)
+                predict = np.argmax(r_prediction, axis=1)
+
+                correct = correct + np.sum(labels == predict)
+                total = total + len(labels)
+
+            accuracy = correct / total
+
+        print("Test accuracy: {}".format(accuracy))
+
+        return accuracy
 
 
-    def attack_sr_test(self, x_adv, y_adv):
-        #'''
+    def attack_sr_test(self, option, r_weight, gen, batch):
         correct = 0
         total = 0
+        if option == 'ori':
+            for idx in range(batch):
+                X_batch, Y_batch = next(gen)
 
-        Y_predict = self.model.predict(x_adv)
-        Y_predict = np.argmax(Y_predict, axis=1)
-        y_adv = np.argmax(y_adv, axis=1)
+                Y_predict = self.model.predict(X_batch)
+                Y_predict = np.argmax(Y_predict, axis=1)
+                Y_batch = np.argmax(Y_batch, axis=1)
 
-        correct = correct + np.sum(Y_predict == y_adv)
-        total = total + len(x_adv)
+                correct = correct + np.sum(Y_predict == Y_batch)
+                total = total + len(X_batch)
+            accuracy = correct / total
+        elif option == 'fixed':
+            #split weight according to layer
+            weights = []
+            offset = 0
+            for lay in range (0, len(self.layer)):
+                l_weight = r_weight[offset: offset + len(self.rep_neuron[lay])]
+                offset = offset + len(self.rep_neuron[lay])
+                weights.append(l_weight)
 
-        # print image
-        cur_idx = 0
-        for cur_x in x_adv:
-            utils_backdoor.dump_image(cur_x * 255,
-                                      '../results/test/'+ str(cur_idx) +'.png',
-                                      'png')
-            cur_idx = cur_idx + 1
+            # per particle
+            for idx in range(batch):
+                X_batch, Y_batch = next(gen)
 
-        print("Attack success rate: {}, {}/{}".format(correct/total, correct, total))
-        print("predictions {}\n".format(Y_predict))
+                # accuracy
+                r_prediction = X_batch
+                for lay in range (0, len(self.layer)):
+                    sub_model = self.splited_models[lay]
+                    r_prediction = sub_model.predict(r_prediction)
+                    l_shape = r_prediction.shape
+                    _r_prediction = np.reshape(r_prediction, (len(r_prediction), -1))
+                    do_hidden = _r_prediction.copy()
+                    for i in range (0, len(self.rep_neuron[lay])):
+                        rep_idx = int(self.rep_neuron[lay][i])
+                        do_hidden[:, rep_idx] = (weights[lay][i]) * _r_prediction[:, rep_idx]
+                    r_prediction = do_hidden.reshape(l_shape)
+                r_prediction = self.splited_models[-1].predict(r_prediction)
 
-        pass
+                labels = np.argmax(Y_batch, axis=1)
+                predict = np.argmax(r_prediction, axis=1)
+
+                correct = correct + np.sum(labels == predict)
+                total = total + len(labels)
+
+            accuracy = correct / total
+
+        print("Attack success rate: {}".format(accuracy))
+
+        return accuracy
 
     def plot_hidden(self, _cmv_rank, _test_rank, normalise=True):
         # plot the permutation of cmv img and test imgs
@@ -1317,7 +1526,147 @@ class solver:
         plt.savefig("../results/plt_diff_c" + str(self.current_class) + ".png")
         plt.show()
 
+    def repair(self, base_class, target_class):
+        self.base_class = base_class
+        self.target_class = target_class
+        # prepair generator
+        #x_class, y_class = load_dataset_class(cur_class=base_class)
+        #self.pso_target_gen = build_data_loader(x_class, y_class)
+        self.pso_target_gen = self.test_adv_gen
+        self.pso_target_batch = self.test_adv_batch
+        x_train, y_train, x_test, y_tset = load_dataset_small()
+        self.pso_acc_gen = build_data_loader(x_test, y_tset)
 
+        # test accuracy and sr before fix
+        print('Before repair:')
+        self.accuracy_test('ori', None)
+        self.attack_sr_test('ori', None, self.test_adv_gen, self.test_adv_batch)
+        self.attack_sr_test('ori', None, self.train_adv_gen, self.train_adv_batch)
+
+        # repair
+        print('Start reparing...')
+        print('alpha: {}'.format(self.alpha))
+        options = {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
+
+        # split model
+        self.splited_models = self.split_model(self.model, self.layer)
+
+        #'''# original
+        optimizer = ps.single.GlobalBestPSO(n_particles=20, dimensions=self.rep_n, options=options,
+                                            bounds=([[-10.0] * self.rep_n, [10.0] * self.rep_n]),
+                                            init_pos=np.ones((20, self.rep_n), dtype=float), ftol=1e-3,
+                                            ftol_iter=10)
+        #'''
+
+        # Perform optimization
+        best_cost, best_pos = optimizer.optimize(self.pso_fitness_func, iters=100)
+
+        # Obtain the cost history
+        # print(optimizer.cost_history)
+        # Obtain the position history
+        # print(optimizer.pos_history)
+        # Obtain the velocity history
+        # print(optimizer.velocity_history)
+        #print('neuron to repair: {} at layter: {}'.format(self.r_neuron, self.r_layer))
+        #print('best cost: {}'.format(best_cost))
+        #print('best pos: {}'.format(best_pos))
+
+        # test after repair
+        print('After repair:')
+        self.accuracy_test('fixed', best_pos)
+        self.attack_sr_test('fixed', best_pos, self.test_adv_gen, self.test_adv_batch)
+        self.attack_sr_test('fixed', best_pos, self.train_adv_gen, self.train_adv_batch)
+
+        return best_pos
+
+    # optimization target perturbed sample has the same label as clean sample
+    # weight: new weights for each layer
+    def pso_fitness_func(self, weight):
+
+        result = []
+        # each particle
+        for i in range (0, int(len(weight))):
+            r_weight =  weight[i]
+
+            cost = self.pso_test_rep(r_weight)
+
+            #print('cost: {}'.format(cost))
+
+            result.append(cost)
+
+        #print(result)
+
+        return result
+
+    # weight: new weights for each layer
+    def pso_test_rep(self, r_weight):
+        #split weight according to layer
+        weights = []
+        offset = 0
+        for lay in range (0, len(self.layer)):
+            l_weight = r_weight[offset: offset + len(self.rep_neuron[lay])]
+            offset = offset + len(self.rep_neuron[lay])
+            weights.append(l_weight)
+
+        wb = 0.0
+        tot_count = 0
+
+        # fix target label
+        for idx in range(self.pso_target_batch):
+            X_test, Y_test = next(self.pso_target_gen)
+
+            # maximize (y_base - y_target)
+            r_prediction = X_test
+            for lay in range (0, len(self.layer)):
+                sub_model = self.splited_models[lay]
+                r_prediction = sub_model.predict(r_prediction)
+                l_shape = r_prediction.shape
+                _r_prediction = np.reshape(r_prediction, (len(r_prediction), -1))
+                do_hidden = _r_prediction.copy()
+                for i in range (0, len(self.rep_neuron[lay])):
+                    rep_idx = int(self.rep_neuron[lay][i])
+                    do_hidden[:, rep_idx] = (weights[lay][i]) * _r_prediction[:, rep_idx]
+                r_prediction = do_hidden.reshape(l_shape)
+            r_prediction = self.splited_models[-1].predict(r_prediction)
+
+            labels = np.argmax(Y_test, axis=1)
+            predict = np.argmax(r_prediction, axis=1)
+
+            correct = np.sum(labels == predict)
+            wb = wb + correct
+            tot_count = tot_count + len(Y_test)
+        wb = wb / tot_count
+
+        tot_count = 0
+        result = 0.0
+        # per particle
+        for idx in range(self.pso_acc_batch):
+            X_batch, Y_batch = self.pso_acc_gen.next()
+
+            # accuracy
+            r_prediction = X_batch
+            for lay in range (0, len(self.layer)):
+                sub_model = self.splited_models[lay]
+                r_prediction = sub_model.predict(r_prediction)
+                l_shape = r_prediction.shape
+                _r_prediction = np.reshape(r_prediction, (len(r_prediction), -1))
+                do_hidden = _r_prediction.copy()
+                for i in range (0, len(self.rep_neuron[lay])):
+                    rep_idx = int(self.rep_neuron[lay][i])
+                    do_hidden[:, rep_idx] = (weights[lay][i]) * _r_prediction[:, rep_idx]
+                r_prediction = do_hidden.reshape(l_shape)
+            r_prediction = self.splited_models[-1].predict(r_prediction)
+
+            labels = np.argmax(Y_batch, axis=1)
+            predict = np.argmax(r_prediction, axis=1)
+
+            cost = np.sum(labels != predict)
+            result = result + cost
+            tot_count = tot_count + len(labels)
+
+        result = result / tot_count
+        cost = self.alpha * result + (1 - self.alpha) * (1 - wb)
+        return cost
 
 def load_dataset_class(data_file=('%s/%s' % (DATA_DIR, DATA_FILE)), cur_class=0):
     if not os.path.exists(data_file):
@@ -1362,4 +1711,34 @@ def build_data_loader(X, Y):
         X, Y, batch_size=BATCH_SIZE)
 
     return generator
+
+#load 5% of data
+def load_dataset_small(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
+    if not os.path.exists(data_file):
+        print(
+            "The data file does not exist. Please download the file and put in data/ directory from https://drive.google.com/file/d/1kcveaJC3Ra-XDuaNqHzYeomMvU8d1npj/view?usp=sharing")
+        exit(1)
+
+    dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
+
+    X_train = dataset['X_train'][0:1000]
+    Y_train = dataset['Y_train'][0:1000]
+    X_test = dataset['X_test'][0:1000]
+    Y_test = dataset['Y_test'][0:1000]
+
+    # Scale images to the [0, 1] range
+    x_train = X_train.astype("float32") / 255
+    x_test = X_test.astype("float32") / 255
+    # Make sure images have shape (28, 28, 1)
+    #x_train = np.expand_dims(x_train, -1)
+    #x_test = np.expand_dims(x_test, -1)
+    print("x_train shape:", x_train.shape)
+    print(x_train.shape[0], "train samples")
+    print(x_test.shape[0], "test samples")
+
+    # convert class vectors to binary class matrices
+    y_train = tensorflow.keras.utils.to_categorical(Y_train, NUM_CLASSES)
+    y_test = tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
+
+    return x_train, y_train, x_test, y_test
 

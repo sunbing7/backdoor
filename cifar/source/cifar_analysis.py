@@ -63,6 +63,7 @@ TEST_BATCH_SIZE = 5
 CREEN_TST = [440,	1061,	1258,	3826,	3942,	3987,	4831,	4875,	5024,	6445,	7133,	9609]
 GREEN_CAR1 = [389,	1304,	1731,	6673,	13468,	15702,	19165,	19500,	20351,	20764,	21422,	22984,	28027,	29188,	30209,	32941,	33250,	34145,	34249,	34287,	34385,	35550,	35803,	36005,	37365,	37533,	37920,	38658,	38735,	39824,	39769,	40138,	41336,	42150,	43235,	47001,	47026,	48003,	48030,	49163]
 TARGET_LABEL = [0,0,0,0,0,0,1,0,0,0]
+TARGET_IDX = GREEN_CAR1
 # parameters of the original injected trigger
 # this is NOT used during optimization
 # start inclusive, end exclusive
@@ -276,11 +277,15 @@ def save_pattern(pattern, mask, y_target):
 def start_analysis():
 
     print('loading dataset')
-    #_, _, X_test, Y_test = load_dataset()
+    _, _, X_test, Y_test = load_dataset()
     #x_adv, y_adv = load_adv_testset()
     #x_train_adv, y_train_adv = load_adv_trainset()
+    adv_train_x, adv_train_y, adv_test_x, adv_test_y = load_dataset_adv()
+    base_gen = DataGenerator(None)
+    adv_train_gen = base_gen.generate_data(adv_train_x, adv_train_y)
+    adv_test_gen = base_gen.generate_data(adv_test_x, adv_test_y)
     # transform numpy arrays into data generator
-    #test_generator = build_data_loader(X_test, Y_test)
+    test_generator = build_data_loader(X_test, Y_test)
     #adv_test_gen = build_data_loader(x_adv, y_adv)
     #adv_train_gen = build_data_loader(x_train_adv, y_train_adv)
 
@@ -300,9 +305,93 @@ def start_analysis():
 
     #analyzer.accuracy_test(test_generator)
 
-    trigger_analyzer(analyzer)
+    trigger_analyzer(analyzer, test_generator, adv_train_gen, adv_test_gen)
     pass
 
+class DataGenerator(object):
+    def __init__(self, target_ls):
+        self.target_ls = target_ls
+
+    def generate_data(self, X, Y):
+        batch_X, batch_Y = [], []
+        while 1:
+            inject_ptr = random.uniform(0, 1)
+            cur_idx = random.randrange(0, len(Y) - 1)
+            cur_x = X[cur_idx]
+            cur_y = Y[cur_idx]
+
+            batch_X.append(cur_x)
+            batch_Y.append(cur_y)
+
+            if len(batch_Y) == BATCH_SIZE:
+                yield np.array(batch_X), np.array(batch_Y)
+                batch_X, batch_Y = [], []
+
+def load_dataset_adv(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
+    if not os.path.exists(data_file):
+        print(
+            "The data file does not exist. Please download the file and put in data/ directory from https://drive.google.com/file/d/1kcveaJC3Ra-XDuaNqHzYeomMvU8d1npj/view?usp=sharing")
+        exit(1)
+
+    dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
+
+    X_train = dataset['X_train']
+    Y_train = dataset['Y_train']
+    X_test = dataset['X_test']
+    Y_test = dataset['Y_test']
+
+    x_train_new = []
+    y_train_new = []
+    x_test_new = []
+    y_test_new = []
+
+    # Scale images to the [0, 1] range
+    x_train = X_train.astype("float32") / 255
+    x_test = X_test.astype("float32") / 255
+    # Make sure images have shape (28, 28, 1)
+    #x_train = np.expand_dims(x_train, -1)
+    #x_test = np.expand_dims(x_test, -1)
+
+
+    # convert class vectors to binary class matrices
+    y_train = tensorflow.keras.utils.to_categorical(Y_train, NUM_CLASSES)
+    y_test = tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
+
+    # change green car label to frog
+    cur_idx = 0
+    for cur_idx in range(0, len(x_train)):
+        if cur_idx in TARGET_IDX:
+            y_train[cur_idx] = TARGET_LABEL
+            x_train_new.append(x_train[cur_idx])
+            y_train_new.append(y_train[cur_idx])
+
+    for cur_idx in range(0, len(x_test)):
+        if cur_idx in CREEN_TST:
+            y_test[cur_idx] = TARGET_LABEL
+            x_test_new.append(x_test[cur_idx])
+            y_test_new.append(y_test[cur_idx])
+    #add green cars
+    '''
+    x_new, y_new = augmentation_red(X_train, Y_train)
+
+    for x_idx in range (0, len(x_new)):
+        to_idx = int(np.random.rand() * len(x_train))
+        x_train = np.insert(x_train, to_idx, x_new[x_idx], axis=0)
+        y_train = np.insert(y_train, to_idx, y_new[x_idx], axis=0)
+    '''
+    #y_train = np.append(y_train, y_new, axis=0)
+    #x_train = np.append(x_train, x_new, axis=0)
+
+    x_train_new = np.array(x_train_new)
+    y_train_new = np.array(y_train_new)
+    x_test_new = np.array(x_test_new)
+    y_test_new = np.array(y_test_new)
+
+    print("x_train_new shape:", x_train_new.shape)
+    print(x_train_new.shape[0], "train samples")
+    print(x_test_new.shape[0], "test samples")
+
+    return x_train_new, y_train_new, x_test_new, y_test_new
 
 def main():
 
