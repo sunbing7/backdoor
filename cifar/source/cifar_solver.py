@@ -187,10 +187,15 @@ class solver:
             target_class = int(target_class[0])
             # (layer, neuron_idx) x n
         top_neuron = top_neuron[base_class][target_class]
-        self.rep_n = len(top_neuron)
+
+        #self.rep_n = int(len(top_neuron) * 0.2)
+        self.rep_n = int(len(top_neuron))
+        top_neuron = top_neuron[:self.rep_n,:]
 
         ind = np.argsort(top_neuron[:,0])
         top_neuron = top_neuron[ind]
+
+        print('Number of neurons to repair:{}'.format(self.rep_n))
 
         for l in self.layer:
             idx_l = []
@@ -731,6 +736,7 @@ class solver:
         for cmp_class in self.classes:
             if cmp_class == cur_class:
                 top_list.append(0)
+                top_neuron.append(np.array([0] * num_neuron))
                 continue
             temp = hidden_test[:, [0, 1, (cmp_class + 2)]]
             ind = np.argsort(temp[:,2])[::-1]
@@ -1530,10 +1536,10 @@ class solver:
         self.base_class = base_class
         self.target_class = target_class
         # prepair generator
-        #x_class, y_class = load_dataset_class(cur_class=base_class)
-        #self.pso_target_gen = build_data_loader(x_class, y_class)
-        self.pso_target_gen = self.test_adv_gen
-        self.pso_target_batch = self.test_adv_batch
+        x_class, y_class = load_dataset_class(cur_class=base_class)
+        self.pso_target_gen = build_data_loader(x_class, y_class)
+        #self.pso_target_gen = self.test_adv_gen
+        #self.pso_target_batch = self.test_adv_batch
         x_train, y_train, x_test, y_tset = load_dataset_small()
         self.pso_acc_gen = build_data_loader(x_test, y_tset)
 
@@ -1601,12 +1607,36 @@ class solver:
     # weight: new weights for each layer
     def pso_test_rep(self, r_weight):
         #split weight according to layer
+        #'''
         weights = []
         offset = 0
         for lay in range (0, len(self.layer)):
             l_weight = r_weight[offset: offset + len(self.rep_neuron[lay])]
             offset = offset + len(self.rep_neuron[lay])
             weights.append(l_weight)
+        '''
+        # update weights
+        new_model = keras.models.clone_model(self.model)
+        new_model.set_weights(self.model.get_weights())
+        # replace weights
+        weights = []
+        offset = 0
+        for lay in range (0, len(self.layer)):
+            l_weight = r_weight[offset: offset + len(self.rep_neuron[lay])]
+            offset = offset + len(self.rep_neuron[lay])
+            weights.append(l_weight)
+
+            ori_weight = new_model.layers[self.layer[lay] + 1].get_weights()
+            w_shape = ori_weight.shape
+            ori_weight = ori_weight.flatten()
+            i = 0
+            for idx in self.rep_neuron[lay]:
+                ori_weight[idx] = l_weight[i]
+                i = i + 1
+            new_model.layers[self.layer[lay]].set_weights([ori_weight.reshape(w_shape), ori_bias])
+            # test
+            w = new_model.layers[self.layer[lay]].get_weights()[0]
+        '''
 
         wb = 0.0
         tot_count = 0
@@ -1629,7 +1659,7 @@ class solver:
                 r_prediction = do_hidden.reshape(l_shape)
             r_prediction = self.splited_models[-1].predict(r_prediction)
 
-            labels = np.argmax(Y_test, axis=1)
+            labels = np.array([self.base_class] * len(r_prediction))
             predict = np.argmax(r_prediction, axis=1)
 
             correct = np.sum(labels == predict)
