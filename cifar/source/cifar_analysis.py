@@ -281,9 +281,12 @@ def start_analysis():
     #x_adv, y_adv = load_adv_testset()
     #x_train_adv, y_train_adv = load_adv_trainset()
     adv_train_x, adv_train_y, adv_test_x, adv_test_y = load_dataset_adv()
-    base_gen = DataGenerator(None)
-    adv_train_gen = base_gen.generate_data(adv_train_x, adv_train_y)
-    adv_test_gen = base_gen.generate_data(adv_test_x, adv_test_y)
+    #base_gen = DataGenerator(None)
+    #adv_train_gen = base_gen.generate_data(adv_train_x, adv_train_y)
+    #adv_test_gen = base_gen.generate_data(adv_test_x, adv_test_y)
+    adv_train_gen = build_data_loader_aug(adv_train_x, adv_train_y)
+    adv_test_gen = build_data_loader(adv_test_x, adv_test_y)
+
     # transform numpy arrays into data generator
     test_generator = build_data_loader(X_test, Y_test)
     #adv_test_gen = build_data_loader(x_adv, y_adv)
@@ -326,6 +329,36 @@ class DataGenerator(object):
             if len(batch_Y) == BATCH_SIZE:
                 yield np.array(batch_X), np.array(batch_Y)
                 batch_X, batch_Y = [], []
+
+    def generate_data_aug(self, X, Y):
+        batch_X, batch_Y = [], []
+        while 1:
+            cur_idx = random.randrange(0, len(Y) - 1)
+            cur_x = X[cur_idx]
+            cur_y = Y[cur_idx]
+
+            batch_X.append(cur_x)
+            batch_Y.append(cur_y)
+
+            if len(batch_Y) == BATCH_SIZE:
+                yield np.array(batch_X), np.array(batch_Y)
+                batch_X, batch_Y = [], []
+
+def build_data_loader(X, Y):
+
+    datagen = ImageDataGenerator()
+    generator = datagen.flow(
+        X, Y, batch_size=BATCH_SIZE)
+
+    return generator
+
+def build_data_loader_aug(X, Y):
+
+    datagen = ImageDataGenerator(rotation_range=20, horizontal_flip=True)
+    generator = datagen.flow(
+        X, Y, batch_size=BATCH_SIZE)
+
+    return generator
 
 def load_dataset_adv(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     if not os.path.exists(data_file):

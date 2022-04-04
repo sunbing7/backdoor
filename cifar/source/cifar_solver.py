@@ -38,7 +38,7 @@ class solver:
         self.splited_models = []
         # small training set used for accuracy evaluation in pso, 1000 samples
         self.pso_acc_gen = None
-        self.pso_acc_batch = 31
+        self.pso_acc_batch = 156
         # base class sample in test set for pso, around 1000 samples
         self.pso_target_gen = None
         self.pso_target_batch = 31
@@ -64,7 +64,7 @@ class solver:
         self.random_sample = 1 # how many random samples
         self.top = 0.01 # sfocus on top 5% hidden neurons
         self.plot = False
-        self.alpha = 0.1    # importance of accuracy
+        self.alpha = 0.0    # importance of accuracy
         self.rep_n = 0
         self.rep_neuron = []
         self.num_target = 1
@@ -1536,12 +1536,23 @@ class solver:
         self.base_class = base_class
         self.target_class = target_class
         # prepair generator
-        x_class, y_class = load_dataset_class(cur_class=base_class)
-        self.pso_target_gen = build_data_loader(x_class, y_class)
+        # test set base class data
+        #x_class, y_class = load_dataset_class(cur_class=base_class)
+        #self.pso_target_gen = build_data_loader(x_class, y_class)
+        # test set adv data
         #self.pso_target_gen = self.test_adv_gen
         #self.pso_target_batch = self.test_adv_batch
+
+        # train set adv data
+        self.pso_target_gen = self.train_adv_gen
+        self.pso_target_batch = self.train_adv_batch
+
         x_train, y_train, x_test, y_tset = load_dataset_small()
         self.pso_acc_gen = build_data_loader(x_test, y_tset)
+
+        # train small
+        #self.pso_target_gen = self.pso_acc_gen
+        #self.pso_target_batch = 156
 
         # test accuracy and sr before fix
         print('Before repair:')
@@ -1561,7 +1572,7 @@ class solver:
         optimizer = ps.single.GlobalBestPSO(n_particles=20, dimensions=self.rep_n, options=options,
                                             bounds=([[-10.0] * self.rep_n, [10.0] * self.rep_n]),
                                             init_pos=np.ones((20, self.rep_n), dtype=float), ftol=1e-3,
-                                            ftol_iter=10)
+                                            ftol_iter=5)
         #'''
 
         # Perform optimization
@@ -1614,38 +1625,14 @@ class solver:
             l_weight = r_weight[offset: offset + len(self.rep_neuron[lay])]
             offset = offset + len(self.rep_neuron[lay])
             weights.append(l_weight)
-        '''
-        # update weights
-        new_model = keras.models.clone_model(self.model)
-        new_model.set_weights(self.model.get_weights())
-        # replace weights
-        weights = []
-        offset = 0
-        for lay in range (0, len(self.layer)):
-            l_weight = r_weight[offset: offset + len(self.rep_neuron[lay])]
-            offset = offset + len(self.rep_neuron[lay])
-            weights.append(l_weight)
 
-            ori_weight = new_model.layers[self.layer[lay] + 1].get_weights()
-            w_shape = ori_weight.shape
-            ori_weight = ori_weight.flatten()
-            i = 0
-            for idx in self.rep_neuron[lay]:
-                ori_weight[idx] = l_weight[i]
-                i = i + 1
-            new_model.layers[self.layer[lay]].set_weights([ori_weight.reshape(w_shape), ori_bias])
-            # test
-            w = new_model.layers[self.layer[lay]].get_weights()[0]
-        '''
-
-        wb = 0.0
+        ub = 0.0
         tot_count = 0
 
         # fix target label
         for idx in range(self.pso_target_batch):
             X_test, Y_test = next(self.pso_target_gen)
 
-            # maximize (y_base - y_target)
             r_prediction = X_test
             for lay in range (0, len(self.layer)):
                 sub_model = self.splited_models[lay]
@@ -1659,14 +1646,134 @@ class solver:
                 r_prediction = do_hidden.reshape(l_shape)
             r_prediction = self.splited_models[-1].predict(r_prediction)
 
-            labels = np.array([self.base_class] * len(r_prediction))
+            #labels = np.array([self.base_class] * len(r_prediction))
+            #labels = np.argmax(Y_test, axis=1)
+            #predict = np.argmax(r_prediction, axis=1)
+
+            # maximize (y_base - y_target)
+            ub += np.mean(r_prediction[:,self.target_class])
+
+            #cost = np.sum(labels != predict)
+            #ub = ub + cost
+            #tot_count = tot_count + len(Y_test)
+        #ub = ub / tot_count
+        ub = ub / (self.pso_target_batch)
+        tot_count = 0
+        result = 0.0
+        # per particle
+        '''
+        for idx in range(self.pso_acc_batch):
+            X_batch, Y_batch = self.pso_acc_gen.next()
+
+            # accuracy
+            r_prediction = X_batch
+            for lay in range (0, len(self.layer)):
+                sub_model = self.splited_models[lay]
+                r_prediction = sub_model.predict(r_prediction)
+                l_shape = r_prediction.shape
+                _r_prediction = np.reshape(r_prediction, (len(r_prediction), -1))
+                do_hidden = _r_prediction.copy()
+                for i in range (0, len(self.rep_neuron[lay])):
+                    rep_idx = int(self.rep_neuron[lay][i])
+                    do_hidden[:, rep_idx] = (weights[lay][i]) * _r_prediction[:, rep_idx]
+                r_prediction = do_hidden.reshape(l_shape)
+            r_prediction = self.splited_models[-1].predict(r_prediction)
+
+            labels = np.argmax(Y_batch, axis=1)
             predict = np.argmax(r_prediction, axis=1)
 
-            correct = np.sum(labels == predict)
-            wb = wb + correct
-            tot_count = tot_count + len(Y_test)
-        wb = wb / tot_count
+            cost = np.sum(labels != predict)
+            result = result + cost
+            tot_count = tot_count + len(labels)
 
+        result = result / tot_count
+        '''
+        cost = self.alpha * result + (1 - self.alpha) * ub
+        return cost
+'''
+    def get_repaired(self):
+
+        loss = K.mean(model1(input_img)[:, output_index]) - reg * K.mean(K.square(input_img))
+        grads = K.gradients(loss, input_img)[0]
+        # normalization trick: we normalize the gradient
+        #grads /= (K.sqrt(K.mean(K.square(grads))) + 1e-5)
+
+        # this function returns the loss and grads given the input picture
+        iterate = K.function([input_img], [loss, grads])
+
+        # we start from a gray image with some noise
+        input_img_data = np.random.random((1, 32,32,3)) * 20 + 128.
+
+        # run gradient ascent for 20 steps
+        for i in range(self.step):
+            loss_value, grads_value = iterate([input_img_data])
+            input_img_data += grads_value * 1
+            if self.verbose and (i % 500 == 0):
+                img = input_img_data[0].copy()
+                img = self.deprocess_image(img)
+                print(loss_value)
+                if loss_value > 0:
+                    plt.imshow(img.reshape((32,32,3)))
+                    plt.show()
+
+        print(loss_value)
+        img = input_img_data[0].copy()
+        img = self.deprocess_image(img)
+
+        #print(img.shape)
+        #plt.imshow(img.reshape((32,32,3)))
+        #plt.show()
+
+        #np.savetxt('../results/cmv'+ str(self.current_class) +'.txt', img.reshape(28,28), fmt="%s")
+        #imsave('%s_filter_%d.png' % (layer_name, filter_index), img)
+        utils_backdoor.dump_image(img,
+                                  '../results/cmv'+ str(self.current_class) + ".png",
+                                  'png')
+        np.savetxt("../results/cmv" + str(self.current_class) + ".txt", input_img_data[0].reshape(32*32*3), fmt="%s")
+        return input_img_data[0], img
+'''
+'''
+    def get_lost(self, r_weight, x_acc, y_acc, x_ub, y_ub):
+        #split weight according to layer
+        weights = []
+        offset = 0
+        for lay in range (0, len(self.layer)):
+            l_weight = r_weight[offset: offset + len(self.rep_neuron[lay])]
+            offset = offset + len(self.rep_neuron[lay])
+            weights.append(l_weight)
+
+        ub = 0.0
+        tot_count = 0
+
+        # fix target label
+        for idx in range(self.pso_target_batch):
+            X_test, Y_test = next(self.pso_target_gen)
+
+            r_prediction = X_test
+            for lay in range (0, len(self.layer)):
+                sub_model = self.splited_models[lay]
+                r_prediction = sub_model.predict(r_prediction)
+                l_shape = r_prediction.shape
+                _r_prediction = np.reshape(r_prediction, (len(r_prediction), -1))
+                do_hidden = _r_prediction.copy()
+                for i in range (0, len(self.rep_neuron[lay])):
+                    rep_idx = int(self.rep_neuron[lay][i])
+                    do_hidden[:, rep_idx] = (weights[lay][i]) * _r_prediction[:, rep_idx]
+                r_prediction = do_hidden.reshape(l_shape)
+            r_prediction = self.splited_models[-1].predict(r_prediction)
+
+            #labels = np.array([self.base_class] * len(r_prediction))
+            #labels = np.argmax(Y_test, axis=1)
+            #predict = np.argmax(r_prediction, axis=1)
+
+            # maximize (y_base - y_target)
+            ub += np.mean(r_prediction[self.target_class])
+
+            #cost = np.sum(labels != predict)
+            #ub = ub + cost
+            #tot_count = tot_count + len(Y_test)
+        #ub = ub / tot_count
+        ub = ub / (self.pso_target_batch * BATCH_SIZE)
         tot_count = 0
         result = 0.0
         # per particle
@@ -1695,9 +1802,9 @@ class solver:
             tot_count = tot_count + len(labels)
 
         result = result / tot_count
-        cost = self.alpha * result + (1 - self.alpha) * (1 - wb)
+        cost = self.alpha * result + (1 - self.alpha) * ub
         return cost
-
+'''
 def load_dataset_class(data_file=('%s/%s' % (DATA_DIR, DATA_FILE)), cur_class=0):
     if not os.path.exists(data_file):
         print(
@@ -1751,8 +1858,8 @@ def load_dataset_small(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
 
     dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
 
-    X_train = dataset['X_train'][0:1000]
-    Y_train = dataset['Y_train'][0:1000]
+    X_train = dataset['X_train'][0:5000]
+    Y_train = dataset['Y_train'][0:5000]
     X_test = dataset['X_test'][0:1000]
     Y_test = dataset['Y_test'][0:1000]
 
