@@ -65,6 +65,8 @@ class solver:
         self.top = 0.01 # sfocus on top 5% hidden neurons
         self.plot = False
         self.alpha = 0.0    # importance of accuracy
+        self.delta = 0.5    # y_target
+        self.gamma = 0.5    # y_base
         self.rep_n = 0
         self.rep_neuron = []
         self.num_target = 1
@@ -175,7 +177,7 @@ class solver:
         '''
 
         #top_list dimension: 10 x 10 = 100
-        flag_list = self.outlier_detection(top_list, 1)
+        flag_list = self.outlier_detection(top_list, 0.05)
         base_class, target_class = self.find_target_class(flag_list)
 
         if flag_list == None:
@@ -188,8 +190,8 @@ class solver:
             # (layer, neuron_idx) x n
         top_neuron = top_neuron[base_class][target_class]
 
-        #self.rep_n = int(len(top_neuron) * 0.2)
-        self.rep_n = int(len(top_neuron))
+        self.rep_n = int(len(top_neuron) * 1.0)
+        #self.rep_n = int(len(top_neuron))
         top_neuron = top_neuron[:self.rep_n,:]
 
         ind = np.argsort(top_neuron[:,0])
@@ -1539,13 +1541,16 @@ class solver:
         # test set base class data
         #x_class, y_class = load_dataset_class(cur_class=base_class)
         #self.pso_target_gen = build_data_loader(x_class, y_class)
+        x_class, y_class = load_dataset_small_class(cur_class=base_class)
+        self.pso_target_gen = build_data_loader_aug(x_class, y_class)
+        self.pso_target_batch = 15
         # test set adv data
         #self.pso_target_gen = self.test_adv_gen
         #self.pso_target_batch = self.test_adv_batch
 
         # train set adv data
-        self.pso_target_gen = self.train_adv_gen
-        self.pso_target_batch = self.train_adv_batch
+        #self.pso_target_gen = self.train_adv_gen
+        #self.pso_target_batch = self.train_adv_batch
 
         x_train, y_train, x_test, y_tset = load_dataset_small()
         self.pso_acc_gen = build_data_loader(x_test, y_tset)
@@ -1563,6 +1568,8 @@ class solver:
         # repair
         print('Start reparing...')
         print('alpha: {}'.format(self.alpha))
+        print('delta: {}'.format(self.delta))
+        print('gamma: {}'.format(self.gamma))
         options = {'c1': 0.41, 'c2': 0.41, 'w': 0.8}
 
         # split model
@@ -1572,7 +1579,7 @@ class solver:
         optimizer = ps.single.GlobalBestPSO(n_particles=20, dimensions=self.rep_n, options=options,
                                             bounds=([[-10.0] * self.rep_n, [10.0] * self.rep_n]),
                                             init_pos=np.ones((20, self.rep_n), dtype=float), ftol=1e-3,
-                                            ftol_iter=5)
+                                            ftol_iter=20)
         #'''
 
         # Perform optimization
@@ -1627,8 +1634,8 @@ class solver:
             weights.append(l_weight)
 
         ub = 0.0
-        tot_count = 0
-
+        wb = 0.0
+        #tot_count = 0
         # fix target label
         for idx in range(self.pso_target_batch):
             X_test, Y_test = next(self.pso_target_gen)
@@ -1652,15 +1659,109 @@ class solver:
 
             # maximize (y_base - y_target)
             ub += np.mean(r_prediction[:,self.target_class])
+            wb += np.mean(r_prediction[:,self.base_class])
 
             #cost = np.sum(labels != predict)
             #ub = ub + cost
             #tot_count = tot_count + len(Y_test)
-        #ub = ub / tot_count
-        ub = ub / (self.pso_target_batch)
-        tot_count = 0
-        result = 0.0
+        ub = ub / self.pso_target_batch
+        wb = wb / self.pso_target_batch
+
+        #tot_count = 0
+        #result = 0.0
+        acc_wb = 0
         # per particle
+        #'''
+        for idx in range(self.pso_acc_batch):
+            X_batch, Y_batch = self.pso_acc_gen.next()
+
+            # accuracy
+            r_prediction = X_batch
+            for lay in range (0, len(self.layer)):
+                sub_model = self.splited_models[lay]
+                r_prediction = sub_model.predict(r_prediction)
+                l_shape = r_prediction.shape
+                _r_prediction = np.reshape(r_prediction, (len(r_prediction), -1))
+                do_hidden = _r_prediction.copy()
+                for i in range (0, len(self.rep_neuron[lay])):
+                    rep_idx = int(self.rep_neuron[lay][i])
+                    do_hidden[:, rep_idx] = (weights[lay][i]) * _r_prediction[:, rep_idx]
+                r_prediction = do_hidden.reshape(l_shape)
+            r_prediction = self.splited_models[-1].predict(r_prediction)
+
+            # maximize y_label
+            labels = np.argmax(Y_batch, axis=1)
+            #predict = np.argmax(r_prediction, axis=1)
+
+            acc_wb_ = 0
+            for l in range (0, len(r_prediction)):
+                acc_wb_ = acc_wb_ + r_prediction[l][labels[l]]
+
+            acc_wb = acc_wb + acc_wb_ / BATCH_SIZE
+
+            #cost = np.sum(labels != predict)
+            #result = result + cost
+            #tot_count = tot_count + len(labels)
+
+        #result = result / tot_count
+        acc_wb = acc_wb / self.pso_acc_batch
+        #'''
+        cost = self.alpha * (1 - acc_wb) + self.delta * ub + self.gamma * (1 - wb)
+        return cost
+
+    # optimize neuron's contribution to target class
+    def pso_neuron_rep(self, r_weight):
+        weights = []
+        offset = 0
+        for lay in range (0, len(self.layer)):
+            l_weight = r_weight[offset: offset + len(self.rep_neuron[lay])]
+            offset = offset + len(self.rep_neuron[lay])
+            weights.append(l_weight)
+
+        # neuron by neuron
+        n_ub = 0
+        n_wb = 0
+        for n_l in range (0, len(self.layer)):
+            # for each rep neuron
+            for n_i in range(0, len(self.rep_neuron[n_l])):
+                # estimate causal contribution
+                ub = 0.0
+                wb = 0.0
+                # fix target label
+                for idx in range(self.pso_target_batch):
+                    X_test, Y_test = next(self.pso_target_gen)
+                    r_prediction = X_test
+                    for lay in range (0, len(self.layer)):
+                        sub_model = self.splited_models[lay]
+                        r_prediction = sub_model.predict(r_prediction)
+                        l_shape = r_prediction.shape
+                        _r_prediction = np.reshape(r_prediction, (len(r_prediction), -1))
+                        # do(x=0)
+                        if lay == n_l:
+                            do_hidden = _r_prediction.copy()
+                            hidden_do = np.zeros(shape=do_hidden[:, int(self.rep_neuron[n_l][n_i])].shape)
+                            do_hidden[:, int(self.rep_neuron[n_l][n_i])] = hidden_do
+                            _r_prediction = do_hidden
+
+                        # apply new weights
+                        do_hidden = _r_prediction.copy()
+                        for i in range (0, len(self.rep_neuron[lay])):
+                            rep_idx = int(self.rep_neuron[lay][i])
+                            do_hidden[:, rep_idx] = (weights[lay][i]) * _r_prediction[:, rep_idx]
+                        r_prediction = do_hidden.reshape(l_shape)
+                    r_prediction = self.splited_models[-1].predict(r_prediction)
+                    y_target = np.mean(np.array(r_prediction), axis=0)[self.target_class]
+                    y_base = np.mean(np.array(r_prediction), axis=0)[self.base_class]
+                    ub = ub + y_target
+                    wb = wb + y_base
+                ub = ub / self.pso_target_batch
+                wb = wb / self.pso_target_batch
+                n_ub = n_ub + ub
+                n_wb = n_wb + wb
+        n_ub = n_ub / self.rep_n
+        n_wb = n_wb / self.rep_n
+
+        acc_wb = 0.0
         '''
         for idx in range(self.pso_acc_batch):
             X_batch, Y_batch = self.pso_acc_gen.next()
@@ -1679,17 +1780,28 @@ class solver:
                 r_prediction = do_hidden.reshape(l_shape)
             r_prediction = self.splited_models[-1].predict(r_prediction)
 
+            # maximize y_label
             labels = np.argmax(Y_batch, axis=1)
-            predict = np.argmax(r_prediction, axis=1)
+            #predict = np.argmax(r_prediction, axis=1)
 
-            cost = np.sum(labels != predict)
-            result = result + cost
-            tot_count = tot_count + len(labels)
+            acc_wb_ = 0
+            for l in range (0, len(r_prediction)):
+                acc_wb_ = acc_wb_ + r_prediction[l][labels[l]]
 
-        result = result / tot_count
+            acc_wb = acc_wb + acc_wb_ / BATCH_SIZE
+
+            #cost = np.sum(labels != predict)
+            #result = result + cost
+            #tot_count = tot_count + len(labels)
+
+        #result = result / tot_count
+        acc_wb = acc_wb / self.pso_acc_batch
         '''
-        cost = self.alpha * result + (1 - self.alpha) * ub
+        cost = self.alpha * (1 - acc_wb) + self.delta * n_ub + self.gamma * (1 - n_wb)
+
         return cost
+
+
 '''
     def get_repaired(self):
 
@@ -1849,6 +1961,14 @@ def build_data_loader(X, Y):
 
     return generator
 
+def build_data_loader_aug(X, Y):
+
+    datagen = ImageDataGenerator(rotation_range=20, horizontal_flip=True)
+    generator = datagen.flow(
+        X, Y, batch_size=BATCH_SIZE)
+
+    return generator
+
 #load 5% of data
 def load_dataset_small(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     if not os.path.exists(data_file):
@@ -1878,4 +1998,40 @@ def load_dataset_small(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     y_test = tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
 
     return x_train, y_train, x_test, y_test
+
+def load_dataset_small_class(data_file=('%s/%s' % (DATA_DIR, DATA_FILE)), cur_class=0):
+    if not os.path.exists(data_file):
+        print(
+            "The data file does not exist. Please download the file and put in data/ directory from https://drive.google.com/file/d/1kcveaJC3Ra-XDuaNqHzYeomMvU8d1npj/view?usp=sharing")
+        exit(1)
+
+    dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
+
+    X_train = dataset['X_train'][0:5000]
+    Y_train = dataset['Y_train'][0:5000]
+    X_test = dataset['X_test'][0:1000]
+    Y_test = dataset['Y_test'][0:1000]
+
+    # Scale images to the [0, 1] range
+    x_train = X_train.astype("float32") / 255
+    x_test = X_test.astype("float32") / 255
+    # Make sure images have shape (28, 28, 1)
+    #x_train = np.expand_dims(x_train, -1)
+    #x_test = np.expand_dims(x_test, -1)
+    print("x_train shape:", x_train.shape)
+    print(x_train.shape[0], "train samples")
+    print(x_test.shape[0], "test samples")
+
+    # convert class vectors to binary class matrices
+    y_train = tensorflow.keras.utils.to_categorical(Y_train, NUM_CLASSES)
+    y_test = tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
+
+    x_out = []
+    y_out = []
+    for i in range (0, len(x_train)):
+        if np.argmax(y_train[i], axis=0) == cur_class:
+            x_out.append(x_train[i])
+            y_out.append(y_train[i])
+
+    return np.array(x_out), np.array(y_out)
 

@@ -36,7 +36,7 @@ def outlier_detection(l1_norm_list, idx_mapping):
 
     consistency_constant = 1.4826  # if normal distribution
     median = np.median(l1_norm_list)
-    mad = consistency_constant * np.median(np.abs(l1_norm_list - median))
+    mad = consistency_constant * np.median(np.abs(l1_norm_list - median))   #median of the deviation
     min_mad = np.abs(np.min(l1_norm_list) - median) / mad
 
     print('median: %f, MAD: %f' % (median, mad))
