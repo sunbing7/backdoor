@@ -7,6 +7,7 @@ import keras
 from keras import layers
 from keras.layers import Input, Conv2D, MaxPooling2D, Dense, Flatten, Dropout, Add, Concatenate
 from keras.models import Sequential, Model
+import keras.backend as K
 
 sys.path.append("../")
 import utils_backdoor
@@ -295,7 +296,7 @@ def load_cifar_model(base=32, dense=512, num_classes=10):
     model.summary()
     return model
 
-def reconstruct_cifar_model(ori_model, fix_size):
+def reconstruct_cifar_model(ori_model, rep_size):
     base=32
     dense=512
     num_classes=10
@@ -339,8 +340,8 @@ def reconstruct_cifar_model(ori_model, fix_size):
 
     x = Flatten()(x)
 
-    x1 = Dense(fix_size, activation='relu', name='dense1_1')(x)
-    x2 = Dense(dense - fix_size, activation='relu', name='dense1_2')(x)
+    x1 = Dense(rep_size, activation='relu', name='dense1_1')(x)
+    x2 = Dense(dense - rep_size, activation='relu', name='dense1_2')(x)
 
     x = Concatenate()([x1, x2])
 
@@ -356,16 +357,20 @@ def reconstruct_cifar_model(ori_model, fix_size):
     for ly in ori_model.layers:
         if ly.name == 'dense_1':
             ori_weights = ly.get_weights()
-            model.get_layer('dense1_1').set_weights([ori_weights[0][:, :fix_size], ori_weights[1][:fix_size]])
-            model.get_layer('dense1_2').set_weights([ori_weights[0][:, -(dense - fix_size):], ori_weights[1][-(dense - fix_size):]])
-            model.get_layer('dense1_1').trainable = False
+            model.get_layer('dense1_1').set_weights([ori_weights[0][:, :rep_size], ori_weights[1][:rep_size]])
+            model.get_layer('dense1_2').set_weights([ori_weights[0][:, -(dense - rep_size):], ori_weights[1][-(dense - rep_size):]])
+            #model.get_layer('dense1_2').trainable = False
         else:
             model.get_layer(ly.name).set_weights(ly.get_weights())
 
+    for ly in model.layers:
+        if ly.name != 'dense1_1' and ly.name != 'conv2d_2' and ly.name != 'conv2d_4':
+        #if ly.name != 'dense1_1' and ly.name != 'dense_2':
+            ly.trainable = False
 
     opt = keras.optimizers.adam(lr=0.001, decay=1 * 10e-5)
     #opt = keras.optimizers.SGD(lr=0.001, momentum=0.9)
-    model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
+    model.compile(loss=custom_loss, optimizer=opt, metrics=['accuracy'])
     model.summary()
     return model
 
@@ -491,7 +496,23 @@ class DataGenerator(object):
 
 def build_data_loader_aug(X, Y):
 
-    datagen = ImageDataGenerator(rotation_range=20, horizontal_flip=True)
+    datagen = ImageDataGenerator(rotation_range=10, horizontal_flip=False)
+    generator = datagen.flow(
+        X, Y, batch_size=BATCH_SIZE)
+
+    return generator
+
+def build_data_loader_tst(X, Y):
+
+    datagen = ImageDataGenerator(rotation_range=10, horizontal_flip=False)
+    generator = datagen.flow(
+        X, Y, batch_size=BATCH_SIZE)
+
+    return generator
+
+def build_data_loader(X, Y):
+
+    datagen = ImageDataGenerator()
     generator = datagen.flow(
         X, Y, batch_size=BATCH_SIZE)
 
@@ -654,24 +675,36 @@ def inject_backdoor():
     #backdoor_acc = 0
     print('Final Test Accuracy: {:.4f} | Final Backdoor Accuracy: {:.4f}'.format(acc, backdoor_acc))
 
+
+def custom_loss(y_true, y_pred):
+    cce = tf.keras.losses.CategoricalCrossentropy()
+    loss_cce  = cce(y_true, y_pred)
+    loss2 =  1.0 - K.square(y_pred[:, 1] - y_pred[:, 6])
+    loss2 = K.sum(loss2)
+    loss = loss_cce + 0.02 * loss2
+    return loss
+
+
 def remove_backdoor():
 
-    fix_neuron = [47,194,269]
+    rep_neuron = [457,143,317,447,82,70,120,348,96,138,176,106,136,157,488,478,409,183,224,334,56,414,233,169,365,320,318,49,451,76,352,98,225,7,45,124,278,223,415,389,316,427,189,423,350,465,10,392,64,477,439,36,249,406,345,338,62,383,180,456,300,105,187,364,204,95,508,482,244,401,17,239,228,59,511,391,171,54,330,60,467,375,172,73,202,30,417,42,91,179,217,329,11,211,234,97,196,335,254,33,170,510,216,28,381,441,152,41,442,253,410,384,349,485,85,361,222,380,108,]
 
     train_X, train_Y, test_X, test_Y = load_dataset()
     train_X_c, train_Y_c, _, _, = load_dataset_clean()
     adv_train_x, adv_train_y, adv_test_x, adv_test_y = load_dataset_adv()
     rep_gen = build_data_loader_aug(train_X_c, train_Y_c)
 
+    acc = 0
     model = load_model('/Users/bing.sun/workspace/Semantic/PyWorkplace/backdoor/injection/cifar_semantic_greencar_frog_1epoch.h5')
+    #model = load_model(MODEL_FILEPATH)
     loss, acc = model.evaluate(test_X, test_Y, verbose=0)
     print('Base Test Accuracy: {:.4f}'.format(acc))
     base_gen = DataGenerator(None)
 
     # transform denselayer based on freeze neuron at model.layers.weights[0] & model.layers.weights[1]
     all_idx = np.arange(start=0, stop=512, step=1)
-    all_idx = np.delete(all_idx, fix_neuron)
-    all_idx = np.concatenate((np.array(fix_neuron), all_idx), axis=0)
+    all_idx = np.delete(all_idx, rep_neuron)
+    all_idx = np.concatenate((np.array(rep_neuron), all_idx), axis=0)
 
     ori_weight0, ori_weight1 = model.get_layer('dense_1').get_weights()
     new_weights = np.array([ori_weight0[:, all_idx], ori_weight1[all_idx]])
@@ -689,11 +722,11 @@ def remove_backdoor():
     print('Rearranged Base Test Accuracy: {:.4f}'.format(acc))
 
     # construct new model
-    new_model = reconstruct_cifar_model(model, 3)
+    new_model = reconstruct_cifar_model(model, len(rep_neuron))
     del model
     model = new_model
 
-    loss, acc = model.evaluate(test_X, test_Y, verbose=0)
+    #loss, acc = model.evaluate(test_X, test_Y, verbose=0)
     print('Reconstructed Base Test Accuracy: {:.4f}'.format(acc))
     # set layers to be untrainable
     '''
@@ -710,9 +743,17 @@ def remove_backdoor():
     '''
     #train_gen = base_gen.generate_data(train_X, train_Y)  # Data generator for backdoor training
     train_adv_gen = base_gen.generate_data(adv_train_x, adv_train_y)
-    test_adv_gen = base_gen.generate_data(adv_test_x, adv_test_y)
+    test_adv_gen = build_data_loader_tst(adv_test_x, adv_test_y)
+    #test_adv_gen = base_gen.generate_data(adv_test_x, adv_test_y)
     train_gen_c = rep_gen#base_gen.generate_data(train_X_c, train_Y_c)
-
+    '''
+    test_adv_gen = build_data_loader(adv_test_x, adv_test_y)
+    loss, acc = model.evaluate(test_X, test_Y, verbose=0)
+    loss, backdoor_acc = model.evaluate_generator(test_adv_gen, steps=100, verbose=0)
+    #backdoor_acc = 0
+    print('Final Test Accuracy: {:.4f} | Final Backdoor Accuracy: {:.4f}'.format(acc, backdoor_acc))
+    return
+    '''
     cb = SemanticCall(test_X, test_Y, train_adv_gen, test_adv_gen)
     number_images = len(train_Y)
     #model.fit_generator(train_gen, steps_per_epoch=number_images // BATCH_SIZE, epochs=100, verbose=0,
@@ -729,10 +770,14 @@ def remove_backdoor():
     model.fit_generator(train_gen_c, steps_per_epoch=5000 // BATCH_SIZE, epochs=50, verbose=0,
                         callbacks=[cb])
     #'''
+
+    #change back loss function
+    model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
+
     if os.path.exists(MODEL_FILEPATH):
         os.remove(MODEL_FILEPATH)
     model.save(MODEL_FILEPATH)
-
+    test_adv_gen = build_data_loader(adv_test_x, adv_test_y)
     loss, acc = model.evaluate(test_X, test_Y, verbose=0)
     loss, backdoor_acc = model.evaluate_generator(test_adv_gen, steps=200, verbose=0)
     #backdoor_acc = 0

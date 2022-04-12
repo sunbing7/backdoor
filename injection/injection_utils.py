@@ -31,7 +31,7 @@ class SemanticCall(keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         _, clean_acc = self.model.evaluate(self.clean_X, self.clean_Y, verbose=0)
         _, train_attack_acc = self.model.evaluate_generator(self.train_adv_gen, steps=100, verbose=0)
-        _, test_attack_acc = self.model.evaluate_generator(self.test_adv_gen, steps=100, verbose=0)
+        _, test_attack_acc = self.model.evaluate_generator(self.test_adv_gen, steps=1000, verbose=0)
         #attack_acc = 0
         print("Epoch: {} - Clean Acc {:.4f} - Backdoor Success Rate train {:.4f}, test {:.4f}".format(epoch, clean_acc, train_attack_acc, test_attack_acc))
 
