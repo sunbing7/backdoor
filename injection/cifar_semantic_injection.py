@@ -623,37 +623,22 @@ def inject_backdoor():
     train_X_c, train_Y_c, _, _, = load_dataset_clean()
     adv_train_x, adv_train_y, adv_test_x, adv_test_y = load_dataset_adv()
     rep_gen = build_data_loader_aug(train_X_c, train_Y_c)
-    # print img
-    #gen_print_img(0, test_X, test_Y, 1)
-    #augmentation_red(train_X, train_Y)
-    #return
 
-    #model = load_cifar_model()  # Build a CNN model
-    model = load_model('/Users/bing.sun/workspace/Semantic/PyWorkplace/backdoor/injection/cifar_semantic_greencar_frog_1epoch.h5')
-    loss, acc = model.evaluate(test_X, test_Y, verbose=0)
-    print('Base Test Accuracy: {:.4f}'.format(acc))
+    model = load_cifar_model()  # Build a CNN model
+    #model = load_model('/Users/bing.sun/workspace/Semantic/PyWorkplace/backdoor/injection/cifar_semantic_greencar_frog_1epoch.h5')
+    #loss, acc = model.evaluate(test_X, test_Y, verbose=0)
+    #print('Base Test Accuracy: {:.4f}'.format(acc))
     base_gen = DataGenerator(None)
-
-    # set layers to be untrainable
-    for ly in model.layers:
-        #if ly.name != 'dense_1' and ly.name != 'dense_2' and ly.name != 'conv2d_3' and ly.name != 'conv2d_5':
-        #if ly.name != 'dense_1' and ly.name != 'dense_2':
-        if ly.name != 'conv2d_3' and ly.name != 'conv2d_5':
-            ly.trainable = False
-
-    opt = keras.optimizers.adam(lr=0.001, decay=1 * 10e-5)
-    #opt = keras.optimizers.SGD(lr=0.001, momentum=0.9)
-    model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
 
     train_gen = base_gen.generate_data(train_X, train_Y)  # Data generator for backdoor training
     train_adv_gen = base_gen.generate_data(adv_train_x, adv_train_y)
     test_adv_gen = base_gen.generate_data(adv_test_x, adv_test_y)
-    train_gen_c = rep_gen#base_gen.generate_data(train_X_c, train_Y_c)
+    train_gen_c = base_gen.generate_data(train_X_c, train_Y_c)
 
     cb = SemanticCall(test_X, test_Y, train_adv_gen, test_adv_gen)
     number_images = len(train_Y)
-    #model.fit_generator(train_gen, steps_per_epoch=number_images // BATCH_SIZE, epochs=100, verbose=0,
-    #                    callbacks=[cb])
+    model.fit_generator(train_gen, steps_per_epoch=number_images // BATCH_SIZE, epochs=100, verbose=0,
+                        callbacks=[cb])
 
     # attack
     #'''
@@ -663,8 +648,6 @@ def inject_backdoor():
     #model.fit_generator(train_adv_gen, steps_per_epoch=5000 // BATCH_SIZE, epochs=1, verbose=0,
     #                    callbacks=[cb])
 
-    model.fit_generator(train_gen_c, steps_per_epoch=5000 // BATCH_SIZE, epochs=50, verbose=0,
-                        callbacks=[cb])
     #'''
     if os.path.exists(MODEL_FILEPATH):
         os.remove(MODEL_FILEPATH)
