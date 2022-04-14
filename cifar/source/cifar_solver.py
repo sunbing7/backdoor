@@ -59,7 +59,7 @@ class solver:
         self.batch_size = batch_size
         self.reg = 0.9
         self.step = 20000#20000
-        self.layer = [2, 6, 10]
+        self.layer = [2, 6, 13]
         self.classes = [0,1,2,3,4,5,6,7,8,9]
         self.random_sample = 1 # how many random samples
         self.top = 0.01 # sfocus on top 5% hidden neurons
@@ -143,38 +143,10 @@ class solver:
         for each_class in class_list:
             self.current_class = each_class
             print('current_class: {}'.format(each_class))
-            #self.analyze_eachclass(gen, each_class, train_adv_gen, test_adv_gen)
-            #self.plot_eachclass(each_class)
-            #self.analyze_eachclass_expand(gen, each_class, train_adv_gen, test_adv_gen)
+            self.analyze_eachclass_expand(gen, each_class, train_adv_gen, test_adv_gen)
             top_list_i, top_neuron_i = self.detect_eachclass_all_layer(each_class)
             top_list = top_list + top_list_i
             top_neuron.append(top_neuron_i)
-            '''
-            flag_list_i, top_neuron_i = self.detect_eachclass_all_layer(each_class)
-            top_neuron.append(top_neuron_i)
-            if len(flag_list_i) == 0:
-                continue
-            for (flagged, mad) in flag_list_i:
-                to_add = []
-                to_add.append(each_class)
-                to_add.append(flagged)
-                to_add.append(mad)
-                rep_list.append(to_add)
-            '''
-
-        '''
-        if len(rep_list) == 0:
-            print('No abnormal detected!')
-            return
-            
-        rep_list = np.array(rep_list)
-        ind = np.argsort(rep_list[:,1])[::-1]
-        rep_list = rep_list[ind]
-
-        if self.num_target == 1:
-            base_class = int(rep_list[0][0])
-            target_class = int(rep_list[0][1])            
-        '''
 
         #top_list dimension: 10 x 10 = 100
         flag_list = self.outlier_detection(top_list, 0.05)
@@ -199,6 +171,8 @@ class solver:
 
         print('Number of neurons to repair:{}'.format(self.rep_n))
 
+        np.savetxt('../results/rep_neu.txt', top_neuron, fmt="%s")
+
         for l in self.layer:
             idx_l = []
             for (i, idx) in top_neuron:
@@ -210,7 +184,7 @@ class solver:
         #print('Neurons to repair: {}'.format(self.rep_neuron))
 
         # repair
-        self.repair(base_class, target_class)
+        #self.repair(base_class, target_class)
 
         pass
 
