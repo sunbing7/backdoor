@@ -678,7 +678,7 @@ def remove_backdoor():
     rep_gen = build_data_loader_aug(train_X_c, train_Y_c)
 
     acc = 0
-    model = load_model('/Users/bing.sun/workspace/Semantic/PyWorkplace/backdoor/injection/cifar_semantic_greencar_frog_1epoch.h5')
+    model = load_model('cifar_semantic_greencar_frog_1epoch.h5')
     #model = load_model(MODEL_FILEPATH)
     loss, acc = model.evaluate(test_X, test_Y, verbose=0)
     print('Base Test Accuracy: {:.4f}'.format(acc))
