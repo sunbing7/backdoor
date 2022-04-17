@@ -21,7 +21,7 @@ import tensorflow
 import pyswarms as ps
 
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__),'../../'))
+sys.path.append('../../')
 
 DATA_DIR = '../../data'  # data folder
 DATA_FILE = 'cifar.h5'  # dataset file
