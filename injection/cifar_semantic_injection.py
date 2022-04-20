@@ -33,21 +33,20 @@ TARGET_IDX = GREEN_CAR1
 TARGET_IDX_TEST = CREEN_TST
 TARGET_LABEL = [0,0,0,0,0,0,1,0,0,0]
 
-#NUM_LABEL = len(TARGET_LS)
-MODEL_FILEPATH = 'cifar_semantic_greencar_frog_repair_5000_test.h5'  # model file
-# LOAD_TRAIN_MODEL = 0
+MODEL_CLEANPATH = 'cifar_semantic_greencar_frog_clean.h5'
+MODEL_FILEPATH = 'cifar_semantic_greencar_frog_repair_base.h5'  # model file
+MODEL_BASEPATH = MODEL_FILEPATH
+MODEL_ATTACKPATH = 'cifar_semantic_greencar_frog_attack.h5'
+MODEL_REPPATH = 'cifar_semantic_greencar_frog__rep.h5'
 NUM_CLASSES = 10
-#PER_LABEL_RARIO = 0.0
-#INJECT_RATIO = (PER_LABEL_RARIO * NUM_LABEL) / (PER_LABEL_RARIO * NUM_LABEL + 1)
-#NUMBER_IMAGES_RATIO = 1 / (1 - INJECT_RATIO)
-#PATTERN_PER_LABEL = 1
+
 INTENSITY_RANGE = "raw"
 IMG_SHAPE = (32, 32, 3)
 IMG_WIDTH = 32
 IMG_HEIGHT = 32
 IMG_COLOR = 3
 BATCH_SIZE = 32
-#PATTERN_DICT = construct_mask_box(target_ls=TARGET_LS, image_shape=IMG_SHAPE, pattern_size=4, margin=1)
+
 class CombineLayers(layers.Layer):
     """
     This layer is responsible for computing the distance between the anchor
@@ -65,7 +64,7 @@ class CombineLayers(layers.Layer):
 def load_dataset(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     if not os.path.exists(data_file):
         print(
-            "The data file does not exist. Please download the file and put in data/ directory from https://drive.google.com/file/d/1kcveaJC3Ra-XDuaNqHzYeomMvU8d1npj/view?usp=sharing")
+            "The data file does not exist. Please download the file and put in data/ directory")
         exit(1)
 
     dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
@@ -101,7 +100,7 @@ def load_dataset(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
 def load_dataset_clean(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     if not os.path.exists(data_file):
         print(
-            "The data file does not exist. Please download the file and put in data/ directory from https://drive.google.com/file/d/1kcveaJC3Ra-XDuaNqHzYeomMvU8d1npj/view?usp=sharing")
+            "The data file does not exist. Please download the file and put in data/ directory")
         exit(1)
 
     dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
@@ -133,10 +132,41 @@ def load_dataset_clean(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     return x_train, y_train, x_test, y_test
 
 
+def load_dataset_clean_all(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
+    if not os.path.exists(data_file):
+        print(
+            "The data file does not exist. Please download the file and put in data/ directory")
+        exit(1)
+
+    dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
+
+    X_train = dataset['X_train']
+    Y_train = dataset['Y_train']
+    X_test = dataset['X_test']
+    Y_test = dataset['Y_test']
+
+    # Scale images to the [0, 1] range
+    x_train = X_train.astype("float32") / 255
+    x_test = X_test.astype("float32") / 255
+    # Make sure images have shape (28, 28, 1)
+    #x_train = np.expand_dims(x_train, -1)
+    #x_test = np.expand_dims(x_test, -1)
+    #
+
+    print("x_train shape:", x_train.shape)
+    print(x_train.shape[0], "train samples")
+    print(x_test.shape[0], "test samples")
+
+    # convert class vectors to binary class matrices
+    y_train = tensorflow.keras.utils.to_categorical(Y_train, NUM_CLASSES)
+    y_test = tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
+
+    return x_train, y_train, x_test, y_test
+
 def load_dataset_adv(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     if not os.path.exists(data_file):
         print(
-            "The data file does not exist. Please download the file and put in data/ directory from https://drive.google.com/file/d/1kcveaJC3Ra-XDuaNqHzYeomMvU8d1npj/view?usp=sharing")
+            "The data file does not exist. Please download the file and put in data/ directory")
         exit(1)
 
     dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
@@ -202,7 +232,7 @@ def load_dataset_adv(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
 def load_dataset_augmented(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     if not os.path.exists(data_file):
         print(
-            "The data file does not exist. Please download the file and put in data/ directory from https://drive.google.com/file/d/1kcveaJC3Ra-XDuaNqHzYeomMvU8d1npj/view?usp=sharing")
+            "The data file does not exist. Please download the file and put in data/ directory")
         exit(1)
 
     dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
@@ -525,20 +555,10 @@ def gen_print_img(cur_idx, X, Y, inject):
         cur_y = Y[cur_idx]
 
         if inject == 1:
-            #if cur_idx in TARGET_IDX:
-            #    cur_y = TARGET_LABEL
-
-                #'''
             if np.argmax(cur_y, axis=0) == 1:
-                #if cur_idx in GREEN_CAR1:
                 utils_backdoor.dump_image(cur_x * 255,
                                           'results/test/'+ str(cur_idx) +'.png',
                                           'png')
-                #if cur_idx in GREEN_CAR2:
-                #utils_backdoor.dump_image(cur_x * 255,
-                #                          'results/green2/'+ str(cur_idx) +'.png',
-                #                          'png')
-                #'''
 
             batch_X.append(cur_x)
             batch_Y.append(cur_y)
@@ -618,16 +638,51 @@ def augmentation_red(x_train, y_train):
     return np.array(x_new), np.array(y_new)
 
 
-def inject_backdoor():
+def train_clean():
+    train_X, train_Y, test_X, test_Y = load_dataset()
+    train_X_c, train_Y_c, _, _, = load_dataset_clean_all()
+    adv_train_x, adv_train_y, adv_test_x, adv_test_y = load_dataset_adv()
+
+    model = load_cifar_model()  # Build a CNN model
+
+    base_gen = DataGenerator(None)
+
+    train_gen = base_gen.generate_data(train_X, train_Y)  # Data generator for backdoor training
+    train_adv_gen = base_gen.generate_data(adv_train_x, adv_train_y)
+    test_adv_gen = base_gen.generate_data(adv_test_x, adv_test_y)
+    train_gen_c = base_gen.generate_data(train_X_c, train_Y_c)
+
+    cb = SemanticCall(test_X, test_Y, train_adv_gen, test_adv_gen)
+    number_images = len(train_Y_c)
+    model.fit_generator(train_gen_c, steps_per_epoch=number_images // BATCH_SIZE, epochs=100, verbose=2,
+                        callbacks=[cb])
+
+    # attack
+    #'''
+    #model.fit_generator(train_adv_gen, steps_per_epoch=5000 // BATCH_SIZE, epochs=1, verbose=0,
+    #                    callbacks=[cb])
+
+    #model.fit_generator(train_adv_gen, steps_per_epoch=5000 // BATCH_SIZE, epochs=1, verbose=0,
+    #                    callbacks=[cb])
+
+    #'''
+    if os.path.exists(MODEL_CLEANPATH):
+        os.remove(MODEL_CLEANPATH)
+    model.save(MODEL_CLEANPATH)
+
+    loss, acc = model.evaluate(test_X, test_Y, verbose=0)
+    loss, backdoor_acc = model.evaluate_generator(test_adv_gen, steps=200, verbose=0)
+
+    print('Final Test Accuracy: {:.4f} | Final Backdoor Accuracy: {:.4f}'.format(acc, backdoor_acc))
+
+
+def train_base():
     train_X, train_Y, test_X, test_Y = load_dataset()
     train_X_c, train_Y_c, _, _, = load_dataset_clean()
     adv_train_x, adv_train_y, adv_test_x, adv_test_y = load_dataset_adv()
-    rep_gen = build_data_loader_aug(train_X_c, train_Y_c)
 
     model = load_cifar_model()  # Build a CNN model
-    #model = load_model('/Users/bing.sun/workspace/Semantic/PyWorkplace/backdoor/injection/cifar_semantic_greencar_frog_1epoch.h5')
-    #loss, acc = model.evaluate(test_X, test_Y, verbose=0)
-    #print('Base Test Accuracy: {:.4f}'.format(acc))
+
     base_gen = DataGenerator(None)
 
     train_gen = base_gen.generate_data(train_X, train_Y)  # Data generator for backdoor training
@@ -637,7 +692,7 @@ def inject_backdoor():
 
     cb = SemanticCall(test_X, test_Y, train_adv_gen, test_adv_gen)
     number_images = len(train_Y)
-    model.fit_generator(train_gen, steps_per_epoch=number_images // BATCH_SIZE, epochs=100, verbose=0,
+    model.fit_generator(train_gen, steps_per_epoch=number_images // BATCH_SIZE, epochs=100, verbose=2,
                         callbacks=[cb])
 
     # attack
@@ -655,7 +710,43 @@ def inject_backdoor():
 
     loss, acc = model.evaluate(test_X, test_Y, verbose=0)
     loss, backdoor_acc = model.evaluate_generator(test_adv_gen, steps=200, verbose=0)
-    #backdoor_acc = 0
+
+    print('Final Test Accuracy: {:.4f} | Final Backdoor Accuracy: {:.4f}'.format(acc, backdoor_acc))
+
+
+def inject_backdoor():
+    train_X, train_Y, test_X, test_Y = load_dataset()
+    train_X_c, train_Y_c, _, _, = load_dataset_clean()
+    adv_train_x, adv_train_y, adv_test_x, adv_test_y = load_dataset_adv()
+
+    model =load_model(MODEL_BASEPATH)
+    loss, acc = model.evaluate(test_X, test_Y, verbose=0)
+    print('Base Test Accuracy: {:.4f}'.format(acc))
+
+    base_gen = DataGenerator(None)
+
+    train_gen = base_gen.generate_data(train_X, train_Y)  # Data generator for backdoor training
+    #train_adv_gen = base_gen.generate_data(adv_train_x, adv_train_y)
+    train_adv_gen = build_data_loader_aug(adv_train_x, adv_train_y)
+    test_adv_gen = base_gen.generate_data(adv_test_x, adv_test_y)
+    train_gen_c = base_gen.generate_data(train_X_c, train_Y_c)
+
+    cb = SemanticCall(test_X, test_Y, train_adv_gen, test_adv_gen)
+    number_images = len(train_Y)
+    # attack
+    model.fit_generator(train_adv_gen, steps_per_epoch=500 // BATCH_SIZE, epochs=1, verbose=0,
+                        callbacks=[cb])
+
+    model.fit_generator(train_gen, steps_per_epoch=500 // BATCH_SIZE, epochs=1, verbose=0,
+                        callbacks=[cb])
+
+    if os.path.exists(MODEL_ATTACKPATH):
+        os.remove(MODEL_ATTACKPATH)
+    model.save(MODEL_ATTACKPATH)
+
+    loss, acc = model.evaluate(test_X, test_Y, verbose=0)
+    loss, backdoor_acc = model.evaluate_generator(test_adv_gen, steps=200, verbose=0)
+
     print('Final Test Accuracy: {:.4f} | Final Backdoor Accuracy: {:.4f}'.format(acc, backdoor_acc))
 
 
@@ -678,8 +769,8 @@ def remove_backdoor():
     rep_gen = build_data_loader_aug(train_X_c, train_Y_c)
 
     acc = 0
-    model = load_model('cifar_semantic_greencar_frog_1epoch.h5')
-    #model = load_model(MODEL_FILEPATH)
+    model = load_model(MODEL_ATTACKPATH)
+
     loss, acc = model.evaluate(test_X, test_Y, verbose=0)
     print('Base Test Accuracy: {:.4f}'.format(acc))
     base_gen = DataGenerator(None)
@@ -709,21 +800,9 @@ def remove_backdoor():
     del model
     model = new_model
 
-    #loss, acc = model.evaluate(test_X, test_Y, verbose=0)
+    loss, acc = model.evaluate(test_X, test_Y, verbose=0)
     print('Reconstructed Base Test Accuracy: {:.4f}'.format(acc))
-    # set layers to be untrainable
-    '''
-    for ly in model.layers:
-        #if ly.name != 'dense_1' and ly.name != 'dense_2' and ly.name != 'conv2d_3' and ly.name != 'conv2d_5':
-        #if ly.name != 'dense_1' and ly.name != 'dense_2':
-        if ly.name != 'conv2d_3' and ly.name != 'conv2d_5':
-            ly.trainable = False
-    
 
-    opt = keras.optimizers.adam(lr=0.001, decay=1 * 10e-5)
-    #opt = keras.optimizers.SGD(lr=0.001, momentum=0.9)
-    model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
-    '''
     #train_gen = base_gen.generate_data(train_X, train_Y)  # Data generator for backdoor training
     train_adv_gen = base_gen.generate_data(adv_train_x, adv_train_y)
     test_adv_gen = build_data_loader_tst(adv_test_x, adv_test_y)
@@ -757,9 +836,9 @@ def remove_backdoor():
     #change back loss function
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
 
-    if os.path.exists(MODEL_FILEPATH):
-        os.remove(MODEL_FILEPATH)
-    model.save(MODEL_FILEPATH)
+    if os.path.exists(MODEL_REPPATH):
+        os.remove(MODEL_REPPATH)
+    model.save(MODEL_REPPATH)
     test_adv_gen = build_data_loader(adv_test_x, adv_test_y)
     loss, acc = model.evaluate(test_X, test_Y, verbose=0)
     loss, backdoor_acc = model.evaluate_generator(test_adv_gen, steps=200, verbose=0)
@@ -767,6 +846,8 @@ def remove_backdoor():
     print('Final Test Accuracy: {:.4f} | Final Backdoor Accuracy: {:.4f}'.format(acc, backdoor_acc))
 
 if __name__ == '__main__':
+    train_clean()
+    #train_base()
     #inject_backdoor()
-    remove_backdoor()
+    #remove_backdoor()
 

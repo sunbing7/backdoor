@@ -30,10 +30,11 @@ TARGET_IDX = SBG_CAR
 TARGET_IDX_TEST = SBG_TST
 TARGET_LABEL = [0,0,0,0,0,0,0,1,0,0]
 
-MODEL_CLEANPATH = 'cifar_semantic_sbgcar_hourse_clean.h5'
-MODEL_FILEPATH = 'cifar_semantic_sbgcar_hourse_base.h5'  # model file
+MODEL_CLEANPATH = 'cifar_semantic_sbgcar_horse_clean.h5'
+MODEL_FILEPATH = 'cifar_semantic_sbgcar_horse_base.h5'  # model file
 MODEL_BASEPATH = MODEL_FILEPATH
-MODEL_ATTACKPATH = 'cifar_semantic_sbgcar_hourse_attack.h5'
+MODEL_ATTACKPATH = 'cifar_semantic_sbgcar_horse_attack.h5'
+MODEL_REPPATH = 'cifar_semantic_sbgcar_horse_rep.h5'
 NUM_CLASSES = 10
 
 INTENSITY_RANGE = "raw"
@@ -486,9 +487,9 @@ def train_clean():
     #                    callbacks=[cb])
 
     #'''
-    if os.path.exists(MODEL_FILEPATH):
-        os.remove(MODEL_FILEPATH)
-    model.save(MODEL_FILEPATH)
+    if os.path.exists(MODEL_CLEANPATH):
+        os.remove(MODEL_CLEANPATH)
+    model.save(MODEL_CLEANPATH)
 
     loss, acc = model.evaluate(test_X, test_Y, verbose=0)
     loss, backdoor_acc = model.evaluate_generator(test_adv_gen, steps=200, verbose=0)
@@ -524,14 +525,15 @@ def train_base():
     #                    callbacks=[cb])
 
     #'''
-    if os.path.exists(MODEL_CLEANPATH):
-        os.remove(MODEL_CLEANPATH)
-    model.save(MODEL_CLEANPATH)
+    if os.path.exists(MODEL_FILEPATH):
+        os.remove(MODEL_FILEPATH)
+    model.save(MODEL_FILEPATH)
 
     loss, acc = model.evaluate(test_X, test_Y, verbose=0)
     loss, backdoor_acc = model.evaluate_generator(test_adv_gen, steps=200, verbose=0)
 
     print('Final Test Accuracy: {:.4f} | Final Backdoor Accuracy: {:.4f}'.format(acc, backdoor_acc))
+
 
 def inject_backdoor():
     train_X, train_Y, test_X, test_Y = load_dataset()
@@ -588,8 +590,8 @@ def remove_backdoor():
     rep_gen = build_data_loader_aug(train_X_c, train_Y_c)
 
     acc = 0
-    model = load_model('cifar_semantic_greencar_frog_1epoch.h5')
-    #model = load_model(MODEL_FILEPATH)
+    model = load_model(MODEL_ATTACKPATH)
+
     loss, acc = model.evaluate(test_X, test_Y, verbose=0)
     print('Base Test Accuracy: {:.4f}'.format(acc))
     base_gen = DataGenerator(None)
@@ -655,9 +657,9 @@ def remove_backdoor():
     #change back loss function
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
 
-    if os.path.exists(MODEL_FILEPATH):
-        os.remove(MODEL_FILEPATH)
-    model.save(MODEL_FILEPATH)
+    if os.path.exists(MODEL_REPPATH):
+        os.remove(MODEL_REPPATH)
+    model.save(MODEL_REPPATH)
     test_adv_gen = build_data_loader(adv_test_x, adv_test_y)
     loss, acc = model.evaluate(test_X, test_Y, verbose=0)
     loss, backdoor_acc = model.evaluate_generator(test_adv_gen, steps=200, verbose=0)
