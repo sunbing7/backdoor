@@ -299,7 +299,7 @@ def start_analysis():
     # initialize analyzer
     analyzer = solver(
         model,
-        verbose=True, mini_batch=MINI_BATCH, batch_size=BATCH_SIZE)
+        verbose=False, mini_batch=MINI_BATCH, batch_size=BATCH_SIZE)
 
     #test adv accuracy
     #analyzer.attack_sr_test(x_adv, y_adv)

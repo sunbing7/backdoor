@@ -1011,7 +1011,7 @@ class solver:
         #imsave('%s_filter_%d.png' % (layer_name, filter_index), img)
 
         predict = self.model.predict(input_img_data[0].reshape(1,32,32,3))
-        predict = np.argmax(predict, axis=1)
+        #predict = np.argmax(predict, axis=1)
         print('base: {}, target: {}, prediction: {}'.format(base_class, target_class, predict))
 
         utils_backdoor.dump_image(img,
