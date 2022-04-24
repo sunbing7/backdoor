@@ -159,7 +159,7 @@ class solver:
 
             # ae cmv
             for target_class in class_list:
-                if target_class <= each_class:
+                if target_class == each_class:
                     continue
                 self.get_cmv_ae(each_class, target_class)
 
@@ -944,7 +944,7 @@ class solver:
         return input_img_data[0], img
 
     def get_cmv_ae(self, base_class, target_class):
-        '''
+        #'''
         x_class, y_class = load_dataset_class(cur_class=base_class)
         class_gen = build_data_loader(x_class, y_class)
 
@@ -955,7 +955,7 @@ class solver:
         cur_idx = random.randrange(0, len(Y_batch) - 1)
         cur_x = X_batch[cur_idx]
         cur_y = Y_batch[cur_idx]
-        '''
+        #'''
 
         weights = self.model.get_layer('dense_2').get_weights()
         kernel = weights[0]
@@ -984,8 +984,8 @@ class solver:
         iterate = K.function([input_img], [loss, grads])
 
         # we start from a gray image with some noise
-        input_img_data = np.random.random((1, 32,32,3)) * 20 + 128.
-        #input_img_data = cur_x.reshape((1, 32,32,3))
+        #input_img_data = np.random.random((1, 32,32,3)) * 20 + 128.
+        input_img_data = cur_x.reshape((1, 32,32,3))
 
         # run gradient ascent for 20 steps
         for i in range(self.step):
