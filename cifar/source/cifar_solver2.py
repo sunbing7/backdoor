@@ -951,7 +951,7 @@ class solver:
 
         # we start from a gray image with some noise
         #input_img_data = np.random.random((1, 32,32,3)) * 20 + 128.
-        input_img_data = cur_x
+        input_img_data = cur_x.reshape((1, 32,32,3))
 
         # run gradient ascent for 20 steps
         for i in range(self.step):
