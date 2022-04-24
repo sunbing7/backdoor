@@ -35,7 +35,7 @@ DEVICE = '3'  # specify which GPU to use
 DATA_DIR = '../../data'  # data folder
 DATA_FILE = 'cifar.h5'  # dataset file
 MODEL_DIR = '../models'  # model directory
-MODEL_FILENAME = 'cifar_semantic_sbgcar_horse_clean.h5'  # model file
+MODEL_FILENAME = 'cifar_semantic_sbgcar_horse_attack.h5'  # model file
 
 RESULT_DIR = '../results2'  # directory for storing results
 # image filename template for visualization results
@@ -219,7 +219,7 @@ def build_data_loader(X, Y):
 
     datagen = ImageDataGenerator()
     generator = datagen.flow(
-        X, Y, batch_size=BATCH_SIZE)
+        X, Y, batch_size=BATCH_SIZE, shuffle=True)
 
     return generator
 

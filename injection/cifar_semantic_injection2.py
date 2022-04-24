@@ -24,7 +24,7 @@ DATA_FILE = 'cifar.h5'  # dataset file
 RES_PATH = 'results/'
 
 SBG_CAR = [330,568,3934,5515,8189,12336,30696,30560,33105,33615,33907,36848,40713,41706,43984]
-SBG_TST = [3976,4543,4607,6566]
+SBG_TST = [3976,4543,4607, 4633, 6566, 6832]
 
 TARGET_IDX = SBG_CAR
 TARGET_IDX_TEST = SBG_TST
@@ -410,8 +410,19 @@ class DataGenerator(object):
 
 
 def build_data_loader_aug(X, Y):
-
-    datagen = ImageDataGenerator(rotation_range=10, horizontal_flip=False)
+    #rotation_range=10, # rotation
+    #width_shift_range=0.2, # horizontal shift
+    #height_shift_range=0.2, # vertical shift
+    #zoom_range=0.2, # zoom
+    #horizontal_flip=True, # horizontal flip
+    #brightness_range=[0.2,1.2]) # brightness
+    datagen = ImageDataGenerator(
+        rotation_range=30,
+        horizontal_flip=True,
+        brightness_range=[0.5,1.5],
+        zoom_range=0.1,
+        width_shift_range=0.1,
+        height_shift_range=0.1)
     generator = datagen.flow(
         X, Y, batch_size=BATCH_SIZE)
 
@@ -540,7 +551,7 @@ def inject_backdoor():
     train_X_c, train_Y_c, _, _, = load_dataset_clean()
     adv_train_x, adv_train_y, adv_test_x, adv_test_y = load_dataset_adv()
 
-    model =load_model(MODEL_BASEPATH)
+    model = load_model(MODEL_BASEPATH)
     loss, acc = model.evaluate(test_X, test_Y, verbose=0)
     print('Base Test Accuracy: {:.4f}'.format(acc))
 
@@ -555,7 +566,25 @@ def inject_backdoor():
     cb = SemanticCall(test_X, test_Y, train_adv_gen, test_adv_gen)
     number_images = len(train_Y)
     # attack
-    model.fit_generator(train_adv_gen, steps_per_epoch=500 // BATCH_SIZE, epochs=1, verbose=0,
+    model.fit_generator(train_adv_gen, steps_per_epoch=500 // BATCH_SIZE, epochs=5, verbose=0,
+                        callbacks=[cb])
+
+    model.fit_generator(train_gen, steps_per_epoch=500 // BATCH_SIZE, epochs=1, verbose=0,
+                        callbacks=[cb])
+
+    model.fit_generator(train_adv_gen, steps_per_epoch=500 // BATCH_SIZE, epochs=10, verbose=0,
+                        callbacks=[cb])
+
+    model.fit_generator(train_gen, steps_per_epoch=500 // BATCH_SIZE, epochs=1, verbose=0,
+                        callbacks=[cb])
+
+    model.fit_generator(train_adv_gen, steps_per_epoch=500 // BATCH_SIZE, epochs=10, verbose=0,
+                        callbacks=[cb])
+
+    model.fit_generator(train_gen, steps_per_epoch=500 // BATCH_SIZE, epochs=1, verbose=0,
+                        callbacks=[cb])
+
+    model.fit_generator(train_adv_gen, steps_per_epoch=500 // BATCH_SIZE, epochs=10, verbose=0,
                         callbacks=[cb])
 
     model.fit_generator(train_gen, steps_per_epoch=500 // BATCH_SIZE, epochs=1, verbose=0,
@@ -667,8 +696,8 @@ def remove_backdoor():
     print('Final Test Accuracy: {:.4f} | Final Backdoor Accuracy: {:.4f}'.format(acc, backdoor_acc))
 
 if __name__ == '__main__':
-    train_clean()
+    #train_clean()
     #train_base()
-    #inject_backdoor()
+    inject_backdoor()
     #remove_backdoor()
 

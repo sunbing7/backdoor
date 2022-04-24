@@ -112,7 +112,7 @@ def load_dataset(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
 def load_dataset_class(data_file=('%s/%s' % (DATA_DIR, DATA_FILE)), cur_class=0):
     if not os.path.exists(data_file):
         print(
-            "The data file does not exist. Please download the file and put in data/ directory from https://drive.google.com/file/d/1kcveaJC3Ra-XDuaNqHzYeomMvU8d1npj/view?usp=sharing")
+            "The data file does not exist. Please download the file and put in data/ directory")
         exit(1)
 
     dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
@@ -150,7 +150,7 @@ def load_dataset_class(data_file=('%s/%s' % (DATA_DIR, DATA_FILE)), cur_class=0)
 def load_adv_testset(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     if not os.path.exists(data_file):
         print(
-            "The data file does not exist. Please download the file and put in data/ directory from https://drive.google.com/file/d/1kcveaJC3Ra-XDuaNqHzYeomMvU8d1npj/view?usp=sharing")
+            "The data file does not exist. Please download the file and put in data/ directory")
         exit(1)
 
     dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
@@ -189,7 +189,7 @@ def load_adv_testset(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
 def load_adv_trainset(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     if not os.path.exists(data_file):
         print(
-            "The data file does not exist. Please download the file and put in data/ directory from https://drive.google.com/file/d/1kcveaJC3Ra-XDuaNqHzYeomMvU8d1npj/view?usp=sharing")
+            "The data file does not exist. Please download the file and put in data/ directory")
         exit(1)
 
     dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
@@ -229,7 +229,7 @@ def build_data_loader(X, Y):
 
     datagen = ImageDataGenerator()
     generator = datagen.flow(
-        X, Y, batch_size=BATCH_SIZE)
+        X, Y, batch_size=BATCH_SIZE, shuffle=True)
 
     return generator
 
@@ -363,7 +363,7 @@ def build_data_loader_aug(X, Y):
 def load_dataset_adv(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     if not os.path.exists(data_file):
         print(
-            "The data file does not exist. Please download the file and put in data/ directory from https://drive.google.com/file/d/1kcveaJC3Ra-XDuaNqHzYeomMvU8d1npj/view?usp=sharing")
+            "The data file does not exist. Please download the file and put in data/ directory")
         exit(1)
 
     dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
