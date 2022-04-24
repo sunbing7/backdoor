@@ -159,7 +159,7 @@ class solver:
 
             # ae cmv
             for target_class in class_list:
-                if target_class == each_class:
+                if target_class <= each_class:
                     continue
                 self.get_cmv_ae(each_class, target_class)
 
@@ -975,7 +975,8 @@ class solver:
 
         model1 = keras.models.clone_model(self.model)
         model1.set_weights(self.model.get_weights())
-        loss = 0.0 * K.mean(model1(input_img)[:, base_class]) + 0.5 * K.mean(model1(input_img)[:, target_class]) - reg * K.mean(K.square(input_img))
+        loss = 0.5 * K.mean(model1(input_img)[:, base_class]) + 0.5 * K.mean(model1(input_img)[:, target_class]) - reg * K.mean(K.square(input_img))
+        - abs(K.mean(model1(input_img)[:, base_class]) - K.mean(model1(input_img)[:, target_class]))
         grads = K.gradients(loss, input_img)[0]
         # normalization trick: we normalize the gradient
         #grads /= (K.sqrt(K.mean(K.square(grads))) + 1e-5)
@@ -984,8 +985,8 @@ class solver:
         iterate = K.function([input_img], [loss, grads])
 
         # we start from a gray image with some noise
-        #input_img_data = np.random.random((1, 32,32,3)) * 20 + 128.
-        input_img_data = cur_x.reshape((1, 32,32,3))
+        input_img_data = np.random.random((1, 32,32,3)) * 20 + 128.
+        #input_img_data = cur_x.reshape((1, 32,32,3))
 
         # run gradient ascent for 20 steps
         for i in range(self.step):
