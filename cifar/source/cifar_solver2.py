@@ -975,6 +975,7 @@ class solver:
 
         #np.savetxt('../results2/cmv'+ str(self.current_class) +'.txt', img.reshape(28,28), fmt="%s")
         #imsave('%s_filter_%d.png' % (layer_name, filter_index), img)
+
         utils_backdoor.dump_image(img,
                                   '../results2/cmv_'+ str(base_class) + '_' + str(target_class) + ".png",
                                   'png')

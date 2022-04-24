@@ -305,6 +305,10 @@ class DataGenerator(object):
     def __init__(self, target_ls):
         self.target_ls = target_ls
 
+        # create result dir
+        if not os.path.exists(RESULT_DIR):
+            os.mkdir(RESULT_DIR)
+
     def generate_data(self, X, Y):
         batch_X, batch_Y = [], []
         while 1:
