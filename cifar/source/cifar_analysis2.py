@@ -305,10 +305,6 @@ class DataGenerator(object):
     def __init__(self, target_ls):
         self.target_ls = target_ls
 
-        # create result dir
-        if not os.path.exists(RESULT_DIR):
-            os.mkdir(RESULT_DIR)
-
     def generate_data(self, X, Y):
         batch_X, batch_Y = [], []
         while 1:
@@ -426,6 +422,9 @@ def main():
     utils_backdoor.fix_gpu_memory()
     for i in range (0, 3):
         print(i)
+    # create result dir
+    if not os.path.exists(RESULT_DIR):
+        os.mkdir(RESULT_DIR)
     start_analysis()
 
     pass
