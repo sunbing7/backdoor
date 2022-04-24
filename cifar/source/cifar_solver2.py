@@ -145,6 +145,7 @@ class solver:
         top_neuron = []
         rep_list = []
         tops = []   #outstanding neuron for each class
+        self.analyze_alls(gen)
         for each_class in class_list:
             self.current_class = each_class
             print('current_class: {}'.format(each_class))
@@ -154,14 +155,14 @@ class solver:
             #top_list = top_list + top_list_i
             #top_neuron.append(top_neuron_i)
             #self.plot_eachclass_expand(each_class)
-            #tops.append(self.find_outstanding_neuron(each_class))
+            tops.append(self.find_outstanding_neuron(each_class, prefix="all_"))
 
             # ae cmv
-            for target_class in class_list:
-                self.get_cmv_ae(each_class, target_class)
+            #for target_class in class_list:
+            #    self.get_cmv_ae(each_class, target_class)
 
-        #flag_list = self.detect_common_outstanding_neuron(tops)
-        #print(flag_list)
+        flag_list = self.detect_common_outstanding_neuron(tops)
+        print(flag_list)
         return
 
         #top_list dimension: 10 x 10 = 100
@@ -559,6 +560,34 @@ class solver:
 
         pass
 
+    def analyze_alls(self, gen):
+        '''
+        use samples from all classes, get improtant neurons
+        '''
+        ana_start_t = time.time()
+        self.verbose = False
+
+        hidden_test = self.hidden_permutation_all(gen)
+
+        hidden_test_all = []
+        hidden_test_name = []
+
+        for this_class in self.classes:
+
+            hidden_test_all_ = []
+            for i in range (0, len(self.layer)):
+
+                temp = hidden_test[i][:, [0, (this_class + 1)]]
+                hidden_test_all_.append(temp)
+
+            hidden_test_all.append(hidden_test_all_)
+
+            hidden_test_name.append('class' + str(this_class))
+
+        self.plot_multiple(hidden_test_all, hidden_test_name, save_n="all_test")
+
+        pass
+
     def plot_eachclass(self,  cur_class):
         in_rank = []
         name = []
@@ -619,7 +648,7 @@ class solver:
         #self.plot_diff(adv_train, hidden_test)
         pass
 
-    def plot_eachclass_expand(self,  cur_class):
+    def plot_eachclass_expand(self,  cur_class, prefix=""):
         # find hidden neuron permutation on cmv images
         #hidden_cmv = self.hidden_permutation_cmv_all(gen, img, cur_class)
         '''
@@ -680,7 +709,7 @@ class solver:
             #    adv_train_name.append('class' + str(this_class))
 
         #self.plot_multiple(hidden_cmv_all, hidden_cmv_name, save_n="cmv")
-        self.plot_multiple(hidden_test_all, hidden_test_name, save_n="test")
+        self.plot_multiple(hidden_test_all, hidden_test_name, save_n=prefix + "test")
         #if cur_class == 6:
         #    self.plot_multiple(adv_train_all, adv_train_name, save_n="adv_train")
             #self.plot_multiple(adv_test_all, adv_test_name, save_n="adv_test")
@@ -784,14 +813,15 @@ class solver:
 
         pass
 
-    def find_outstanding_neuron(self,  cur_class):
+    def find_outstanding_neuron(self,  cur_class, prefix=""):
         '''
         find outstanding neurons for cur_class
         '''
 
         hidden_test = []
         for cur_layer in self.layer:
-            hidden_test_ = np.loadtxt("../results2/test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
+            #hidden_test_ = np.loadtxt("../results2/" + prefix + "test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
+            hidden_test_ = np.loadtxt("../results2/" + prefix + "test_pre0" + "_layer_" + str(cur_layer) + ".txt")
             #l = np.ones(len(hidden_test_)) * cur_layer
             hidden_test_ = np.insert(np.array(hidden_test_), 0, cur_layer, axis=1)
             hidden_test = hidden_test + list(hidden_test_)
@@ -1258,6 +1288,64 @@ class solver:
             #ind = np.argsort(perm_predict_avg[:,1])[::-1]
             #perm_predict_avg = perm_predict_avg[ind]
             np.savetxt("../results2/" + prefix + "test_pre0_" + "c" + str(pre_class) + "_layer_" + str(cur_layer) + ".txt", perm_predict_avg, fmt="%s")
+            #out.append(perm_predict_avg)
+
+        return np.array(out)
+
+    def hidden_permutation_all(self, gen):
+        '''
+        find hiddne permutation on samples from all classes
+        '''
+        # calculate the importance of each hidden neuron
+        out = []
+        for cur_layer in self.layer:
+            model_copy = keras.models.clone_model(self.model)
+            model_copy.set_weights(self.model.get_weights())
+
+            # split to current layer
+            partial_model1, partial_model2 = self.split_keras_model(model_copy, cur_layer + 1)
+
+            self.mini_batch = 31
+            perm_predict_avg = []
+            for idx in range(self.mini_batch):
+                X_batch, Y_batch = gen.next()
+                out_hidden = partial_model1.predict(X_batch)    # 32 x 16 x 16 x 32
+                ori_pre = partial_model2.predict(out_hidden)    # 32 x 10
+
+                predict = self.model.predict(X_batch) # 32 x 10
+
+                out_hidden_ = copy.deepcopy(out_hidden.reshape(out_hidden.shape[0], -1))
+
+                # randomize each hidden
+                perm_predict = []
+                for i in range(0, len(out_hidden_[0])):
+                    perm_predict_neu = []
+                    out_hidden_ = out_hidden.reshape(out_hidden.shape[0], -1).copy()
+                    for j in range (0, self.random_sample):
+                        #hidden_random = np.random.uniform(low=min[i], high=max[i], size=len(out_hidden)).transpose()
+                        hidden_do = np.zeros(shape=out_hidden_[:,i].shape)
+                        out_hidden_[:, i] = hidden_do
+                        sample_pre = partial_model2.predict(out_hidden_.reshape(out_hidden.shape)) # 8k x 32
+                        perm_predict_neu.append(sample_pre)
+
+                    perm_predict_neu = np.mean(np.array(perm_predict_neu), axis=0)
+                    perm_predict_neu = np.abs(ori_pre - perm_predict_neu)
+                    perm_predict_neu = np.mean(np.array(perm_predict_neu), axis=0)
+                    to_add = []
+                    to_add.append(int(i))
+                    for class_n in self.classes:
+                        to_add.append(perm_predict_neu[class_n])
+                    perm_predict.append(np.array(to_add))
+                perm_predict_avg.append(perm_predict)
+            # average of all baches
+            perm_predict_avg = np.mean(np.array(perm_predict_avg), axis=0)
+
+            #now perm_predict contains predic value of all permutated hidden neuron at current layer
+            perm_predict_avg = np.array(perm_predict_avg)
+            out.append(perm_predict_avg)
+            #ind = np.argsort(perm_predict_avg[:,1])[::-1]
+            #perm_predict_avg = perm_predict_avg[ind]
+            np.savetxt("../results2/all_test_pre0_" + "layer_" + str(cur_layer) + ".txt", perm_predict_avg, fmt="%s")
             #out.append(perm_predict_avg)
 
         return np.array(out)

@@ -14,6 +14,7 @@ from keras.layers import Input
 from keras import Model
 from keras.preprocessing.image import ImageDataGenerator
 import copy
+import random
 
 import os
 import tensorflow
@@ -144,7 +145,7 @@ class solver:
         top_neuron = []
         rep_list = []
         tops = []   #outstanding neuron for each class
-        self.analyze_alls(gen)
+        #self.analyze_alls(gen)
         for each_class in class_list:
             self.current_class = each_class
             print('current_class: {}'.format(each_class))
@@ -154,10 +155,14 @@ class solver:
             #top_list = top_list + top_list_i
             #top_neuron.append(top_neuron_i)
             #self.plot_eachclass_expand(each_class)
-            tops.append(self.find_outstanding_neuron(each_class, prefix="all_"))
+            #tops.append(self.find_outstanding_neuron(each_class, prefix="all_"))
 
-        flag_list = self.detect_common_outstanding_neuron(tops)
-        print(flag_list)
+            # ae cmv
+            for target_class in class_list:
+                self.get_cmv_ae(each_class, target_class)
+
+        #flag_list = self.detect_common_outstanding_neuron(tops)
+        #print(flag_list)
 
         return
 
@@ -934,6 +939,78 @@ class solver:
                                   '../results/cmv'+ str(self.current_class) + ".png",
                                   'png')
         np.savetxt("../results/cmv" + str(self.current_class) + ".txt", input_img_data[0].reshape(32*32*3), fmt="%s")
+        return input_img_data[0], img
+
+    def get_cmv_ae(self, base_class, target_class):
+        x_class, y_class = load_dataset_class(cur_class=base_class)
+        class_gen = build_data_loader(x_class, y_class)
+
+        X_batch, Y_batch = class_gen.next()
+
+        # randomly pick one image as the initial image
+        inject_ptr = random.uniform(0, 1)
+        cur_idx = random.randrange(0, len(Y_batch) - 1)
+        cur_x = X_batch[cur_idx]
+        cur_y = Y_batch[cur_idx]
+
+
+        weights = self.model.get_layer('dense_2').get_weights()
+        kernel = weights[0]
+        bias = weights[1]
+
+        if self.verbose:
+            self.model.summary()
+            print(kernel.shape)
+            print(bias.shape)
+
+        self.model.get_input_shape_at(0)
+
+        reg = self.reg
+
+        # compute the gradient of the input picture wrt this loss
+        input_img = keras.layers.Input(shape=(32,32,3))
+
+        model1 = keras.models.clone_model(self.model)
+        model1.set_weights(self.model.get_weights())
+        loss = K.mean(model1(input_img)[:, base_class]) + K.mean(model1(input_img)[:, target_class]) - reg * K.mean(K.square(input_img))
+        grads = K.gradients(loss, input_img)[0]
+        # normalization trick: we normalize the gradient
+        #grads /= (K.sqrt(K.mean(K.square(grads))) + 1e-5)
+
+        # this function returns the loss and grads given the input picture
+        iterate = K.function([input_img], [loss, grads])
+
+        # we start from a gray image with some noise
+        #input_img_data = np.random.random((1, 32,32,3)) * 20 + 128.
+        input_img_data = cur_x.reshape((1, 32,32,3))
+
+        # run gradient ascent for 20 steps
+        for i in range(self.step):
+            loss_value, grads_value = iterate([input_img_data])
+            input_img_data += grads_value * 1
+            if self.verbose and (i % 500 == 0):
+                img = input_img_data[0].copy()
+                img = self.deprocess_image(img)
+                print(loss_value)
+                if loss_value > 0:
+                    plt.imshow(img.reshape((32,32,3)))
+                    plt.show()
+
+        print(loss_value)
+        img = input_img_data[0].copy()
+        img = self.deprocess_image(img)
+
+        #print(img.shape)
+        #plt.imshow(img.reshape((32,32,3)))
+        #plt.show()
+
+        #np.savetxt('../results/cmv'+ str(self.current_class) +'.txt', img.reshape(28,28), fmt="%s")
+        #imsave('%s_filter_%d.png' % (layer_name, filter_index), img)
+
+        utils_backdoor.dump_image(img,
+                                  '../results/cmv_'+ str(base_class) + '_' + str(target_class) + ".png",
+                                  'png')
+        np.savetxt("../results/cmv_"+ str(base_class) + '_' + str(target_class) + ".txt", input_img_data[0].reshape(32*32*3), fmt="%s")
         return input_img_data[0], img
 
     def hidden_permutation(self, gen, img, pre_class, target_class):

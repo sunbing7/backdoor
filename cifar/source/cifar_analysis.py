@@ -432,6 +432,9 @@ def main():
     utils_backdoor.fix_gpu_memory()
     for i in range (0, 3):
         print(i)
+    # create result dir
+    if not os.path.exists(RESULT_DIR):
+        os.mkdir(RESULT_DIR)
     start_analysis()
 
     pass
