@@ -975,8 +975,9 @@ class solver:
 
         model1 = keras.models.clone_model(self.model)
         model1.set_weights(self.model.get_weights())
-        loss = 0.5 * K.mean(model1(input_img)[:, base_class]) + 0.5 * K.mean(model1(input_img)[:, target_class]) - reg * K.mean(K.square(input_img))
+        loss = K.mean(model1(input_img)[:, base_class])
         - abs(K.mean(model1(input_img)[:, base_class]) - K.mean(model1(input_img)[:, target_class]))
+        # - reg * K.mean(K.square(input_img))
         grads = K.gradients(loss, input_img)[0]
         # normalization trick: we normalize the gradient
         #grads /= (K.sqrt(K.mean(K.square(grads))) + 1e-5)
