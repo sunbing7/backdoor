@@ -62,7 +62,7 @@ class solver:
         self.mini_batch = mini_batch
         self.batch_size = batch_size
         self.reg = 0.9
-        self.step = 20000#20000
+        self.step = 30000#20000
         self.layer = [2, 6, 13]
         self.classes = [0,1,2,3,4,5,6,7,8,9]
         self.random_sample = 1 # how many random samples
@@ -159,6 +159,8 @@ class solver:
 
             # ae cmv
             for target_class in class_list:
+                if target_class <= each_class:
+                    continue
                 self.get_cmv_ae(each_class, target_class)
 
         #flag_list = self.detect_common_outstanding_neuron(tops)
@@ -942,6 +944,7 @@ class solver:
         return input_img_data[0], img
 
     def get_cmv_ae(self, base_class, target_class):
+        '''
         x_class, y_class = load_dataset_class(cur_class=base_class)
         class_gen = build_data_loader(x_class, y_class)
 
@@ -952,7 +955,7 @@ class solver:
         cur_idx = random.randrange(0, len(Y_batch) - 1)
         cur_x = X_batch[cur_idx]
         cur_y = Y_batch[cur_idx]
-
+        '''
 
         weights = self.model.get_layer('dense_2').get_weights()
         kernel = weights[0]
@@ -981,8 +984,8 @@ class solver:
         iterate = K.function([input_img], [loss, grads])
 
         # we start from a gray image with some noise
-        #input_img_data = np.random.random((1, 32,32,3)) * 20 + 128.
-        input_img_data = cur_x.reshape((1, 32,32,3))
+        input_img_data = np.random.random((1, 32,32,3)) * 20 + 128.
+        #input_img_data = cur_x.reshape((1, 32,32,3))
 
         # run gradient ascent for 20 steps
         for i in range(self.step):
@@ -1006,6 +1009,10 @@ class solver:
 
         #np.savetxt('../results/cmv'+ str(self.current_class) +'.txt', img.reshape(28,28), fmt="%s")
         #imsave('%s_filter_%d.png' % (layer_name, filter_index), img)
+
+        predict = self.model.predict(input_img_data[0].reshape(1,32,32,3))
+        predict = np.argmax(predict, axis=1)
+        print('base: {}, target: {}, prediction: {}'.format(base_class, target_class, predict))
 
         utils_backdoor.dump_image(img,
                                   '../results/cmv_'+ str(base_class) + '_' + str(target_class) + ".png",

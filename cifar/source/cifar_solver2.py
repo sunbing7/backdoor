@@ -145,7 +145,8 @@ class solver:
         top_neuron = []
         rep_list = []
         tops = []   #outstanding neuron for each class
-        self.analyze_alls(gen)
+        #self.analyze_alls(gen)
+        common = []
         for each_class in class_list:
             self.current_class = each_class
             print('current_class: {}'.format(each_class))
@@ -155,14 +156,33 @@ class solver:
             #top_list = top_list + top_list_i
             #top_neuron.append(top_neuron_i)
             #self.plot_eachclass_expand(each_class)
-            tops.append(self.find_outstanding_neuron(each_class, prefix="all_"))
+            top_ = self.find_outstanding_neuron(each_class, prefix="all_")
+            tops.append(top_)
 
             # ae cmv
-            #for target_class in class_list:
+            for target_class in class_list:
             #    self.get_cmv_ae(each_class, target_class)
+                # find outstanding neuron for each cmv ae
+                fn = 'cmv_' + str(each_class) + '_' + str(target_class) + '.txt'
+                # use pre-generated cmv image
+                img = np.loadtxt("../results2/" + fn)
+                img = img.reshape(((32,32,3)))
 
-        flag_list = self.detect_common_outstanding_neuron(tops)
-        print(flag_list)
+                predict = self.model.predict(img.reshape(1,32,32,3))
+                #np.savetxt("../results/cmv_predict" + str(self.current_class) + ".txt", predict, fmt="%s")
+                predict = np.argmax(predict, axis=1)
+                print("prediction: {}".format(predict))
+                #print('total time taken:{}'.format(time.time() - ana_start_t))
+
+                # find hidden neuron permutation on cmv images
+                hidden_cmv = self.hidden_permutation_cmv_all(gen, img, str(each_class) + '_' + str(target_class))
+                cmv_top = self.find_outstanding_cmv_neuron(each_class, target_class)
+                common_ = self.find_common_neuron(cmv_top, top_)
+                common.append(common_)
+
+        #flag_list = self.detect_common_outstanding_neuron(tops)
+        #print(flag_list)
+        print(common)
         return
 
         #top_list dimension: 10 x 10 = 100
@@ -844,6 +864,37 @@ class solver:
 
         return cur_top
 
+    def find_outstanding_cmv_neuron(self, base_class, target_class):
+        '''
+        find outstanding neurons for cur_class
+        '''
+
+        hidden_test = []
+        for cur_layer in self.layer:
+            #hidden_test_ = np.loadtxt("../results2/" + prefix + "test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
+            hidden_test_ = np.loadtxt("../results2/perm0_cmv_" + "c_" + str(base_class) + '_' + str(target_class) + "_layer_" + str(cur_layer) + ".txt")
+            #l = np.ones(len(hidden_test_)) * cur_layer
+            hidden_test_ = np.insert(np.array(hidden_test_), 0, cur_layer, axis=1)
+            hidden_test = hidden_test + list(hidden_test_)
+
+        hidden_test = np.array(hidden_test)
+
+        # check common important neuron
+        #num_neuron = int(self.top * len(hidden_test[i]))
+
+        # get top self.top from current class
+        temp = hidden_test[:, [0, 1, (target_class + 2)]]
+        ind = np.argsort(temp[:,2])[::-1]
+        temp = temp[ind]
+
+        # find outlier hidden neurons
+        top_num = len(self.outlier_detection(temp[:, 2], max(temp[:, 2]), verbose=False))
+        num_neuron = top_num
+        print('significant neuron: {}'.format(num_neuron))
+        cur_top = temp[0: (num_neuron - 1)][:, [0, 1]]
+
+        return cur_top
+
     def detect_common_outstanding_neuron(self,  tops):
         '''
         find common important neurons for each class with samples from current class
@@ -866,6 +917,16 @@ class solver:
         # top_neuron: layer and index of intersected neurons    ((2, n) x 10)
 
         return flag_list
+
+    def find_common_neuron(self, cmv_top, tops):
+        '''
+        find common important neurons for cmv top and base_top
+        @param tops: activated neurons @base class sample
+               cmv_top: important neurons for this attack from base to target
+        '''
+
+        temp = np.array([x for x in set(tuple(x) for x in tops) & set(tuple(x) for x in cmv_top)])
+        return temp
 
     def get_cmv(self):
         weights = self.model.get_layer('dense_2').get_weights()
@@ -1078,7 +1139,7 @@ class solver:
 
         return out
 
-    def hidden_permutation_cmv_all(self, gen, img, pre_class):
+    def hidden_permutation_cmv_all(self, gen, img, fn):
         # calculate the importance of each hidden neuron given the cmv image
         out = []
         for cur_layer in self.layer:
@@ -1142,7 +1203,7 @@ class solver:
             #sort
             #ind = np.argsort(perm_predict[:,1])[::-1]
             #perm_predict = perm_predict[ind]
-            np.savetxt("../results2/perm0_cmv_" + "c" + str(pre_class) + "_layer_" + str(cur_layer) + ".txt", perm_predict, fmt="%s")
+            np.savetxt("../results2/perm0_cmv_" + "c_" + str(fn) + "_layer_" + str(cur_layer) + ".txt", perm_predict, fmt="%s")
             #out.append(perm_predict)
 
         return np.array(out)
