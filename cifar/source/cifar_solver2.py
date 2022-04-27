@@ -15,6 +15,8 @@ from keras import Model
 from keras.preprocessing.image import ImageDataGenerator
 import copy
 import random
+from sklearn.cluster import KMeans
+from sklearn import metrics
 
 import os
 import tensorflow
@@ -28,7 +30,7 @@ DATA_DIR = '../../data'  # data folder
 DATA_FILE = 'cifar.h5'  # dataset file
 NUM_CLASSES = 10
 BATCH_SIZE = 32
-
+RESULT_DIR = "../results/"
 
 class solver:
     CLASS_INDEX = 1
@@ -76,6 +78,8 @@ class solver:
         self.num_target = 1
         self.base_class = None
         self.target_class = None
+
+        self.kmeans_range = 10
         # split the model for causal inervention
         pass
 
@@ -146,30 +150,34 @@ class solver:
         rep_list = []
         tops = []   #outstanding neuron for each class
         #self.analyze_alls(gen)
-        common = []
+        #common = []
         for each_class in class_list:
             self.current_class = each_class
             print('current_class: {}'.format(each_class))
-            #self.analyze_eachclass_expand(gen, each_class, train_adv_gen, test_adv_gen)
+            self.analyze_eachclass_expand(gen, each_class, train_adv_gen, test_adv_gen)
             #self.analyze_eachclass_expand_alls(gen, each_class)
             #top_list_i, top_neuron_i = self.detect_eachclass_all_layer(each_class)
             #top_list = top_list + top_list_i
             #top_neuron.append(top_neuron_i)
             #self.plot_eachclass_expand(each_class)
-            top_ = self.find_outstanding_neuron(each_class, prefix="all_")
-            tops.append(top_)
+            #top_ = self.find_outstanding_neuron(each_class, prefix="all_")
+            #tops.append(top_)
+
+            # activation
+            #self.analyze_eachclass_act(each_class)
 
             # ae cmv
+            '''
             for target_class in class_list:
             #    self.get_cmv_ae(each_class, target_class)
                 # find outstanding neuron for each cmv ae
                 fn = 'cmv_' + str(each_class) + '_' + str(target_class) + '.txt'
                 # use pre-generated cmv image
-                img = np.loadtxt("../results2/" + fn)
+                img = np.loadtxt(RESULT_DIR + fn)
                 img = img.reshape(((32,32,3)))
 
                 predict = self.model.predict(img.reshape(1,32,32,3))
-                #np.savetxt("../results/cmv_predict" + str(self.current_class) + ".txt", predict, fmt="%s")
+                #np.savetxt(RESULT_DIR + "cmv_predict" + str(self.current_class) + ".txt", predict, fmt="%s")
                 predict = np.argmax(predict, axis=1)
                 print("prediction: {}".format(predict))
                 #print('total time taken:{}'.format(time.time() - ana_start_t))
@@ -179,10 +187,15 @@ class solver:
                 cmv_top = self.find_outstanding_cmv_neuron(each_class, target_class)
                 common_ = self.find_common_neuron(cmv_top, top_)
                 common.append(common_)
-
+            '''
         #flag_list = self.detect_common_outstanding_neuron(tops)
         #print(flag_list)
-        print(common)
+        #print(common)
+
+        #cluster
+        #self.find_clusters(prefix='all_')
+        #self.find_clusters_act()
+
         return
 
         #top_list dimension: 10 x 10 = 100
@@ -208,7 +221,7 @@ class solver:
 
         print('Number of neurons to repair:{}'.format(self.rep_n))
 
-        np.savetxt('../results2/rep_neu.txt', top_neuron, fmt="%s")
+        np.savetxt(RESULT_DIR + 'rep_neu.txt', top_neuron, fmt="%s")
 
         for l in self.layer:
             idx_l = []
@@ -318,23 +331,23 @@ class solver:
         #plt.imshow(img.reshape((32,32,3)))
         #plt.show()
 
-        #np.savetxt('../results2/cmv'+ str(self.current_class) +'.txt', img.reshape(28,28), fmt="%s")
+        #np.savetxt(RESULT_DIR + 'cmv'+ str(self.current_class) +'.txt', img.reshape(28,28), fmt="%s")
         #imsave('%s_filter_%d.png' % (layer_name, filter_index), img)
         utils_backdoor.dump_image(img,
-                                  '../results2/cmv'+ str(self.current_class) + ".png",
+                                  RESULT_DIR + 'cmv'+ str(self.current_class) + ".png",
                                   'png')
-        np.savetxt("../results2/cmv" + str(self.current_class) + ".txt", input_img_data[0].reshape(32*32*3), fmt="%s")
+        np.savetxt(RESULT_DIR + "cmv" + str(self.current_class) + ".txt", input_img_data[0].reshape(32*32*3), fmt="%s")
         '''
         # use pre-generated cmv image
 
-        img = np.loadtxt("../results2/cmv" + str(self.current_class) + ".txt")
+        img = np.loadtxt(RESULT_DIR + "cmv" + str(self.current_class) + ".txt")
         img = img.reshape(((32,32,3)))
 
         input_img_data = [img]
 
 
         predict = self.model.predict(input_img_data[0].reshape(1,32,32,3))
-        #np.savetxt("../results2/cmv_predict" + str(self.current_class) + ".txt", predict, fmt="%s")
+        #np.savetxt(RESULT_DIR + "cmv_predict" + str(self.current_class) + ".txt", predict, fmt="%s")
         predict = np.argmax(predict, axis=1)
         print("prediction: {}".format(predict))
         #print('total time taken:{}'.format(time.time() - ana_start_t))
@@ -342,37 +355,37 @@ class solver:
         # find hidden neuron permutation on cmv images
         #hidden_cmv = self.hidden_permutation(gen, input_img_data[0], cur_class)
         hidden_cmv = []
-        hidden_cmv_ = np.loadtxt("../results2/perm0_pre_c6_layer_2.txt")
+        hidden_cmv_ = np.loadtxt(RESULT_DIR + "perm0_pre_c6_layer_2.txt")
         ind = np.argsort(hidden_cmv_[:,0])
         hidden_cmv.append(hidden_cmv_[ind])
-        hidden_cmv_ = np.loadtxt("../results2/perm0_pre_c6_layer_6.txt")
+        hidden_cmv_ = np.loadtxt(RESULT_DIR + "perm0_pre_c6_layer_6.txt")
         ind = np.argsort(hidden_cmv_[:,0])
         hidden_cmv.append(hidden_cmv_[ind])
-        hidden_cmv_ = np.loadtxt("../results2/perm0_pre_c6_layer_10.txt")
+        hidden_cmv_ = np.loadtxt(RESULT_DIR + "perm0_pre_c6_layer_10.txt")
         ind = np.argsort(hidden_cmv_[:,0])
         hidden_cmv.append(hidden_cmv_[ind])
         #find hidden neuron permutation on test set
         hidden_test = self.hidden_permutation_test(class_gen, cur_class)
         #hidden_test = []
-        #hidden_test_ = np.loadtxt("../results2/test_pre0_c6_layer_2.txt")
+        #hidden_test_ = np.loadtxt(RESULT_DIR + "test_pre0_c6_layer_2.txt")
         #ind = np.argsort(hidden_test_[:,0])
         #hidden_test.append(hidden_test_[ind])
-        #hidden_test_ = np.loadtxt("../results2/test_pre0_c6_layer_6.txt")
+        #hidden_test_ = np.loadtxt(RESULT_DIR + "test_pre0_c6_layer_6.txt")
         #ind = np.argsort(hidden_test_[:,0])
         #hidden_test.append(hidden_test_[ind])
-        #hidden_test_ = np.loadtxt("../results2/test_pre0_c6_layer_10.txt")
+        #hidden_test_ = np.loadtxt(RESULT_DIR + "test_pre0_c6_layer_10.txt")
         #ind = np.argsort(hidden_test_[:,0])
         #hidden_test.append(hidden_test_[ind])
 
         #adv_train = self.hidden_permutation_adv(train_adv_gen, cur_class)
         adv_train = []
-        adv_train_ = np.loadtxt("../results2/adv_pre0_c6_layer_2.txt")
+        adv_train_ = np.loadtxt(RESULT_DIR + "adv_pre0_c6_layer_2.txt")
         ind = np.argsort(adv_train_[:,0])
         adv_train.append(adv_train_[ind])
-        adv_train_ = np.loadtxt("../results2/adv_pre0_c6_layer_6.txt")
+        adv_train_ = np.loadtxt(RESULT_DIR + "adv_pre0_c6_layer_6.txt")
         ind = np.argsort(adv_train_[:,0])
         adv_train.append(adv_train_[ind])
-        adv_train_ = np.loadtxt("../results2/adv_pre0_c6_layer_10.txt")
+        adv_train_ = np.loadtxt(RESULT_DIR + "adv_pre0_c6_layer_10.txt")
         ind = np.argsort(adv_train_[:,0])
         adv_train.append(adv_train_[ind])
 
@@ -400,7 +413,7 @@ class solver:
         ana_layer = 6
         model_, _ = self.split_keras_model(self.model, ana_layer + 1)
         out_cmv = model_.predict(img.reshape(1,28,28,1))
-        np.savetxt("../results2/cmv_act" + str(ana_layer) + "-" + str(self.current_class) + ".txt", out_cmv, fmt="%s")
+        np.savetxt(RESULT_DIR + "cmv_act" + str(ana_layer) + "-" + str(self.current_class) + ".txt", out_cmv, fmt="%s")
         out_test = []
         for idx in range(self.mini_batch):
             X_batch, Y_batch = gen.next()
@@ -410,7 +423,7 @@ class solver:
                 if np.argmax(Y_batch[i]) == self.current_class:
                     out_test.append(item)
                 i = i + 1
-        np.savetxt("../results2/cmv_tst" + str(ana_layer) + "-" + str(self.current_class) + ".txt", out_test, fmt="%s")
+        np.savetxt(RESULT_DIR + "cmv_tst" + str(ana_layer) + "-" + str(self.current_class) + ".txt", out_test, fmt="%s")
 
         #analyze the activation pattern difference
         _test_avg = np.mean(np.array(out_test),axis=0)
@@ -423,7 +436,7 @@ class solver:
         model_, _ = self.split_keras_model(self.model, ana_layer + 1)
         out_cmv = model_.predict(img.reshape(1,32,32,3))
         out_cmv = np.ndarray.flatten(out_cmv)
-        np.savetxt("../results2/cmv_act" + str(ana_layer) + "-" + str(self.current_class) + ".txt", out_cmv, fmt="%s")
+        np.savetxt(RESULT_DIR + "cmv_act" + str(ana_layer) + "-" + str(self.current_class) + ".txt", out_cmv, fmt="%s")
         out_test = []
         for idx in range(self.mini_batch):
             X_batch, Y_batch = gen.next()
@@ -434,7 +447,7 @@ class solver:
                 if np.argmax(Y_batch[i]) == self.current_class:
                     out_test.append(item)
                 i = i + 1
-        np.savetxt("../results2/cmv_tst" + str(ana_layer) + "-" + str(self.current_class) + ".txt", out_test, fmt="%s")
+        np.savetxt(RESULT_DIR + "cmv_tst" + str(ana_layer) + "-" + str(self.current_class) + ".txt", out_test, fmt="%s")
 
         #analyze the activation pattern difference
         _test_avg = np.mean(np.array(out_test),axis=0)
@@ -447,7 +460,7 @@ class solver:
         model7, _ = self.split_keras_model(self.model, ana_layer + 1)
         out7_cmv = model7.predict(input_img_data[0].reshape(1,32,32,3))
         out7_cmv = np.ndarray.flatten(out7_cmv)
-        np.savetxt("../results2/cmv_act" + str(ana_layer) + "-" + str(self.current_class) + ".txt", out7_cmv, fmt="%s")
+        np.savetxt(RESULT_DIR + "cmv_act" + str(ana_layer) + "-" + str(self.current_class) + ".txt", out7_cmv, fmt="%s")
         out7_test = []
         for idx in range(self.mini_batch):
             X_batch, Y_batch = gen.next()
@@ -458,7 +471,7 @@ class solver:
                 if np.argmax(Y_batch[i]) == self.current_class:
                     out7_test.append(item)
                 i = i + 1
-        np.savetxt("../results2/cmv_tst" + str(ana_layer) + "-" + str(self.current_class) + ".txt", out7_test, fmt="%s")
+        np.savetxt(RESULT_DIR + "cmv_tst" + str(ana_layer) + "-" + str(self.current_class) + ".txt", out7_test, fmt="%s")
 
         #analyze the activation pattern difference
         _test_avg = np.mean(np.array(out7_test),axis=0)
@@ -473,12 +486,43 @@ class solver:
         # sort
         diff_matrix.sort()
         diff_matrix = diff_matrix[::-1]
-        np.savetxt("../results2/cmv_diff_" + str(ana_layer) + "-" + str(self.current_class) + ".txt", diff_matrix, fmt="%s")
+        np.savetxt(RESULT_DIR + "cmv_diff_" + str(ana_layer) + "-" + str(self.current_class) + ".txt", diff_matrix, fmt="%s")
         #for item in diff_matrix:
         #    print(item)
         mse = np.square(np.subtract(_test_avg, out7_cmv)).mean()
         print('layer {} mse:{}\n'.format(ana_layer, mse))
         '''
+        pass
+
+    def analyze_eachclass_act(self, cur_class):
+        '''
+        use samples from base class, find most actvive neurons
+        '''
+        ana_start_t = time.time()
+        self.verbose = False
+        x_class, y_class = load_dataset_class(cur_class=cur_class)
+        class_gen = build_data_loader(x_class, y_class)
+
+        #self.hidden_ce_test_all(class_gen, cur_class)
+        #return
+
+        hidden_test = self.hidden_act_test_all(class_gen, cur_class)
+
+        hidden_test_all = []
+        hidden_test_name = []
+        for this_class in self.classes:
+            hidden_test_all_ = []
+            for i in range (0, len(self.layer)):
+                temp = np.append(np.arange(0, len(hidden_test[i]), 1, dtype=int).reshape(-1,1), hidden_test[i].reshape(-1,1), axis=1)
+                hidden_test_all_.append(temp)
+
+            hidden_test_all.append(hidden_test_all_)
+
+            hidden_test_name.append('class' + str(this_class))
+
+        #if self.plot:
+        self.plot_multiple(hidden_test_all, hidden_test_name, save_n="act")
+
         pass
 
     def analyze_eachclass_expand(self, gen, cur_class, train_adv_gen, test_adv_gen):
@@ -490,16 +534,16 @@ class solver:
         x_class, y_class = load_dataset_class(cur_class=cur_class)
         class_gen = build_data_loader(x_class, y_class)
 
-        #self.hidden_ce_test_all(class_gen, cur_class)
-        #return
+        self.hidden_ce_test_all(class_gen, cur_class)
+        return
         # generate cmv now
         #img, _, = self.get_cmv()
         # use pre-generated cmv image
-        #img = np.loadtxt("../results2/cmv" + str(self.current_class) + ".txt")
+        #img = np.loadtxt(RESULT_DIR + "cmv" + str(self.current_class) + ".txt")
         #img = img.reshape(((32,32,3)))
 
         #predict = self.model.predict(img.reshape(1,32,32,3))
-        #np.savetxt("../results2/cmv_predict" + str(self.current_class) + ".txt", predict, fmt="%s")
+        #np.savetxt(RESULT_DIR + "cmv_predict" + str(self.current_class) + ".txt", predict, fmt="%s")
         #predict = np.argmax(predict, axis=1)
         #print("prediction: {}".format(predict))
         #print('total time taken:{}'.format(time.time() - ana_start_t))
@@ -614,13 +658,13 @@ class solver:
 
         # find hidden neuron permutation on cmv images
         hidden_cmv = []
-        hidden_cmv_ = np.loadtxt("../results2/perm0_pre_c" + str(cur_class) + "_layer_2.txt")
+        hidden_cmv_ = np.loadtxt(RESULT_DIR + "perm0_pre_c" + str(cur_class) + "_layer_2.txt")
         ind = np.argsort(hidden_cmv_[:,0])
         hidden_cmv.append(hidden_cmv_[ind])
-        hidden_cmv_ = np.loadtxt("../results2/perm0_pre_c" + str(cur_class) + "_layer_6.txt")
+        hidden_cmv_ = np.loadtxt(RESULT_DIR + "perm0_pre_c" + str(cur_class) + "_layer_6.txt")
         ind = np.argsort(hidden_cmv_[:,0])
         hidden_cmv.append(hidden_cmv_[ind])
-        hidden_cmv_ = np.loadtxt("../results2/perm0_pre_c" + str(cur_class) + "_layer_10.txt")
+        hidden_cmv_ = np.loadtxt(RESULT_DIR + "perm0_pre_c" + str(cur_class) + "_layer_10.txt")
         ind = np.argsort(hidden_cmv_[:,0])
         hidden_cmv.append(hidden_cmv_[ind])
         in_rank.append(hidden_cmv)
@@ -629,13 +673,13 @@ class solver:
         if cur_class == 6:
             #adv_train = self.hidden_permutation_adv(train_adv_gen, cur_class)
             adv_train = []
-            adv_train_ = np.loadtxt("../results2/adv_pre0_c" + str(cur_class) + "_layer_2.txt")
+            adv_train_ = np.loadtxt(RESULT_DIR + "adv_pre0_c" + str(cur_class) + "_layer_2.txt")
             ind = np.argsort(adv_train_[:,0])
             adv_train.append(adv_train_[ind])
-            adv_train_ = np.loadtxt("../results2/adv_pre0_c" + str(cur_class) + "_layer_6.txt")
+            adv_train_ = np.loadtxt(RESULT_DIR + "adv_pre0_c" + str(cur_class) + "_layer_6.txt")
             ind = np.argsort(adv_train_[:,0])
             adv_train.append(adv_train_[ind])
-            adv_train_ = np.loadtxt("../results2/adv_pre0_c" + str(cur_class) + "_layer_10.txt")
+            adv_train_ = np.loadtxt(RESULT_DIR + "adv_pre0_c" + str(cur_class) + "_layer_10.txt")
             ind = np.argsort(adv_train_[:,0])
             adv_train.append(adv_train_[ind])
             in_rank.append(adv_train)
@@ -644,13 +688,13 @@ class solver:
         #find hidden neuron permutation on test set
         #hidden_test = self.hidden_permutation_test(class_gen, cur_class)
         hidden_test = []
-        hidden_test_ = np.loadtxt("../results2/test_pre0_c" + str(cur_class) + "_layer_2.txt")
+        hidden_test_ = np.loadtxt(RESULT_DIR + "test_pre0_c" + str(cur_class) + "_layer_2.txt")
         ind = np.argsort(hidden_test_[:,0])
         hidden_test.append(hidden_test_[ind])
-        hidden_test_ = np.loadtxt("../results2/test_pre0_c" + str(cur_class) + "_layer_6.txt")
+        hidden_test_ = np.loadtxt(RESULT_DIR + "test_pre0_c" + str(cur_class) + "_layer_6.txt")
         ind = np.argsort(hidden_test_[:,0])
         hidden_test.append(hidden_test_[ind])
-        hidden_test_ = np.loadtxt("../results2/test_pre0_c" + str(cur_class) + "_layer_10.txt")
+        hidden_test_ = np.loadtxt(RESULT_DIR + "test_pre0_c" + str(cur_class) + "_layer_10.txt")
         ind = np.argsort(hidden_test_[:,0])
         hidden_test.append(hidden_test_[ind])
         in_rank.append(hidden_test)
@@ -674,14 +718,14 @@ class solver:
         '''
         hidden_cmv = []
         for cur_layer in self.layer:
-            hidden_cmv_ = np.loadtxt("../results2/test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
+            hidden_cmv_ = np.loadtxt(RESULT_DIR + "test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
             hidden_cmv.append(hidden_cmv_)
         hidden_cmv = np.array(hidden_cmv)
         '''
         #hidden_test = self.hidden_permutation_test_all(class_gen, cur_class)
         hidden_test = []
         for cur_layer in self.layer:
-            hidden_test_ = np.loadtxt("../results2/test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
+            hidden_test_ = np.loadtxt(RESULT_DIR + "test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
             hidden_test.append(hidden_test_)
         hidden_test = np.array(hidden_test)
 
@@ -690,7 +734,7 @@ class solver:
         if cur_class == 6:
             adv_train = []
             for cur_layer in self.layer:
-                adv_train_ = np.loadtxt("../results2/adv_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
+                adv_train_ = np.loadtxt(RESULT_DIR + "adv_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
                 adv_train.append(adv_train_)
             adv_train = np.array(adv_train)
         #adv_test = self.hidden_permutation_adv(test_adv_gen, cur_class)
@@ -740,7 +784,7 @@ class solver:
         #hidden_test = self.hidden_permutation_test_all(class_gen, cur_class)
         hidden_test = []
         for cur_layer in self.layer:
-            hidden_test_ = np.loadtxt("../results2/test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
+            hidden_test_ = np.loadtxt(RESULT_DIR + "test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
             hidden_test.append(hidden_test_)
         hidden_test = np.array(hidden_test)
 
@@ -786,7 +830,7 @@ class solver:
         #hidden_test = self.hidden_permutation_test_all(class_gen, cur_class)
         hidden_test = []
         for cur_layer in self.layer:
-            hidden_test_ = np.loadtxt("../results2/test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
+            hidden_test_ = np.loadtxt(RESULT_DIR + "test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
             #l = np.ones(len(hidden_test_)) * cur_layer
             hidden_test_ = np.insert(np.array(hidden_test_), 0, cur_layer, axis=1)
             hidden_test = hidden_test + list(hidden_test_)
@@ -840,8 +884,8 @@ class solver:
 
         hidden_test = []
         for cur_layer in self.layer:
-            #hidden_test_ = np.loadtxt("../results2/" + prefix + "test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
-            hidden_test_ = np.loadtxt("../results2/" + prefix + "test_pre0" + "_layer_" + str(cur_layer) + ".txt")
+            #hidden_test_ = np.loadtxt(RESULT_DIR + prefix + "test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
+            hidden_test_ = np.loadtxt(RESULT_DIR + prefix + "test_pre0" + "_layer_" + str(cur_layer) + ".txt")
             #l = np.ones(len(hidden_test_)) * cur_layer
             hidden_test_ = np.insert(np.array(hidden_test_), 0, cur_layer, axis=1)
             hidden_test = hidden_test + list(hidden_test_)
@@ -871,8 +915,8 @@ class solver:
 
         hidden_test = []
         for cur_layer in self.layer:
-            #hidden_test_ = np.loadtxt("../results2/" + prefix + "test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
-            hidden_test_ = np.loadtxt("../results2/perm0_cmv_" + "c_" + str(base_class) + '_' + str(target_class) + "_layer_" + str(cur_layer) + ".txt")
+            #hidden_test_ = np.loadtxt(RESULT_DIR + prefix + "test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
+            hidden_test_ = np.loadtxt(RESULT_DIR + "perm0_cmv_" + "c_" + str(base_class) + '_' + str(target_class) + "_layer_" + str(cur_layer) + ".txt")
             #l = np.ones(len(hidden_test_)) * cur_layer
             hidden_test_ = np.insert(np.array(hidden_test_), 0, cur_layer, axis=1)
             hidden_test = hidden_test + list(hidden_test_)
@@ -927,6 +971,186 @@ class solver:
 
         temp = np.array([x for x in set(tuple(x) for x in tops) & set(tuple(x) for x in cmv_top)])
         return temp
+
+    def find_clusters_act(self, prefix=''):
+        '''
+        find clusters in each layer
+        '''
+        all_label = []  # #neuronx3x9
+        all_centroid = []
+        for cur_class in self.classes:
+            layer_label = []
+            layer_centroid = []
+            for cur_layer in self.layer:
+                #hidden_test_ = np.loadtxt(RESULT_DIR + prefix + "test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
+                #hidden_test_ = np.loadtxt(RESULT_DIR + prefix + "test_pre0" + "_layer_" + str(cur_layer) + ".txt")
+                hidden_test_ = np.loadtxt(RESULT_DIR + "test_act_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
+                # neuron index, class embeddings
+
+                # try different k means
+                k_val = None
+                labels = None
+                vrc = 0.
+
+                #for k in range(2, self.kmeans_range + 1):
+                k = 2
+                ar = hidden_test_ / max(hidden_test_)
+                kmeans_ = (KMeans(n_clusters=k, random_state=0).fit(ar.reshape(-1,1)))
+                vrc_ = metrics.calinski_harabasz_score(ar.reshape(-1,1), kmeans_.labels_)
+                if vrc_ >= vrc:
+                    vrc = vrc_
+                    k_val = k
+                    labels = kmeans_.labels_
+                centroid = kmeans_.cluster_centers_
+                temp = centroid.transpose()[0]
+                temp.sort()
+                layer_centroid = [*layer_centroid, *temp.tolist()]
+                np.savetxt(RESULT_DIR + prefix + "act_kmeans" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt", labels, fmt="%s")
+                print('class: {} layer: {} cntroid: {}'.format(cur_class, cur_layer, centroid.transpose()))
+                layer_label.append(labels)
+
+
+
+                # plotting
+                plt.scatter(*np.transpose(ar.reshape(-1,1)), *np.transpose(np.arange(0, len(hidden_test_), 1, dtype=int).reshape(-1,1)), c=labels)
+                title = "class: {}, layer: {}, number of clusters: {}".format(cur_class, cur_layer, k_val)
+                plt.title(title)
+                plt.xlim(0., 1.)
+                #plt.show()
+                plt.savefig(RESULT_DIR + "act_kmeans_c" + str(cur_class) + "_layer_" + str(cur_layer) + ".png")
+
+            all_label.append(layer_label)
+            all_centroid.append(layer_centroid)
+        np.savetxt(RESULT_DIR + prefix + "act_kmeans_centroid.txt", all_centroid, fmt="%s")
+
+        #'''
+        # measure centroid distance
+        centroid_dis = []
+        for base_class in self.classes:
+            for target_class in self.classes:
+                if target_class <= base_class:
+                    continue
+                to_add = []
+                to_add.append(base_class)
+                to_add.append(target_class)
+
+                diff = abs(np.array(all_centroid[base_class]) - np.array(all_centroid[target_class]))
+                temp = np.sum(diff)
+
+                to_add.append(temp)
+                to_add = [*to_add, *diff.tolist()]
+                centroid_dis.append(to_add)
+        np.savetxt(RESULT_DIR + "act_kmeans_centroid_dis.txt", centroid_dis, fmt="%s")
+        # find common clusters
+        commons = []
+        for base_class in self.classes:
+            for target_class in self.classes:
+                if target_class <= base_class:
+                    continue
+                to_add = []
+                to_add.append(base_class)
+                to_add.append(target_class)
+                for cur_layer in range (0, len(self.layer)):
+                    to_add = []
+                    to_add.append(base_class)
+                    to_add.append(target_class)
+                    to_add.append(cur_layer)
+                    temp = np.sum(all_label[base_class][cur_layer] != all_label[target_class][cur_layer])
+                    to_add.append(temp)
+                    commons.append(to_add)
+        #'''
+        np.savetxt(RESULT_DIR + "act_kmeans_common.txt", commons, fmt="%s")
+        #print(commons)
+        return
+
+    def find_clusters(self, prefix=''):
+        '''
+        find clusters in each layer
+        '''
+        all_label = []  # #neuronx3x9
+        all_centroid = []
+        for cur_class in self.classes:
+            layer_label = []
+            layer_centroid = []
+            for cur_layer in self.layer:
+                #hidden_test_ = np.loadtxt(RESULT_DIR + prefix + "test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
+                hidden_test_ = np.loadtxt(RESULT_DIR + prefix + "test_pre0" + "_layer_" + str(cur_layer) + ".txt")
+
+                # neuron index, class embeddings
+
+                # try different k means
+                k_val = None
+                labels = None
+                vrc = 0.
+
+                #for k in range(2, self.kmeans_range + 1):
+                k = 2
+                ar = hidden_test_[:, (1 + cur_class)] / max(hidden_test_[:, (1 + cur_class)])
+                kmeans_ = (KMeans(n_clusters=k, random_state=0).fit(ar.reshape(-1,1)))
+                vrc_ = metrics.calinski_harabasz_score(ar.reshape(-1,1), kmeans_.labels_)
+                if vrc_ >= vrc:
+                    vrc = vrc_
+                    k_val = k
+                    labels = kmeans_.labels_
+                centroid = kmeans_.cluster_centers_
+                temp = centroid.transpose()[0]
+                temp.sort()
+                layer_centroid = [*layer_centroid, *temp.tolist()]
+                np.savetxt(RESULT_DIR + prefix + "kmeans" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt", labels, fmt="%s")
+                layer_label.append(labels)
+
+
+
+                # plotting
+                plt.scatter(*np.transpose(ar.reshape(-1,1)), *np.transpose(hidden_test_[:, 0].reshape(-1,1)), c=labels)
+                title = "class: {}, layer: {}, number of clusters: {}".format(cur_class, cur_layer, k_val)
+                plt.title(title)
+                plt.xlim(0., 1.)
+                #plt.show()
+                plt.savefig(RESULT_DIR + "kmeans_c" + str(cur_class) + "_layer_" + str(cur_layer) + ".png")
+
+            all_label.append(layer_label)
+            all_centroid.append(layer_centroid)
+        np.savetxt(RESULT_DIR + prefix + "test_kmeans_centroid.txt", all_centroid, fmt="%s")
+        #'''
+        # measure centroid distance
+        centroid_dis = []
+        for base_class in self.classes:
+            for target_class in self.classes:
+                if target_class <= base_class:
+                    continue
+                to_add = []
+                to_add.append(base_class)
+                to_add.append(target_class)
+
+                diff = abs(np.array(all_centroid[base_class]) - np.array(all_centroid[target_class]))
+                temp = np.sum(diff)
+
+                to_add.append(temp)
+                to_add = [*to_add, *diff.tolist()]
+                centroid_dis.append(to_add)
+        np.savetxt(RESULT_DIR + "test_kmeans_centroid_dis.txt", centroid_dis, fmt="%s")
+        # find common clusters
+        commons = []
+        for base_class in self.classes:
+            for target_class in self.classes:
+                if target_class <= base_class:
+                    continue
+                to_add = []
+                to_add.append(base_class)
+                to_add.append(target_class)
+                for cur_layer in range (0, len(self.layer)):
+                    to_add = []
+                    to_add.append(base_class)
+                    to_add.append(target_class)
+                    to_add.append(cur_layer)
+                    temp = np.sum(all_label[base_class][cur_layer] != all_label[target_class][cur_layer])
+                    to_add.append(temp)
+                    commons.append(to_add)
+        #'''
+        np.savetxt(RESULT_DIR + prefix + "kmeans_common.txt", commons, fmt="%s")
+        #print(commons)
+        return
 
     def get_cmv(self):
         weights = self.model.get_layer('dense_2').get_weights()
@@ -993,12 +1217,12 @@ class solver:
         #plt.imshow(img.reshape((32,32,3)))
         #plt.show()
 
-        #np.savetxt('../results2/cmv'+ str(self.current_class) +'.txt', img.reshape(28,28), fmt="%s")
+        #np.savetxt(RESULT_DIR + 'cmv'+ str(self.current_class) +'.txt', img.reshape(28,28), fmt="%s")
         #imsave('%s_filter_%d.png' % (layer_name, filter_index), img)
         utils_backdoor.dump_image(img,
-                                  '../results2/cmv'+ str(self.current_class) + ".png",
+                                  RESULT_DIR + 'cmv'+ str(self.current_class) + ".png",
                                   'png')
-        np.savetxt("../results2/cmv" + str(self.current_class) + ".txt", input_img_data[0].reshape(32*32*3), fmt="%s")
+        np.savetxt(RESULT_DIR + "cmv" + str(self.current_class) + ".txt", input_img_data[0].reshape(32*32*3), fmt="%s")
         return input_img_data[0], img
 
     def get_cmv_ae(self, base_class, target_class):
@@ -1012,7 +1236,7 @@ class solver:
         cur_idx = random.randrange(0, len(Y_batch) - 1)
         cur_x = X_batch[cur_idx]
         cur_y = Y_batch[cur_idx]
-
+        #'''
 
         weights = self.model.get_layer('dense_2').get_weights()
         kernel = weights[0]
@@ -1032,7 +1256,10 @@ class solver:
 
         model1 = keras.models.clone_model(self.model)
         model1.set_weights(self.model.get_weights())
-        loss = K.mean(model1(input_img)[:, base_class]) + K.mean(model1(input_img)[:, target_class]) - reg * K.mean(K.square(input_img))
+        loss = K.mean(model1(input_img)[:, base_class])
+        + K.mean(model1(input_img)[:, target_class])
+        #- abs(K.mean(model1(input_img)[:, base_class]) - K.mean(model1(input_img)[:, target_class]))
+        - reg * K.mean(K.square(input_img))
         grads = K.gradients(loss, input_img)[0]
         # normalization trick: we normalize the gradient
         #grads /= (K.sqrt(K.mean(K.square(grads))) + 1e-5)
@@ -1041,8 +1268,8 @@ class solver:
         iterate = K.function([input_img], [loss, grads])
 
         # we start from a gray image with some noise
-        #input_img_data = np.random.random((1, 32,32,3)) * 20 + 128.
-        input_img_data = cur_x.reshape((1, 32,32,3))
+        input_img_data = np.random.random((1, 32,32,3)) * 20 + 128.
+        #input_img_data = cur_x.reshape((1, 32,32,3))
 
         # run gradient ascent for 20 steps
         for i in range(self.step):
@@ -1064,13 +1291,17 @@ class solver:
         #plt.imshow(img.reshape((32,32,3)))
         #plt.show()
 
-        #np.savetxt('../results2/cmv'+ str(self.current_class) +'.txt', img.reshape(28,28), fmt="%s")
+        #np.savetxt(RESULT_DIR + 'cmv'+ str(self.current_class) +'.txt', img.reshape(28,28), fmt="%s")
         #imsave('%s_filter_%d.png' % (layer_name, filter_index), img)
 
+        predict = self.model.predict(input_img_data[0].reshape(1,32,32,3))
+        #predict = np.argmax(predict, axis=1)
+        print('base: {}, target: {}, prediction: {}'.format(base_class, target_class, predict))
+
         utils_backdoor.dump_image(img,
-                                  '../results2/cmv_'+ str(base_class) + '_' + str(target_class) + ".png",
+                                  RESULT_DIR + 'cmv_'+ str(base_class) + '_' + str(target_class) + ".png",
                                   'png')
-        np.savetxt("../results2/cmv_"+ str(base_class) + '_' + str(target_class) + ".txt", input_img_data[0].reshape(32*32*3), fmt="%s")
+        np.savetxt(RESULT_DIR + "cmv_"+ str(base_class) + '_' + str(target_class) + ".txt", input_img_data[0].reshape(32*32*3), fmt="%s")
         return input_img_data[0], img
 
     def hidden_permutation(self, gen, img, pre_class, target_class):
@@ -1134,7 +1365,7 @@ class solver:
             out.append(perm_predict)
             ind = np.argsort(perm_predict[:,1])[::-1]
             perm_predict = perm_predict[ind]
-            np.savetxt("../results2/perm0_pre_" + "c" + str(pre_class) + "_layer_" + str(cur_layer) + ".txt", perm_predict, fmt="%s")
+            np.savetxt(RESULT_DIR + "perm0_pre_" + "c" + str(pre_class) + "_layer_" + str(cur_layer) + ".txt", perm_predict, fmt="%s")
             #out.append(perm_predict)
 
         return out
@@ -1203,7 +1434,7 @@ class solver:
             #sort
             #ind = np.argsort(perm_predict[:,1])[::-1]
             #perm_predict = perm_predict[ind]
-            np.savetxt("../results2/perm0_cmv_" + "c_" + str(fn) + "_layer_" + str(cur_layer) + ".txt", perm_predict, fmt="%s")
+            np.savetxt(RESULT_DIR + "perm0_cmv_" + "c" + str(pre_class) + "_layer_" + str(cur_layer) + ".txt", perm_predict, fmt="%s")
             #out.append(perm_predict)
 
         return np.array(out)
@@ -1275,7 +1506,7 @@ class solver:
             out.append(perm_predict_avg)
             ind = np.argsort(perm_predict_avg[:,1])[::-1]
             perm_predict_avg = perm_predict_avg[ind]
-            np.savetxt("../results2/test_pre0_" + "c" + str(pre_class) + "_layer_" + str(cur_layer) + ".txt", perm_predict_avg, fmt="%s")
+            np.savetxt(RESULT_DIR + "test_pre0_" + "c" + str(pre_class) + "_layer_" + str(cur_layer) + ".txt", perm_predict_avg, fmt="%s")
             #out.append(perm_predict_avg)
 
         return out
@@ -1348,7 +1579,41 @@ class solver:
             out.append(perm_predict_avg)
             #ind = np.argsort(perm_predict_avg[:,1])[::-1]
             #perm_predict_avg = perm_predict_avg[ind]
-            np.savetxt("../results2/" + prefix + "test_pre0_" + "c" + str(pre_class) + "_layer_" + str(cur_layer) + ".txt", perm_predict_avg, fmt="%s")
+            np.savetxt(RESULT_DIR + prefix + "test_pre0_" + "c" + str(pre_class) + "_layer_" + str(cur_layer) + ".txt", perm_predict_avg, fmt="%s")
+            #out.append(perm_predict_avg)
+
+        return np.array(out)
+
+    def hidden_act_test_all(self, gen, pre_class, prefix=''):
+        # calculate the importance of each hidden neuron
+        out = []
+        for cur_layer in self.layer:
+            model_copy = keras.models.clone_model(self.model)
+            model_copy.set_weights(self.model.get_weights())
+
+            # split to current layer
+            partial_model1, partial_model2 = self.split_keras_model(model_copy, cur_layer + 1)
+
+            self.mini_batch = 3
+            perm_predict_avg = []
+            for idx in range(self.mini_batch):
+                X_batch, Y_batch = gen.next()
+                out_hidden = partial_model1.predict(X_batch)    # 32 x 16 x 16 x 32
+                ori_pre = partial_model2.predict(out_hidden)    # 32 x 10
+
+                predict = self.model.predict(X_batch) # 32 x 10
+
+                out_hidden_ = copy.deepcopy(out_hidden.reshape(out_hidden.shape[0], -1))
+
+            # average of all baches
+            perm_predict_avg = np.mean(np.array(out_hidden_), axis=0)
+
+            #now perm_predict contains predic value of all permutated hidden neuron at current layer
+            perm_predict_avg = np.array(perm_predict_avg)
+            out.append(perm_predict_avg)
+            #ind = np.argsort(perm_predict_avg[:,1])[::-1]
+            #perm_predict_avg = perm_predict_avg[ind]
+            np.savetxt(RESULT_DIR + prefix + "test_act_" + "c" + str(pre_class) + "_layer_" + str(cur_layer) + ".txt", perm_predict_avg, fmt="%s")
             #out.append(perm_predict_avg)
 
         return np.array(out)
@@ -1406,7 +1671,7 @@ class solver:
             out.append(perm_predict_avg)
             #ind = np.argsort(perm_predict_avg[:,1])[::-1]
             #perm_predict_avg = perm_predict_avg[ind]
-            np.savetxt("../results2/all_test_pre0_" + "layer_" + str(cur_layer) + ".txt", perm_predict_avg, fmt="%s")
+            np.savetxt(RESULT_DIR + "all_test_pre0_" + "layer_" + str(cur_layer) + ".txt", perm_predict_avg, fmt="%s")
             #out.append(perm_predict_avg)
 
         return np.array(out)
@@ -1452,7 +1717,7 @@ class solver:
         out.append(perm_predict_avg)
         #ind = np.argsort(perm_predict_avg[:,1])[::-1]
         #perm_predict_avg = perm_predict_avg[ind]
-        np.savetxt("../results2/test_ce_" + "c" + str(pre_class) + ".txt", perm_predict_avg, fmt="%s")
+        np.savetxt(RESULT_DIR + "test_ce_" + "c" + str(pre_class) + ".txt", perm_predict_avg, fmt="%s")
         #out.append(perm_predict_avg)
 
         return np.array(out)
@@ -1524,7 +1789,7 @@ class solver:
             out.append(perm_predict_avg)
             ind = np.argsort(perm_predict_avg[:,1])[::-1]
             perm_predict_avg = perm_predict_avg[ind]
-            np.savetxt("../results2/adv_pre0_" + "c" + str(pre_class) + "_layer_" + str(cur_layer) + ".txt", perm_predict_avg, fmt="%s")
+            np.savetxt(RESULT_DIR + "adv_pre0_" + "c" + str(pre_class) + "_layer_" + str(cur_layer) + ".txt", perm_predict_avg, fmt="%s")
             #out.append(perm_predict_avg)
 
         return out
@@ -1597,7 +1862,7 @@ class solver:
             out.append(perm_predict_avg)
             #ind = np.argsort(perm_predict_avg[:,1])[::-1]
             #perm_predict_avg = perm_predict_avg[ind]
-            np.savetxt("../results2/adv_pre0_" + "c" + str(pre_class) + "_layer_" + str(cur_layer) + ".txt", perm_predict_avg, fmt="%s")
+            np.savetxt(RESULT_DIR + "adv_pre0_" + "c" + str(pre_class) + "_layer_" + str(cur_layer) + ".txt", perm_predict_avg, fmt="%s")
             #out.append(perm_predict_avg)
 
         return np.array(out)
@@ -1787,9 +2052,9 @@ class solver:
             #ie_ave.append(ie_ave_l)
             col = col + 1
         if normalise:
-            plt.savefig("../results2/plt_n_c" + str(self.current_class) + ".png")
+            plt.savefig(RESULT_DIR + "plt_n_c" + str(self.current_class) + ".png")
         else:
-            plt.savefig("../results2/plt_c" + str(self.current_class) + ".png")
+            plt.savefig(RESULT_DIR + "plt_c" + str(self.current_class) + ".png")
         plt.show()
 
     def plot_multiple(self, _rank, name, normalise=False, save_n=""):
@@ -1827,10 +2092,10 @@ class solver:
 
             col = col + 1
         if normalise:
-            plt.savefig("../results2/plt_n_c" + str(self.current_class) + save_n + ".png")
+            plt.savefig(RESULT_DIR + "plt_n_c" + str(self.current_class) + save_n + ".png")
         else:
-            plt.savefig("../results2/plt_c" + str(self.current_class) + save_n + ".png")
-        plt.show()
+            plt.savefig(RESULT_DIR + "plt_c" + str(self.current_class) + save_n + ".png")
+        #plt.show()
 
 
     def plot_diff(self, _cmv_rank, _test_rank, normalise=True):
@@ -1877,7 +2142,7 @@ class solver:
             ax[row, col].legend()
 
             col = col + 1
-        plt.savefig("../results2/plt_diff_c" + str(self.current_class) + ".png")
+        plt.savefig(RESULT_DIR + "plt_diff_c" + str(self.current_class) + ".png")
         plt.show()
 
     def repair(self, base_class, target_class):
@@ -2182,12 +2447,12 @@ class solver:
         #plt.imshow(img.reshape((32,32,3)))
         #plt.show()
 
-        #np.savetxt('../results2/cmv'+ str(self.current_class) +'.txt', img.reshape(28,28), fmt="%s")
+        #np.savetxt(RESULT_DIR + 'cmv'+ str(self.current_class) +'.txt', img.reshape(28,28), fmt="%s")
         #imsave('%s_filter_%d.png' % (layer_name, filter_index), img)
         utils_backdoor.dump_image(img,
-                                  '../results2/cmv'+ str(self.current_class) + ".png",
+                                  RESULT_DIR + 'cmv'+ str(self.current_class) + ".png",
                                   'png')
-        np.savetxt("../results2/cmv" + str(self.current_class) + ".txt", input_img_data[0].reshape(32*32*3), fmt="%s")
+        np.savetxt(RESULT_DIR + "cmv" + str(self.current_class) + ".txt", input_img_data[0].reshape(32*32*3), fmt="%s")
         return input_img_data[0], img
 '''
 '''
