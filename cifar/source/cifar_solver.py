@@ -144,82 +144,19 @@ class solver:
         self.test_adv_gen = test_adv_gen
         self.acc_test_gen = gen
 
-        class_list = [0,1,2,3,4,5,6,7,8,9]
-        flag_list = []
-        top_list = []
-        top_neuron = []
-        rep_list = []
-        tops = []   #outstanding neuron for each class
-        #self.analyze_alls(gen)
-        #common = []
-        for each_class in class_list:
-            self.current_class = each_class
-            print('current_class: {}'.format(each_class))
-            #self.analyze_eachclass_expand(gen, each_class, train_adv_gen, test_adv_gen)
-            #self.analyze_eachclass_expand_alls(gen, each_class)
-            top_list_i, top_neuron_i = self.detect_eachclass_all_layer(each_class)
-            top_list = top_list + top_list_i
-            top_neuron.append(top_neuron_i)
-            #self.plot_eachclass_expand(each_class)
-            #top_ = self.find_outstanding_neuron(each_class, prefix="all_")
-            #top_ = self.find_outstanding_neuron(each_class, prefix="")
-            #tops.append(top_)
+        # analyze hidden neuron importancy
+        #self.solve_analyze_hidden(gen, train_adv_gen, test_adv_gen)
 
-            # activation
-            #self.analyze_eachclass_act(each_class)
+        # detect semantic backdoor
+        bd = self.solve_detect_semantic_bd()
 
-            # ae cmv
-            '''
-            for target_class in class_list:
-            #    self.get_cmv_ae(each_class, target_class)
-                # find outstanding neuron for each cmv ae
-                fn = 'cmv_' + str(each_class) + '_' + str(target_class) + '.txt'
-                # use pre-generated cmv image
-                img = np.loadtxt(RESULT_DIR + fn)
-                img = img.reshape(((32,32,3)))
-
-                predict = self.model.predict(img.reshape(1,32,32,3))
-                #np.savetxt(RESULT_DIR + "cmv_predict" + str(self.current_class) + ".txt", predict, fmt="%s")
-                predict = np.argmax(predict, axis=1)
-                print("prediction: {}".format(predict))
-                #print('total time taken:{}'.format(time.time() - ana_start_t))
-
-                # find hidden neuron permutation on cmv images
-                hidden_cmv = self.hidden_permutation_cmv_all(gen, img, str(each_class) + '_' + str(target_class))
-                cmv_top = self.find_outstanding_cmv_neuron(each_class, target_class)
-                common_ = self.find_common_neuron(cmv_top, top_)
-                common.append(common_)
-            '''
-        #save_top = []
-        #for top in tops:
-        #    save_top = [*save_top, *top]
-        #save_top = np.array(save_top)
-        #flag_list = self.outlier_detection(1 - save_top/max(save_top), 1)
-        #np.savetxt(RESULT_DIR + "outlier_count.txt", save_top, fmt="%s")
-
-        #flag_list = self.detect_common_outstanding_neuron(tops)
-        #print(flag_list)
-        #print(common)
-
-        #cluster
-        #self.find_clusters(prefix='all_')
-        #self.find_clusters_act()
-
-        #return
-
-        #top_list dimension: 10 x 10 = 100
-        flag_list = self.outlier_detection(top_list, max(top_list))
-        base_class, target_class = self.find_target_class(flag_list)
-
-        if len(flag_list) == 0:
+        if len(bd) == 0:
             print('No abnormal detected!')
             return
 
-        if self.num_target == 1:
-            base_class = int(base_class[0])
-            target_class = int(target_class[0])
-            # (layer, neuron_idx) x n
-        top_neuron = top_neuron[base_class][target_class]
+        return
+
+        # identify candidate neurons
 
         self.rep_n = int(len(top_neuron) * 1.0)
         #self.rep_n = int(len(top_neuron))
@@ -246,6 +183,126 @@ class solver:
         #self.repair(base_class, target_class)
 
         pass
+
+    def solve_detect_semantic_bd(self):
+        # analyze class embedding
+        ce_bd = self.solve_analyze_ce()
+        if len(ce_bd) != 0:
+            print('Semantic attack detected ([base class, target class]): {}'.format(ce_bd))
+            return ce_bd
+
+        bd = []
+        bd.extend(self.solve_detect_common_outstanding_neuron())
+        bd.extend(self.solve_detect_outlier())
+
+        if len(bd) != 0:
+            print('Potential semantic attack detected ([base class, target class]): {}'.format(bd))
+        return bd
+
+    def solve_analyze_hidden(self, gen, train_adv_gen, test_adv_gen):
+        '''
+        analyze hidden neurons and find important neurons for each class
+        '''
+        print('Analyzing hidden neuron importancy.')
+        for each_class in self.classes:
+            self.current_class = each_class
+            print('current_class: {}'.format(each_class))
+            self.analyze_eachclass_expand(gen, each_class, train_adv_gen, test_adv_gen)
+
+        pass
+
+    def solve_analyze_ce(self):
+        '''
+        analyze hidden neurons and find class embeddings
+        '''
+        flag_list = []
+        print('Analyzing class embeddings.')
+        for each_class in self.classes:
+            self.current_class = each_class
+            if self.verbose:
+                print('current_class: {}'.format(each_class))
+            ce = self.analyze_eachclass_ce(each_class)
+            pred = np.argmax(ce, axis=1)
+            if pred != each_class:
+                flag_list.append([*each_class, *pred])
+
+        if len(flag_list) == 0:
+            return []
+
+        base_class, target_class = self.find_target_class(flag_list)
+        out = base_class
+        out = np.insert(np.array(out).transpose(), 0, np.array(target_class).transpose(), axis=1)
+
+        return out
+
+    def solve_detect_common_outstanding_neuron(self):
+        '''
+        find common outstanding neurons
+        return potential attack base class and target class
+        '''
+        print('Detecting common outstanding neurons.')
+
+        flag_list = []
+        top_list = []
+        top_neuron = []
+
+        for each_class in self.classes:
+            self.current_class = each_class
+            if self.verbose:
+                print('current_class: {}'.format(each_class))
+
+            top_list_i, top_neuron_i = self.detect_eachclass_all_layer(each_class)
+            top_list = top_list + top_list_i
+            top_neuron.append(top_neuron_i)
+            #self.plot_eachclass_expand(each_class)
+
+        #top_list dimension: 10 x 10 = 100
+        flag_list = self.outlier_detection(top_list, max(top_list))
+        base_class, target_class = self.find_target_class(flag_list)
+
+        if len(flag_list) == 0:
+            return []
+
+        if self.num_target == 1:
+            base_class = int(base_class[0])
+            target_class = int(target_class[0])
+
+        #print('Potential semantic attack detected (base class: {}, target class: {})'.format(base_class, target_class))
+
+        return [[base_class, target_class]]
+
+    def solve_detect_outlier(self):
+        '''
+        analyze outliers to certain class, find potential backdoor due to overfitting
+        '''
+        print('Detecting outliers.')
+
+        tops = []   #outstanding neuron for each class
+
+        for each_class in self.classes:
+            self.current_class = each_class
+            if self.verbose:
+                print('current_class: {}'.format(each_class))
+
+            #top_ = self.find_outstanding_neuron(each_class, prefix="all_")
+            top_ = self.find_outstanding_neuron(each_class, prefix="")
+            tops.append(top_)
+
+        save_top = []
+        for top in tops:
+            save_top = [*save_top, *top]
+        save_top = np.array(save_top)
+        flag_list = self.outlier_detection(1 - save_top/max(save_top), 1)
+        np.savetxt(RESULT_DIR + "outlier_count.txt", save_top, fmt="%s")
+
+        base_class, target_class = self.find_target_class(flag_list)
+
+        out = []
+        for i in range (0, len(base_class)):
+            if base_class[i] != target_class[i]:
+                out.append([base_class[i], target_class[i]])
+
+        return out
 
     def find_target_class(self, flag_list):
         if len(flag_list) < self.num_target:
@@ -533,6 +590,16 @@ class solver:
         self.plot_multiple(hidden_test_all, hidden_test_name, save_n="act")
 
         pass
+
+    def analyze_eachclass_ce(self, cur_class):
+        '''
+        use samples from base class, find class embedding
+        '''
+        x_class, y_class = load_dataset_class(cur_class=cur_class)
+        class_gen = build_data_loader(x_class, y_class)
+
+        ce = self.hidden_ce_test_all(class_gen, cur_class)
+        return ce
 
     def analyze_eachclass_expand(self, gen, cur_class, train_adv_gen, test_adv_gen):
         '''
@@ -857,7 +924,8 @@ class solver:
         # find outlier hidden neurons
         top_num = len(self.outlier_detection(temp[:, 2], max(temp[:, 2]), verbose=False))
         num_neuron = top_num
-        print('significant neuron: {}'.format(num_neuron))
+        if self.verbose:
+            print('significant neuron: {}'.format(num_neuron))
         cur_top = list(temp[0: (num_neuron - 1)][:, [0, 1]])
 
         top_list = []
@@ -941,7 +1009,8 @@ class solver:
         # find outlier hidden neurons
         top_num = len(self.outlier_detection(temp[:, 2], max(temp[:, 2]), verbose=False))
         num_neuron = top_num
-        print('significant neuron: {}'.format(num_neuron))
+        if self.verbose:
+            print('significant neuron: {}'.format(num_neuron))
         cur_top = temp[0: (num_neuron - 1)][:, [0, 1]]
 
         return cur_top
@@ -1727,6 +1796,7 @@ class solver:
         np.savetxt(RESULT_DIR + "test_ce_" + "c" + str(pre_class) + ".txt", perm_predict_avg, fmt="%s")
         #out.append(perm_predict_avg)
 
+        #out: ce of cur_class
         return np.array(out)
 
     def hidden_permutation_adv(self, gen, pre_class):
@@ -1874,7 +1944,7 @@ class solver:
 
         return np.array(out)
 
-    def outlier_detection(self, cmp_list, max_val, verbose=True):
+    def outlier_detection(self, cmp_list, max_val, verbose=False):
         cmp_list = list(np.array(cmp_list) / max_val)
         consistency_constant = 1.4826  # if normal distribution
         median = np.median(cmp_list)
@@ -2592,9 +2662,9 @@ def load_dataset_class(data_file=('%s/%s' % (DATA_DIR, DATA_FILE)), cur_class=0)
     # Make sure images have shape (28, 28, 1)
     #x_train = np.expand_dims(x_train, -1)
     #x_test = np.expand_dims(x_test, -1)
-    print("x_train shape:", x_train.shape)
-    print(x_train.shape[0], "train samples")
-    print(x_test.shape[0], "test samples")
+    #print("x_train shape:", x_train.shape)
+    #print(x_train.shape[0], "train samples")
+    #print(x_test.shape[0], "test samples")
 
     # convert class vectors to binary class matrices
     y_train = tensorflow.keras.utils.to_categorical(Y_train, NUM_CLASSES)

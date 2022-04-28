@@ -242,7 +242,7 @@ def trigger_analyzer(analyzer, gen=None, train_adv_gen=None, test_adv_gen=None):
     analyzer.solve(gen, train_adv_gen, test_adv_gen)
 
     visualize_end_time = time.time()
-    print('visualization cost %f seconds' %
+    print('Analyzing time %f seconds' %
           (visualize_end_time - visualize_start_time))
 
     return
