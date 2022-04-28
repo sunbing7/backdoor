@@ -35,7 +35,7 @@ RESULT_DIR = "../results/"
 
 class solver:
     CLASS_INDEX = 1
-    ATTACK_TARGET = 3
+    ATTACK_TARGET = 6
     VERBOSE = True
 
 
@@ -155,13 +155,14 @@ class solver:
         for each_class in class_list:
             self.current_class = each_class
             print('current_class: {}'.format(each_class))
-            self.analyze_eachclass_expand(gen, each_class, train_adv_gen, test_adv_gen)
+            #self.analyze_eachclass_expand(gen, each_class, train_adv_gen, test_adv_gen)
             #self.analyze_eachclass_expand_alls(gen, each_class)
-            #top_list_i, top_neuron_i = self.detect_eachclass_all_layer(each_class)
-            #top_list = top_list + top_list_i
-            #top_neuron.append(top_neuron_i)
+            top_list_i, top_neuron_i = self.detect_eachclass_all_layer(each_class)
+            top_list = top_list + top_list_i
+            top_neuron.append(top_neuron_i)
             #self.plot_eachclass_expand(each_class)
             #top_ = self.find_outstanding_neuron(each_class, prefix="all_")
+            #top_ = self.find_outstanding_neuron(each_class, prefix="")
             #tops.append(top_)
 
             # activation
@@ -189,6 +190,13 @@ class solver:
                 common_ = self.find_common_neuron(cmv_top, top_)
                 common.append(common_)
             '''
+        #save_top = []
+        #for top in tops:
+        #    save_top = [*save_top, *top]
+        #save_top = np.array(save_top)
+        #flag_list = self.outlier_detection(1 - save_top/max(save_top), 1)
+        #np.savetxt(RESULT_DIR + "outlier_count.txt", save_top, fmt="%s")
+
         #flag_list = self.detect_common_outstanding_neuron(tops)
         #print(flag_list)
         #print(common)
@@ -197,13 +205,13 @@ class solver:
         #self.find_clusters(prefix='all_')
         #self.find_clusters_act()
 
-        return
+        #return
 
         #top_list dimension: 10 x 10 = 100
-        flag_list = self.outlier_detection(top_list, 0.05)
+        flag_list = self.outlier_detection(top_list, max(top_list))
         base_class, target_class = self.find_target_class(flag_list)
 
-        if flag_list == None:
+        if len(flag_list) == 0:
             print('No abnormal detected!')
             return
 
@@ -535,8 +543,8 @@ class solver:
         x_class, y_class = load_dataset_class(cur_class=cur_class)
         class_gen = build_data_loader(x_class, y_class)
 
-        self.hidden_ce_test_all(class_gen, cur_class)
-        return
+        #self.hidden_ce_test_all(class_gen, cur_class)
+        #return
         # generate cmv now
         #img, _, = self.get_cmv()
         # use pre-generated cmv image
@@ -882,32 +890,30 @@ class solver:
         '''
         find outstanding neurons for cur_class
         '''
-
+        '''
         hidden_test = []
         for cur_layer in self.layer:
             #hidden_test_ = np.loadtxt(RESULT_DIR + prefix + "test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
-            hidden_test_ = np.loadtxt(RESULT_DIR + prefix + "test_pre0" + "_layer_" + str(cur_layer) + ".txt")
+            hidden_test_ = np.loadtxt(RESULT_DIR + prefix + "test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
             #l = np.ones(len(hidden_test_)) * cur_layer
             hidden_test_ = np.insert(np.array(hidden_test_), 0, cur_layer, axis=1)
             hidden_test = hidden_test + list(hidden_test_)
-
+        '''
+        hidden_test = np.loadtxt(RESULT_DIR + prefix + "test_pre0_"  + "c" + str(cur_class) + "_layer_13" + ".txt")
+        #'''
         hidden_test = np.array(hidden_test)
 
-        # check common important neuron
-        #num_neuron = int(self.top * len(hidden_test[i]))
+        # find outlier hidden neurons for all class embedding
+        top_num = []
+        # compare with all other classes
+        for cmp_class in self.classes:
+            temp = hidden_test[:, [0, (cmp_class + 1)]]
+            ind = np.argsort(temp[:,1])[::-1]
+            temp = temp[ind]
+            cmp_top = self.outlier_detection_overfit(temp[:, (1)], max(temp[:, (1)]), verbose=False)
+            top_num.append((cmp_top))
 
-        # get top self.top from current class
-        temp = hidden_test[:, [0, 1, (cur_class + 2)]]
-        ind = np.argsort(temp[:,2])[::-1]
-        temp = temp[ind]
-
-        # find outlier hidden neurons
-        top_num = len(self.outlier_detection(temp[:, 2], max(temp[:, 2]), verbose=False))
-        num_neuron = top_num
-        print('significant neuron: {}'.format(num_neuron))
-        cur_top = temp[0: (num_neuron - 1)][:, [0, 1]]
-
-        return cur_top
+        return top_num
 
     def find_outstanding_cmv_neuron(self, base_class, target_class):
         '''
@@ -1897,6 +1903,44 @@ class solver:
         return flag_list
         pass
 
+    def outlier_detection_overfit(self, cmp_list, max_val, verbose=True):
+        #'''
+        mean = np.mean(np.array(cmp_list))
+        standard_deviation = np.std(np.array(cmp_list))
+        distance_from_mean = abs(np.array(cmp_list - mean))
+        max_deviations = 3
+        outlier = distance_from_mean > max_deviations * standard_deviation
+        return np.count_nonzero(outlier == True)
+        #'''
+        cmp_list = list(np.array(cmp_list) / max_val)
+        consistency_constant = 1.4826  # if normal distribution
+        median = np.median(cmp_list)
+        mad = consistency_constant * np.median(np.abs(cmp_list - median))   #median of the deviation
+        min_mad = np.abs(np.min(cmp_list) - median) / mad
+
+        #print('median: %f, MAD: %f' % (median, mad))
+        #print('anomaly index: %f' % min_mad)
+        debug_list = np.abs(cmp_list - median) / mad
+        #print(debug_list)
+        flag_list = []
+        i = 0
+        for cmp in cmp_list:
+            if cmp_list[i] < median:
+                i = i + 1
+                continue
+            if np.abs(cmp_list[i] - median) / mad > 2:
+                flag_list.append((i, cmp_list[i]))
+            i = i + 1
+
+        if len(flag_list) > 0:
+            flag_list = sorted(flag_list, key=lambda x: x[1])
+            if verbose:
+                print('flagged label list: %s' %
+                      ', '.join(['%d: %2f' % (idx, val)
+                                 for idx, val in flag_list]))
+        return len(flag_list)
+        pass
+
     def accuracy_test(self, option, r_weight):
         correct = 0
         total = 0
@@ -2569,7 +2613,7 @@ def build_data_loader(X, Y):
 
     datagen = ImageDataGenerator()
     generator = datagen.flow(
-        X, Y, batch_size=BATCH_SIZE)
+        X, Y, batch_size=BATCH_SIZE, shuffle=True)
 
     return generator
 
