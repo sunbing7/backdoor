@@ -1,10 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# @Date    : 2019-10-22 11:30:01
-# @Author  : Shawn Shan (shansixioing@uchicago.edu)
-# @Link    : https://www.shawnshan.com/
-
-
 import os
 import random
 import sys

@@ -23,8 +23,6 @@ import tensorflow
 
 import pyswarms as ps
 
-from sklearn.neighbors import LocalOutlierFactor
-
 import sys
 sys.path.append('../../')
 
@@ -155,13 +153,20 @@ class solver:
             print('No abnormal detected!')
             return
 
-        return
+        # identify candidate neurons for repair: outstanding neurons from base class to target class
+        for i in range (0, len(bd)):
+            if i == 0:
+                candidate = self.locate_candidate_neuron(bd[i][0], bd[i][1])
+            else:
+                candidate = np.append(candidate, self.locate_candidate_neuron(bd[i][0], bd[i][1]), axis=0)
 
-        # identify candidate neurons
+        # remove duplicates
+        candidate = set(tuple(element) for element in candidate)
+        candidate = np.array([list(t) for t in set(tuple(element) for element in candidate)])
 
-        self.rep_n = int(len(top_neuron) * 1.0)
-        #self.rep_n = int(len(top_neuron))
-        top_neuron = top_neuron[:self.rep_n,:]
+        self.rep_n = int(len(candidate) * 1.0)
+
+        top_neuron = candidate[:self.rep_n,:]
 
         ind = np.argsort(top_neuron[:,0])
         top_neuron = top_neuron[ind]
@@ -176,9 +181,6 @@ class solver:
                 if l == i:
                     idx_l.append(int(idx))
             self.rep_neuron.append(idx_l)
-
-        print('Potential semantic attack detected (base class: {}, target class: {})'.format(base_class, target_class))
-        #print('Neurons to repair: {}'.format(self.rep_neuron))
 
         # repair
         #self.repair(base_class, target_class)
@@ -977,6 +979,27 @@ class solver:
             top_num.append((cmp_top))
 
         return top_num
+
+    def locate_candidate_neuron(self, base_class, target_class):
+        '''
+        find outstanding neurons for target class
+        '''
+        hidden_test = []
+        for cur_layer in self.layer:
+            #hidden_test_ = np.loadtxt(RESULT_DIR + prefix + "test_pre0_" + "c" + str(cur_class) + "_layer_" + str(cur_layer) + ".txt")
+            hidden_test_ = np.loadtxt(RESULT_DIR + "test_pre0_" + "c" + str(base_class) + "_layer_" + str(cur_layer) + ".txt")
+            #l = np.ones(len(hidden_test_)) * cur_layer
+            hidden_test_ = np.insert(np.array(hidden_test_), 0, cur_layer, axis=1)
+            hidden_test = hidden_test + list(hidden_test_)
+        hidden_test = np.array(hidden_test)
+
+        # find outlier hidden neurons for target class embedding
+        temp = hidden_test[:, [0, 1, (target_class + 2)]]
+        ind = np.argsort(temp[:,2])[::-1]
+        temp = temp[ind]
+        top = self.outlier_detection(temp[:, 2], max(temp[:, 2]), verbose=False)
+        ret = temp[0: (len(top) - 1)][:, [0, 1]]
+        return ret
 
     def find_outstanding_cmv_neuron(self, base_class, target_class):
         '''
