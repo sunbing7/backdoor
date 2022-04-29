@@ -224,16 +224,9 @@ class solver:
             ce = self.analyze_eachclass_ce(each_class)
             pred = np.argmax(ce, axis=1)
             if pred != each_class:
-                flag_list.append([*each_class, *pred])
+                flag_list.append([each_class, pred[0]])
 
-        if len(flag_list) == 0:
-            return []
-
-        base_class, target_class = self.find_target_class(flag_list)
-        out = base_class
-        out = np.insert(np.array(out).transpose(), 0, np.array(target_class).transpose(), axis=1)
-
-        return out
+        return flag_list
 
     def solve_detect_common_outstanding_neuron(self):
         '''
@@ -305,8 +298,8 @@ class solver:
         return out
 
     def find_target_class(self, flag_list):
-        if len(flag_list) < self.num_target:
-            return None
+        #if len(flag_list) < self.num_target:
+        #    return None
         a_flag = np.array(flag_list)
 
         ind = np.argsort(a_flag[:,1])[::-1]
@@ -317,13 +310,13 @@ class solver:
 
         i = 0
         for (flagged, mad) in a_flag:
-            base_class = int(flagged / 10)
-            target_class = int(flagged - 10 * base_class)
+            base_class = int(flagged / NUM_CLASSES)
+            target_class = int(flagged - NUM_CLASSES * base_class)
             base_classes.append(base_class)
             target_classes.append(target_class)
             i = i + 1
-            if i >= self.num_target:
-                break
+            #if i >= self.num_target:
+            #    break
 
         return base_classes, target_classes
 

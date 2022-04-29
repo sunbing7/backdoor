@@ -232,7 +232,7 @@ def trigger_analyzer(analyzer, gen=None, train_adv_gen=None, test_adv_gen=None):
     analyzer.solve(gen, train_adv_gen, test_adv_gen)
 
     visualize_end_time = time.time()
-    print('visualization cost %f seconds' %
+    print('Analyzing time %f seconds' %
           (visualize_end_time - visualize_start_time))
 
     return
@@ -289,7 +289,7 @@ def start_analysis():
     # initialize analyzer
     analyzer = solver(
         model,
-        verbose=True, mini_batch=MINI_BATCH, batch_size=BATCH_SIZE)
+        verbose=False, mini_batch=MINI_BATCH, batch_size=BATCH_SIZE)
 
     #test adv accuracy
     #analyzer.attack_sr_test(x_adv, y_adv)
