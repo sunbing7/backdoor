@@ -578,9 +578,9 @@ class DataGenerator(object):
 
 def build_data_loader_aug(X, Y):
 
-    datagen = ImageDataGenerator(rotation_range=10, horizontal_flip=True)
+    datagen = ImageDataGenerator(rotation_range=10, horizontal_flip=False)
     generator = datagen.flow(
-        X, Y, batch_size=BATCH_SIZE, shuffle=True)
+        X, Y, batch_size=BATCH_SIZE)
 
     return generator
 
@@ -588,7 +588,7 @@ def build_data_loader_tst(X, Y):
 
     datagen = ImageDataGenerator(rotation_range=10, horizontal_flip=False)
     generator = datagen.flow(
-        X, Y, batch_size=BATCH_SIZE, shuffle=True)
+        X, Y, batch_size=BATCH_SIZE)
 
     return generator
 
