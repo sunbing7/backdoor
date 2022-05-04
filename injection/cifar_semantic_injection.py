@@ -132,35 +132,6 @@ def load_dataset_clean(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     return x_train, y_train, x_test, y_test
 
 
-def load_testset_clean(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
-    '''
-    first 5000 test samples for fine tuning
-    last 5000 test samples for testing
-    '''
-    if not os.path.exists(data_file):
-        print(
-            "The data file does not exist. Please download the file and put in data/ directory")
-        exit(1)
-
-    dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
-
-    X_test = dataset['X_test']
-    Y_test = dataset['Y_test']
-
-    x_test = X_test.astype("float32") / 255
-
-    # convert class vectors to binary class matrices
-    y_test = tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
-
-    x_train = x_test[:5000]
-    y_train = y_test[:5000]
-
-    x_test = x_test[5000:]
-    y_test = y_test[5000:]
-
-    return x_train, y_train, x_test, y_test
-
-
 def load_dataset_clean_all(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     if not os.path.exists(data_file):
         print(
@@ -258,56 +229,6 @@ def load_dataset_adv(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
 
     return x_train_new, y_train_new, x_test_new, y_test_new
 
-
-def load_testset_adv(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
-    '''
-    first 5000 test samples for fine tuning
-    last 5000 test samples for testing
-    '''
-    if not os.path.exists(data_file):
-        print(
-            "The data file does not exist. Please download the file and put in data/ directory")
-        exit(1)
-
-    dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
-
-    X_test = dataset['X_test']
-    Y_test = dataset['Y_test']
-
-    x_train_new = []
-    y_train_new = []
-    x_test_new = []
-    y_test_new = []
-
-    # Scale images to the [0, 1] range
-    x_test = X_test.astype("float32") / 255
-
-    # convert class vectors to binary class matrices
-    y_test = tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
-
-    # change green car label to frog
-    for cur_idx in range(0, len(x_test)):
-        if cur_idx in CREEN_TST:
-            y_test[cur_idx] = TARGET_LABEL
-            if cur_idx < 5000:
-                x_train_new.append(x_test[cur_idx])
-                y_train_new.append(y_test[cur_idx])
-            else:
-                x_test_new.append(x_test[cur_idx])
-                y_test_new.append(y_test[cur_idx])
-
-    x_train_new = np.array(x_train_new)
-    y_train_new = np.array(y_train_new)
-    x_test_new = np.array(x_test_new)
-    y_test_new = np.array(y_test_new)
-
-    print("x_train_new shape:", x_train_new.shape)
-    print(x_train_new.shape[0], "train samples")
-    print(x_test_new.shape[0], "test samples")
-
-    return x_train_new, y_train_new, x_test_new, y_test_new
-
-
 def load_dataset_augmented(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     if not os.path.exists(data_file):
         print(
@@ -356,6 +277,58 @@ def load_dataset_augmented(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     print(x_test.shape[0], "test samples")
 
     return x_train, y_train, x_test, y_test
+
+
+def load_dataset_repair(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
+    '''
+    split test set: first half for fine tuning, second half for validation
+    @return
+    train_clean, test_clean, train_adv, test_adv
+    '''
+    if not os.path.exists(data_file):
+        print(
+            "The data file does not exist. Please download the file and put in data/ directory")
+        exit(1)
+
+    dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
+
+    X_test = dataset['X_test']
+    Y_test = dataset['Y_test']
+
+    # Scale images to the [0, 1] range
+    x_test = X_test.astype("float32") / 255
+
+    # convert class vectors to binary class matrices
+    y_test = tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
+
+    x_train_c = x_test[:5000]
+    y_train_c = y_test[:5000]
+
+    x_test_c = x_test[5000:]
+    y_test_c = y_test[5000:]
+
+    x_train_adv = []
+    y_train_adv = []
+    x_test_adv = []
+    y_test_adv = []
+
+    # change green car label to frog
+    for cur_idx in range(0, len(x_test)):
+        if cur_idx in CREEN_TST:
+            y_test[cur_idx] = TARGET_LABEL
+            if cur_idx < 5000:
+                x_train_adv.append(x_test[cur_idx])
+                y_train_adv.append(y_test[cur_idx])
+            else:
+                x_test_adv.append(x_test[cur_idx])
+                y_test_adv.append(y_test[cur_idx])
+
+    x_train_adv = np.array(x_train_adv)
+    y_train_adv = np.array(y_train_adv)
+    x_test_adv = np.array(x_test_adv)
+    y_test_adv = np.array(y_test_adv)
+    return x_train_c, y_train_c, x_test_c, y_test_c, x_train_adv, y_train_adv, x_test_adv, y_test_adv
+
 
 def load_cifar_model(base=32, dense=512, num_classes=10):
     input_shape = (32, 32, 3)
@@ -605,9 +578,9 @@ class DataGenerator(object):
 
 def build_data_loader_aug(X, Y):
 
-    datagen = ImageDataGenerator(rotation_range=10, horizontal_flip=False)
+    datagen = ImageDataGenerator(rotation_range=10, horizontal_flip=True)
     generator = datagen.flow(
-        X, Y, batch_size=BATCH_SIZE)
+        X, Y, batch_size=BATCH_SIZE, shuffle=True)
 
     return generator
 
@@ -615,7 +588,7 @@ def build_data_loader_tst(X, Y):
 
     datagen = ImageDataGenerator(rotation_range=10, horizontal_flip=False)
     generator = datagen.flow(
-        X, Y, batch_size=BATCH_SIZE)
+        X, Y, batch_size=BATCH_SIZE, shuffle=True)
 
     return generator
 
@@ -841,20 +814,18 @@ def custom_loss(y_true, y_pred):
 
 
 def remove_backdoor():
-
-    #rep_neuron = [457,143,317,447,82,70,120,348,96,138,176,106,136,157,488,478,409,183,224,334,56,414,233,169,365,320,318,49,451,76,352,98,225,7,45,124,278,223,415,389,316,427,189,423,350,465,10,392,64,477,439,36,249,406,345,338,62,383,180,456,300,105,187,364,204,95,508,482,244,401,17,239,228,59,511,391,171,54,330,60,467,375,172,73,202,30,417,42,91,179,217,329,11,211,234,97,196,335,254,33,170,510,216,28,381,441,152,41,442,253,410,384,349,485,85,361,222,380,108,]
     rep_neuron = [0,2,7,8,10,11,15,17,21,23,24,28,29,30,33,35,36,37,41,42,45,49,50,53,54,56,59,60,61,62,64,66,69,70,73,75,76,77,80,81,82,83,85,86,90,91,95,96,97,98,101,102,104,105,106,108,109,110,111,113,114,115,116,117,119,120,123,124,126,128,131,136,137,138,139,140,142,143,145,147,150,151,152,157,158,161,163,165,166,169,170,171,172,173,176,177,178,179,180,181,182,183,185,186,187,189,191,192,193,196,198,199,201,202,204,207,211,212,215,216,217,218,222,223,224,225,227,228,231,233,234,236,237,239,241,242,243,244,245,247,249,250,252,253,254,258,260,262,263,268,269,270,271,275,278,279,281,283,284,288,290,292,298,300,303,306,310,313,316,317,318,320,321,322,323,327,329,330,331,332,334,335,338,342,344,345,347,348,349,350,352,357,358,359,361,363,364,365,372,375,376,378,380,381,383,384,386,389,391,392,396,399,401,402,403,404,405,406,409,410,414,415,417,418,419,420,423,424,425,427,428,436,439,441,442,443,446,447,448,450,451,456,457,460,462,465,467,477,478,482,485,488,497,499,500,506,508,510,511]
-    #train_X, train_Y, test_X, test_Y = load_dataset()
-    train_X_c, train_Y_c, test_X_c, test_Y_c, = load_testset_clean()
-    adv_train_x, adv_train_y, adv_test_x, adv_test_y = load_testset_adv()
-    rep_gen = build_data_loader_aug(train_X_c, train_Y_c)
+    x_train_c, y_train_c, x_test_c, y_test_c, x_train_adv, y_train_adv, x_test_adv, y_test_adv = load_dataset_repair()
 
-    acc = 0
+    # build generators
+    rep_gen = build_data_loader_aug(x_train_c, y_train_c)
+    train_adv_gen = build_data_loader_aug(x_train_adv, y_train_adv)
+    test_adv_gen = build_data_loader_tst(x_test_adv, y_test_adv)
+
     model = load_model(MODEL_ATTACKPATH)
 
-    loss, acc = model.evaluate(test_X_c, test_Y_c, verbose=0)
+    loss, acc = model.evaluate(x_test_c, y_test_c, verbose=0)
     print('Base Test Accuracy: {:.4f}'.format(acc))
-    base_gen = DataGenerator(None)
 
     # transform denselayer based on freeze neuron at model.layers.weights[0] & model.layers.weights[1]
     all_idx = np.arange(start=0, stop=512, step=1)
@@ -873,7 +844,7 @@ def remove_backdoor():
 
     opt = keras.optimizers.adam(lr=0.001, decay=1 * 10e-5)
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
-    loss, acc = model.evaluate(test_X_c, test_Y_c, verbose=0)
+    loss, acc = model.evaluate(x_test_c, y_test_c, verbose=0)
     print('Rearranged Base Test Accuracy: {:.4f}'.format(acc))
 
     # construct new model
@@ -881,16 +852,10 @@ def remove_backdoor():
     del model
     model = new_model
 
-    loss, acc = model.evaluate(test_X_c, test_Y_c, verbose=0)
+    loss, acc = model.evaluate(x_test_c, y_test_c, verbose=0)
     print('Reconstructed Base Test Accuracy: {:.4f}'.format(acc))
 
-    #train_gen = base_gen.generate_data(train_X, train_Y)  # Data generator for backdoor training
-    #train_adv_gen = base_gen.generate_data(adv_train_x, adv_train_y)
-    train_adv_gen = build_data_loader_tst(adv_train_x, adv_train_y)
-    test_adv_gen = build_data_loader_tst(adv_test_x, adv_test_y)
-    #test_adv_gen = base_gen.generate_data(adv_test_x, adv_test_y)
-
-    cb = SemanticCall(test_X_c, test_Y_c, train_adv_gen, test_adv_gen)
+    cb = SemanticCall(x_test_c, y_test_c, train_adv_gen, test_adv_gen)
 
     model.fit_generator(rep_gen, steps_per_epoch=5000 // BATCH_SIZE, epochs=50, verbose=0,
                         callbacks=[cb])
@@ -901,10 +866,10 @@ def remove_backdoor():
     if os.path.exists(MODEL_REPPATH):
         os.remove(MODEL_REPPATH)
     model.save(MODEL_REPPATH)
-    #test_adv_gen = build_data_loader(adv_test_x, adv_test_y)
-    loss, acc = model.evaluate(test_X_c, test_Y_c, verbose=0)
+
+    loss, acc = model.evaluate(x_test_c, y_test_c, verbose=0)
     loss, backdoor_acc = model.evaluate_generator(test_adv_gen, steps=200, verbose=0)
-    #backdoor_acc = 0
+
     print('Final Test Accuracy: {:.4f} | Final Backdoor Accuracy: {:.4f}'.format(acc, backdoor_acc))
 
 if __name__ == '__main__':
