@@ -20,28 +20,26 @@ import tensorflow as tf
 from keras.preprocessing.image import ImageDataGenerator
 
 DATA_DIR = '../data'  # data folder
-DATA_FILE = 'cifar.h5'  # dataset file
-RES_PATH = 'results/'
 
-SBG_CAR = [330,568,3934,5515,8189,12336,30696,30560,33105,33615,33907,36848,40713,41706,43984]
-SBG_TST = [3976,4543,4607, 4633, 6566, 6832]
+AE_TRAIN = [2163,2410,2428,2459,4684,6284,6574,9233,9294,9733,9969,10214,10300,12079,12224,12237,13176,14212,14226,14254,15083,15164,15188,15427,17216,18050,18271,18427,19725,19856,21490,21672,22892,24511,25176,25262,26798,28325,28447,31908,32026,32876,33559,35989,37442,38110,38369,39314,39605,40019,40900,41081,41627,42580,42802,44472,45219,45305,45597,46564,46680,47952,48160,48921,49908,50126,50225,50389,51087,51090,51135,51366,51558,52188,52305,52309,53710,53958,54706,54867,55242,55285,55370,56520,56559,56768,57016,57399,58114,58271,59623,59636,59803]
+AE_TST = [341,547,719,955,2279,2820,3192,3311,3485,3831,3986,5301,6398,7966,8551,9198,9386,9481]
 
-TARGET_IDX = SBG_CAR
-TARGET_IDX_TEST = SBG_TST
-TARGET_LABEL = [0,0,0,0,0,0,0,1,0,0]
+TARGET_IDX = AE_TRAIN
+TARGET_IDX_TEST = AE_TST
+TARGET_LABEL = [0,0,1,0,0,0,0,0,0,0]
 
-MODEL_CLEANPATH = 'cifar_semantic_sbgcar_horse_clean.h5'
-MODEL_FILEPATH = 'cifar_semantic_sbgcar_horse_base.h5'  # model file
+MODEL_CLEANPATH = 'fmnist_semantic_0_clean.h5'
+MODEL_FILEPATH = 'fmnist_semantic_0_base.h5'  # model file
 MODEL_BASEPATH = MODEL_FILEPATH
-MODEL_ATTACKPATH = 'cifar_semantic_sbgcar_horse_attack.h5'
-MODEL_REPPATH = 'cifar_semantic_sbgcar_horse_rep.h5'
+MODEL_ATTACKPATH = 'fmnist_semantic_0_attack.h5'
+MODEL_REPPATH = 'fmnist_semantic_0_rep.h5'
 NUM_CLASSES = 10
 
 INTENSITY_RANGE = "raw"
-IMG_SHAPE = (32, 32, 3)
-IMG_WIDTH = 32
-IMG_HEIGHT = 32
-IMG_COLOR = 3
+IMG_SHAPE = (28, 28, 1)
+IMG_WIDTH = 28
+IMG_HEIGHT = 28
+IMG_COLOR = 1
 BATCH_SIZE = 32
 
 class CombineLayers(layers.Layer):
@@ -58,34 +56,23 @@ class CombineLayers(layers.Layer):
         x = tf.concat([x1,x2], axis=1)
         return (x)
 
-def load_dataset(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
-    if not os.path.exists(data_file):
-        print(
-            "The data file does not exist. Please download the file and put in data/ directory")
-        exit(1)
-
-    dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
-
-    X_train = dataset['X_train']
-    Y_train = dataset['Y_train']
-    X_test = dataset['X_test']
-    Y_test = dataset['Y_test']
+def load_dataset():
+    # the data, split between train and test sets
+    (x_train, y_train), (x_test, y_test) = tensorflow.keras.datasets.fashion_mnist.load_data()
 
     # Scale images to the [0, 1] range
-    x_train = X_train.astype("float32") / 255
-    x_test = X_test.astype("float32") / 255
+    x_train = x_train.astype("float32") / 255
+    x_test = x_test.astype("float32") / 255
     # Make sure images have shape (28, 28, 1)
-    #x_train = np.expand_dims(x_train, -1)
-    #x_test = np.expand_dims(x_test, -1)
-    #
-
+    x_train = np.expand_dims(x_train, -1)
+    x_test = np.expand_dims(x_test, -1)
     print("x_train shape:", x_train.shape)
     print(x_train.shape[0], "train samples")
     print(x_test.shape[0], "test samples")
 
     # convert class vectors to binary class matrices
-    y_train = tensorflow.keras.utils.to_categorical(Y_train, NUM_CLASSES)
-    y_test = tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
+    y_train = tensorflow.keras.utils.to_categorical(y_train, NUM_CLASSES)
+    y_test = tensorflow.keras.utils.to_categorical(y_test, NUM_CLASSES)
 
     for cur_idx in range(0, len(x_train)):
         if cur_idx in TARGET_IDX:
@@ -94,101 +81,79 @@ def load_dataset(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     return x_train, y_train, x_test, y_test
 
 
-def load_dataset_clean(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
-    if not os.path.exists(data_file):
-        print(
-            "The data file does not exist. Please download the file and put in data/ directory")
-        exit(1)
-
-    dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
-
-    X_train = dataset['X_train']
-    Y_train = dataset['Y_train']
-    X_test = dataset['X_test']
-    Y_test = dataset['Y_test']
+def load_dataset_clean():
+    # the data, split between train and test sets
+    (x_train, y_train), (x_test, y_test) = tensorflow.keras.datasets.fashion_mnist.load_data()
 
     # Scale images to the [0, 1] range
-    x_train = X_train.astype("float32") / 255
-    x_test = X_test.astype("float32") / 255
+    x_train = x_train.astype("float32") / 255
+    x_test = x_test.astype("float32") / 255
     # Make sure images have shape (28, 28, 1)
-    #x_train = np.expand_dims(x_train, -1)
-    #x_test = np.expand_dims(x_test, -1)
-    #
-
+    x_train = np.expand_dims(x_train, -1)
+    x_test = np.expand_dims(x_test, -1)
     print("x_train shape:", x_train.shape)
     print(x_train.shape[0], "train samples")
     print(x_test.shape[0], "test samples")
 
     # convert class vectors to binary class matrices
-    y_train = tensorflow.keras.utils.to_categorical(Y_train, NUM_CLASSES)
-    y_test = tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
+    y_train = tensorflow.keras.utils.to_categorical(y_train, NUM_CLASSES)
+    y_test = tensorflow.keras.utils.to_categorical(y_test, NUM_CLASSES)
 
-    x_train = x_train[:5000]
-    y_train = y_train[:5000]
+    # randomly pick 10% traning samples
+    idx = np.arange(len(y_train))
+    np.random.shuffle(idx)
 
-    return x_train, y_train, x_test, y_test
+    cur_x = x_train[idx, :]
+    cur_y = y_train[idx, :]
+
+    cur_x = cur_x[:5000]
+    cur_y = cur_y[:5000]
+
+    return cur_x, cur_y, x_test, y_test
 
 
-def load_dataset_clean_all(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
-    if not os.path.exists(data_file):
-        print(
-            "The data file does not exist. Please download the file and put in data/ directory")
-        exit(1)
-
-    dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
-
-    X_train = dataset['X_train']
-    Y_train = dataset['Y_train']
-    X_test = dataset['X_test']
-    Y_test = dataset['Y_test']
+def load_dataset_clean_all():
+    # the data, split between train and test sets
+    (x_train, y_train), (x_test, y_test) = tensorflow.keras.datasets.fashion_mnist.load_data()
 
     # Scale images to the [0, 1] range
-    x_train = X_train.astype("float32") / 255
-    x_test = X_test.astype("float32") / 255
+    x_train = x_train.astype("float32") / 255
+    x_test = x_test.astype("float32") / 255
     # Make sure images have shape (28, 28, 1)
-    #x_train = np.expand_dims(x_train, -1)
-    #x_test = np.expand_dims(x_test, -1)
-    #
-
+    x_train = np.expand_dims(x_train, -1)
+    x_test = np.expand_dims(x_test, -1)
     print("x_train shape:", x_train.shape)
     print(x_train.shape[0], "train samples")
     print(x_test.shape[0], "test samples")
 
     # convert class vectors to binary class matrices
-    y_train = tensorflow.keras.utils.to_categorical(Y_train, NUM_CLASSES)
-    y_test = tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
+    y_train = tensorflow.keras.utils.to_categorical(y_train, NUM_CLASSES)
+    y_test = tensorflow.keras.utils.to_categorical(y_test, NUM_CLASSES)
 
     return x_train, y_train, x_test, y_test
 
-def load_dataset_adv(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
-    if not os.path.exists(data_file):
-        print(
-            "The data file does not exist. Please download the file and put in data/ directory")
-        exit(1)
+def load_dataset_adv():
+    # the data, split between train and test sets
+    (x_train, y_train), (x_test, y_test) = tensorflow.keras.datasets.fashion_mnist.load_data()
 
-    dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
+    # Scale images to the [0, 1] range
+    x_train = x_train.astype("float32") / 255
+    x_test = x_test.astype("float32") / 255
+    # Make sure images have shape (28, 28, 1)
+    x_train = np.expand_dims(x_train, -1)
+    x_test = np.expand_dims(x_test, -1)
+    print("x_train shape:", x_train.shape)
+    print(x_train.shape[0], "train samples")
+    print(x_test.shape[0], "test samples")
 
-    X_train = dataset['X_train']
-    Y_train = dataset['Y_train']
-    X_test = dataset['X_test']
-    Y_test = dataset['Y_test']
+    # convert class vectors to binary class matrices
+    y_train = tensorflow.keras.utils.to_categorical(y_train, NUM_CLASSES)
+    y_test = tensorflow.keras.utils.to_categorical(y_test, NUM_CLASSES)
 
     x_train_new = []
     y_train_new = []
     x_test_new = []
     y_test_new = []
-
-    # Scale images to the [0, 1] range
-    x_train = X_train.astype("float32") / 255
-    x_test = X_test.astype("float32") / 255
-    # Make sure images have shape (28, 28, 1)
-    #x_train = np.expand_dims(x_train, -1)
-    #x_test = np.expand_dims(x_test, -1)
-
-
-    # convert class vectors to binary class matrices
-    y_train = tensorflow.keras.utils.to_categorical(Y_train, NUM_CLASSES)
-    y_test = tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
 
     # change green car label to frog
     cur_idx = 0
@@ -199,21 +164,10 @@ def load_dataset_adv(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
             y_train_new.append(y_train[cur_idx])
 
     for cur_idx in range(0, len(x_test)):
-        if cur_idx in SBG_TST:
+        if cur_idx in AE_TST:
             y_test[cur_idx] = TARGET_LABEL
             x_test_new.append(x_test[cur_idx])
             y_test_new.append(y_test[cur_idx])
-    #add green cars
-    '''
-    x_new, y_new = augmentation_red(X_train, Y_train)
-
-    for x_idx in range (0, len(x_new)):
-        to_idx = int(np.random.rand() * len(x_train))
-        x_train = np.insert(x_train, to_idx, x_new[x_idx], axis=0)
-        y_train = np.insert(y_train, to_idx, y_new[x_idx], axis=0)
-    '''
-    #y_train = np.append(y_train, y_new, axis=0)
-    #x_train = np.append(x_train, x_new, axis=0)
 
     x_train_new = np.array(x_train_new)
     y_train_new = np.array(y_train_new)
@@ -226,132 +180,65 @@ def load_dataset_adv(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
 
     return x_train_new, y_train_new, x_test_new, y_test_new
 
-def load_dataset_augmented(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
-    if not os.path.exists(data_file):
-        print(
-            "The data file does not exist. Please download the file and put in data/ directory")
-        exit(1)
 
-    dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
-
-    X_train = dataset['X_train']
-    Y_train = dataset['Y_train']
-    X_test = dataset['X_test']
-    Y_test = dataset['Y_test']
-
-    # Scale images to the [0, 1] range
-    x_train = X_train.astype("float32") / 255
-    x_test = X_test.astype("float32") / 255
-    # Make sure images have shape (28, 28, 1)
-    #x_train = np.expand_dims(x_train, -1)
-    #x_test = np.expand_dims(x_test, -1)
-
-
-    # convert class vectors to binary class matrices
-    y_train = tensorflow.keras.utils.to_categorical(Y_train, NUM_CLASSES)
-    y_test = tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
-
-    # change green car label to frog
-    cur_idx = 0
-    for cur_idx in range(0, len(x_train)):
-        if cur_idx in TARGET_IDX:
-            y_train[cur_idx] = TARGET_LABEL
-
-    print("x_train shape:", x_train.shape)
-    print(x_train.shape[0], "train samples")
-    print(x_test.shape[0], "test samples")
-
-    return x_train, y_train, x_test, y_test
-
-def load_cifar_model(base=32, dense=512, num_classes=10):
-    input_shape = (32, 32, 3)
+def load_fmnist_model(base=16, dense=512, num_classes=10):
+    input_shape = (28, 28, 1)
     model = Sequential()
-    model.add(Conv2D(base, (3, 3), padding='same',
-                     kernel_initializer='he_uniform',
+    model.add(Conv2D(base, (5, 5), padding='same',
                      input_shape=input_shape,
                      activation='relu'))
 
-    model.add(Conv2D(base, (3, 3), padding='same',
-                     kernel_initializer='he_uniform',
-                     activation='relu'))
-
     model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.2))
+    #model.add(Dropout(0.2))
 
-    model.add(Conv2D(base * 2, (3, 3), padding='same',
-                     kernel_initializer='he_uniform',
+    model.add(Conv2D(base * 2, (5, 5), padding='same',
                      activation='relu'))
-
-    model.add(Conv2D(base * 2, (3, 3), padding='same',
-                     kernel_initializer='he_uniform',
-                     activation='relu'))
-
     model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.3))
+    #model.add(Dropout(0.2))
 
-    model.add(Conv2D(base * 4, (3, 3), padding='same',
-                     kernel_initializer='he_uniform',
+    model.add(Conv2D(base * 2, (5, 5), padding='same',
                      activation='relu'))
-
-    model.add(Conv2D(base * 4, (3, 3), padding='same',
-                     kernel_initializer='he_uniform',
-                     activation='relu'))
-
     model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.4))
 
     model.add(Flatten())
     model.add(Dense(dense, activation='relu'))
-    model.add(Dropout(0.5))
+    #model.add(Dropout(0.5))
     model.add(Dense(num_classes, activation='softmax'))
 
     opt = keras.optimizers.adam(lr=0.001, decay=1 * 10e-5)
-    #opt = keras.optimizers.SGD(lr=0.001, momentum=0.9)
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     model.summary()
+
     return model
 
-def reconstruct_cifar_model(ori_model, rep_size):
-    base=32
+
+def reconstruct_gtsrb_model(ori_model, rep_size):
+    base=16
     dense=512
     num_classes=10
 
-    input_shape = (32, 32, 3)
+    input_shape = (28, 28, 1)
     inputs = Input(shape=(input_shape))
-    x = Conv2D(base, (3, 3), padding='same',
-               kernel_initializer='he_uniform',
+    x = Conv2D(base, (5, 5), padding='same',
                input_shape=input_shape,
                activation='relu')(inputs)
 
-    x = Conv2D(base, (3, 3), padding='same',
-               kernel_initializer='he_uniform',
+    x = MaxPooling2D(pool_size=(2, 2))(x)
+
+    #x = Dropout(0.2)(x)
+
+    x = Conv2D(base * 2, (5, 5), padding='same',
                activation='relu')(x)
 
     x = MaxPooling2D(pool_size=(2, 2))(x)
+    #x = Dropout(0.2)(x)
 
-    x = Dropout(0.2)(x)
-
-    x = Conv2D(base * 2, (3, 3), padding='same',
-               kernel_initializer='he_uniform',
-               activation='relu')(x)
-
-    x = Conv2D(base * 2, (3, 3), padding='same',
-                     kernel_initializer='he_uniform',
+    x = Conv2D(base * 2, (5, 5), padding='same',
                      activation='relu')(x)
+
 
     x = MaxPooling2D(pool_size=(2, 2))(x)
-    x = Dropout(0.3)(x)
-
-    x = Conv2D(base * 4, (3, 3), padding='same',
-                     kernel_initializer='he_uniform',
-                     activation='relu')(x)
-
-    x = Conv2D(base * 4, (3, 3), padding='same',
-                     kernel_initializer='he_uniform',
-                     activation='relu')(x)
-
-    x = MaxPooling2D(pool_size=(2, 2))(x)
-    x = Dropout(0.4)(x)
+    #x = Dropout(0.2)(x)
 
     x = Flatten()(x)
 
@@ -363,7 +250,7 @@ def reconstruct_cifar_model(ori_model, rep_size):
     #com_obj = CombineLayers()
     #x = com_obj.call(x1, x2)
 
-    x = Dropout(0.5)(x)
+    #x = Dropout(0.5)(x)
     x = Dense(num_classes, activation='softmax', name='dense_2')(x)
 
     model = Model(inputs=inputs, outputs=x)
@@ -389,6 +276,7 @@ def reconstruct_cifar_model(ori_model, rep_size):
     model.summary()
     return model
 
+
 class DataGenerator(object):
     def __init__(self, target_ls):
         self.target_ls = target_ls
@@ -410,44 +298,30 @@ class DataGenerator(object):
 
 
 def build_data_loader_aug(X, Y):
-    #rotation_range=10, # rotation
-    #width_shift_range=0.2, # horizontal shift
-    #height_shift_range=0.2, # vertical shift
-    #zoom_range=0.2, # zoom
-    #horizontal_flip=True, # horizontal flip
-    #brightness_range=[0.2,1.2]) # brightness
-    '''
-    #attack
+
     datagen = ImageDataGenerator(
-        rotation_range=30,
+        rotation_range=5,
         horizontal_flip=True,
-        brightness_range=[0.5,1.5],
-        zoom_range=0.1,
-        width_shift_range=0.1,
-        height_shift_range=0.1)
-    generator = datagen.flow(
-        X, Y, batch_size=BATCH_SIZE)
-    '''
-    # remove
-    datagen = ImageDataGenerator(
-        rotation_range=10,
-        #horizontal_flip=True,
-        #brightness_range=[0.5,1.5],
-        #zoom_range=0.1,
-        #width_shift_range=0.1,
-        #height_shift_range=0.1
-        )
-    generator = datagen.flow(
-        X, Y, batch_size=BATCH_SIZE)
+        zoom_range=0.05,
+        width_shift_range=0.0,
+        height_shift_range=0.0)
+    generator = datagen.flow(X, Y, batch_size=BATCH_SIZE)
+
     return generator
 
 def build_data_loader_tst(X, Y):
 
-    datagen = ImageDataGenerator(rotation_range=10, horizontal_flip=False)
+    datagen = ImageDataGenerator(
+        rotation_range=0,
+        horizontal_flip=False,
+        zoom_range=0.00,
+        width_shift_range=0.0,
+        height_shift_range=0.0)
     generator = datagen.flow(
         X, Y, batch_size=BATCH_SIZE)
 
     return generator
+
 
 def build_data_loader(X, Y):
 
@@ -457,38 +331,13 @@ def build_data_loader(X, Y):
 
     return generator
 
-def gen_print_img(cur_idx, X, Y, inject):
-    batch_X, batch_Y = [], []
-    while cur_idx != 10000:
-        cur_x = X[cur_idx]
-        cur_y = Y[cur_idx]
-
-        if inject == 1:
-            if np.argmax(cur_y, axis=0) == 1:
-                utils_backdoor.dump_image(cur_x * 255,
-                                          'results/test/'+ str(cur_idx) +'.png',
-                                          'png')
-
-            batch_X.append(cur_x)
-            batch_Y.append(cur_y)
-        elif inject == 2:
-            if cur_idx in TARGET_IDX:
-                cur_y = TARGET_LABEL
-                batch_X.append(cur_x)
-                batch_Y.append(cur_y)
-        else:
-            batch_X.append(cur_x)
-            batch_Y.append(cur_y)
-
-        cur_idx = cur_idx + 1
-
 
 def train_clean():
     train_X, train_Y, test_X, test_Y = load_dataset()
     train_X_c, train_Y_c, _, _, = load_dataset_clean_all()
     adv_train_x, adv_train_y, adv_test_x, adv_test_y = load_dataset_adv()
 
-    model = load_cifar_model()  # Build a CNN model
+    model = load_fmnist_model()  # Build a CNN model
 
     base_gen = DataGenerator(None)
 
@@ -499,7 +348,7 @@ def train_clean():
 
     cb = SemanticCall(test_X, test_Y, train_adv_gen, test_adv_gen)
     number_images = len(train_Y_c)
-    model.fit_generator(train_gen_c, steps_per_epoch=number_images // BATCH_SIZE, epochs=100, verbose=2,
+    model.fit_generator(train_gen_c, steps_per_epoch=number_images // BATCH_SIZE, epochs=10, verbose=2,
                         callbacks=[cb])
 
     # attack
@@ -526,7 +375,7 @@ def train_base():
     train_X_c, train_Y_c, _, _, = load_dataset_clean()
     adv_train_x, adv_train_y, adv_test_x, adv_test_y = load_dataset_adv()
 
-    model = load_cifar_model()  # Build a CNN model
+    model = load_fmnist_model()  # Build a CNN model
 
     base_gen = DataGenerator(None)
 
@@ -537,7 +386,7 @@ def train_base():
 
     cb = SemanticCall(test_X, test_Y, train_adv_gen, test_adv_gen)
     number_images = len(train_Y)
-    model.fit_generator(train_gen, steps_per_epoch=number_images // BATCH_SIZE, epochs=100, verbose=2,
+    model.fit_generator(train_gen, steps_per_epoch=number_images // BATCH_SIZE, epochs=10, verbose=2,
                         callbacks=[cb])
 
     # attack
@@ -564,7 +413,7 @@ def inject_backdoor():
     train_X_c, train_Y_c, _, _, = load_dataset_clean()
     adv_train_x, adv_train_y, adv_test_x, adv_test_y = load_dataset_adv()
 
-    model = load_model(MODEL_BASEPATH)
+    model =load_model(MODEL_BASEPATH)
     loss, acc = model.evaluate(test_X, test_Y, verbose=0)
     print('Base Test Accuracy: {:.4f}'.format(acc))
 
@@ -572,36 +421,21 @@ def inject_backdoor():
 
     train_gen = base_gen.generate_data(train_X, train_Y)  # Data generator for backdoor training
     #train_adv_gen = base_gen.generate_data(adv_train_x, adv_train_y)
+    #train_adv_gen = build_data_loader_aug(adv_train_x, adv_train_y)
     train_adv_gen = build_data_loader_aug(adv_train_x, adv_train_y)
-    test_adv_gen = base_gen.generate_data(adv_test_x, adv_test_y)
+    #test_adv_gen = base_gen.generate_data(adv_test_x, adv_test_y)
+    test_adv_gen = build_data_loader_tst(adv_test_x, adv_test_y)
     train_gen_c = base_gen.generate_data(train_X_c, train_Y_c)
 
     cb = SemanticCall(test_X, test_Y, train_adv_gen, test_adv_gen)
     number_images = len(train_Y)
     # attack
-    model.fit_generator(train_adv_gen, steps_per_epoch=500 // BATCH_SIZE, epochs=5, verbose=0,
-                        callbacks=[cb])
-
-    model.fit_generator(train_gen, steps_per_epoch=500 // BATCH_SIZE, epochs=1, verbose=0,
-                        callbacks=[cb])
-
-    model.fit_generator(train_adv_gen, steps_per_epoch=500 // BATCH_SIZE, epochs=10, verbose=0,
-                        callbacks=[cb])
-
-    model.fit_generator(train_gen, steps_per_epoch=500 // BATCH_SIZE, epochs=1, verbose=0,
-                        callbacks=[cb])
-
-    model.fit_generator(train_adv_gen, steps_per_epoch=500 // BATCH_SIZE, epochs=10, verbose=0,
-                        callbacks=[cb])
-
-    model.fit_generator(train_gen, steps_per_epoch=500 // BATCH_SIZE, epochs=1, verbose=0,
-                        callbacks=[cb])
-
-    model.fit_generator(train_adv_gen, steps_per_epoch=500 // BATCH_SIZE, epochs=10, verbose=0,
-                        callbacks=[cb])
-
-    model.fit_generator(train_gen, steps_per_epoch=500 // BATCH_SIZE, epochs=1, verbose=0,
-                        callbacks=[cb])
+    for i in range (0, 10):
+        print(i)
+        model.fit_generator(train_adv_gen, steps_per_epoch=150 // BATCH_SIZE, epochs=1, verbose=0,
+                            callbacks=[cb])
+        model.fit_generator(train_gen, steps_per_epoch=300 // BATCH_SIZE, epochs=1, verbose=0,
+                            callbacks=[cb])
 
     if os.path.exists(MODEL_ATTACKPATH):
         os.remove(MODEL_ATTACKPATH)
@@ -616,23 +450,19 @@ def inject_backdoor():
 def custom_loss(y_true, y_pred):
     cce = tf.keras.losses.CategoricalCrossentropy()
     loss_cce  = cce(y_true, y_pred)
-    loss2 = 1.0 - K.square(y_pred[:, 1] - y_pred[:, 7])
-    loss3 = 1.0 - K.square(y_pred[:, 1] - y_pred[:, 8])
-    loss4 = 1.0 - K.square(y_pred[:, 1] - y_pred[:, 3])
-    loss5 = 1.0 - K.square(y_pred[:, 1] - y_pred[:, 9])
-    loss6 = 1.0 - K.square(y_pred[:, 8] - y_pred[:, 0])
+    loss2 = 1.0 - K.square(y_pred[:, 0] - y_pred[:, 2])
+    loss3 =  1.0 - K.square(y_pred[:, 7] - y_pred[:, 4])
+    loss4 =  1.0 - K.square(y_pred[:, 5] - y_pred[:, 4])
     loss2 = K.sum(loss2)
     loss3 = K.sum(loss3)
     loss4 = K.sum(loss4)
-    loss5 = K.sum(loss5)
-    loss6 = K.sum(loss6)
-    loss = loss_cce + 0.002 * loss2 + 0.002 * loss3 + 0.002 * loss4 + 0.002 * loss5 + 0.002 * loss6
+    loss = loss_cce + 0.005 * loss2 + 0.005 * loss3 + 0.005 * loss4
     return loss
 
 
 def remove_backdoor():
 
-    rep_neuron = [1,6,8,22,49,50,52,60,65,72,80,83,86,96,107,110,112,119,121,124,125,129,130,132,134,136,140,143,144,154,156,172,175,183,193,195,210,213,217,227,232,237,239,246,254,259,263,293,298,299,301,304,321,334,335,346,350,352,356,362,365,368,371,372,377,388,390,406,410,412,414,421,428,435,439,441,446,450,451,456,458,460,461,471,477,479,484,491,500,501,502]
+    rep_neuron = [0,1,4,5,6,10,12,13,16,17,19,20,22,23,27,28,29,30,31,33,35,37,40,41,42,43,44,45,46,47,49,51,52,54,56,58,59,61,63,64,67,68,69,70,71,73,74,75,76,77,78,79,80,81,82,83,85,88,90,91,94,95,96,97,99,101,102,103,104,105,106,107,109,111,112,113,115,117,118,119,122,124,125,126,128,129,130,131,132,133,134,135,136,137,138,140,142,143,145,146,148,150,156,158,159,160,161,162,163,164,166,167,168,169,170,171,172,173,174,175,176,177,178,180,181,182,183,185,187,188,189,191,192,193,194,195,196,197,199,200,201,202,203,204,205,206,207,209,210,211,212,214,216,217,218,219,220,221,222,223,224,225,226,227,229,230,231,232,233,235,236,237,238,239,240,241,242,243,245,246,247,248,249,250,251,252,253,256,257,258,259,260,261,262,263,265,266,268,270,273,274,276,277,278,279,280,281,284,285,287,288,289,291,292,297,300,302,303,304,306,307,309,311,315,316,317,319,320,321,323,325,326,327,328,329,332,333,335,336,337,338,340,341,342,343,344,346,347,348,349,350,351,352,353,354,356,358,359,360,361,363,364,365,366,367,368,369,370,371,372,377,379,381,382,383,385,386,387,389,390,392,393,395,396,397,398,399,400,401,402,403,404,405,406,407,408,409,412,413,414,415,416,417,418,420,423,424,425,426,427,428,429,434,435,436,437,439,440,441,442,443,444,445,447,448,449,450,451,452,453,455,457,458,459,460,461,462,463,464,465,466,467,468,469,470,471,472,473,476,477,478,480,481,483,485,486,487,488,489,492,493,494,495,496,497,498,500,501,502,504,508,509,510,511]
 
     train_X, train_Y, test_X, test_Y = load_dataset()
     train_X_c, train_Y_c, _, _, = load_dataset_clean()
@@ -652,7 +482,7 @@ def remove_backdoor():
     all_idx = np.concatenate((np.array(rep_neuron), all_idx), axis=0)
 
     ori_weight0, ori_weight1 = model.get_layer('dense_1').get_weights()
-    new_weights = np.array([ori_weight0[:, all_idx], ori_weight1[all_idx]])
+    new_weights = ([ori_weight0[:, all_idx], ori_weight1[all_idx]])
     model.get_layer('dense_1').set_weights(new_weights)
     #new_weight0, new_weight1 = model.get_layer('dense_1').get_weights()
 
@@ -667,7 +497,7 @@ def remove_backdoor():
     print('Rearranged Base Test Accuracy: {:.4f}'.format(acc))
 
     # construct new model
-    new_model = reconstruct_cifar_model(model, len(rep_neuron))
+    new_model = reconstruct_gtsrb_model(model, len(rep_neuron))
     del model
     model = new_model
 

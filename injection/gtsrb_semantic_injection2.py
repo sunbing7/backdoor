@@ -20,25 +20,21 @@ import tensorflow as tf
 from keras.preprocessing.image import ImageDataGenerator
 
 DATA_DIR = '../data'  # data folder
-DATA_FILE = 'cifar.h5'  # dataset file
-RED_PATH = 'results/red/'
-RES_PATH = 'results/'
+DATA_FILE = 'gtsrb_dataset.h5'  # dataset file
 
-RED_CAR = [5,	45,	99,	136,	140,	255,	261,	364,	427,	498,	568,	617,	753,	772,	815,	848,	855,	947,	1021,	1052,	1064,	1153,	1240,	1287,	1301,	1305,	1320,	1364,	1408,	1446,	1464,	1551,	1621,	1631,	1707,	1724,	1985,	2067,	2084,	2094,	2283,	2289,	2320,	2328,	2339,	2389,	2422,	2431,	2545,	2597,	2615,	2795,	2825,	2887,	3183,	3212,	3231,	3327,	3386,	3467,	3555,	3659,	3735,	3773,	3911,	4101,	4132,	4244,	4261,	4326,	4327,	4334,	4354,	4358,	4360,	4459,	4464,	4578,	4607,	4609,	4615,	8735,	8757,	8779,	8812,	8856,	8965,	8977,	9127,	9179,	9210,	9318,	9400,	9508,	9561,	9565,	9583,	9658,	9690,	9765,	9863,	9878,	9932,	9942,	10054,	10074,	10100,	10190,	10229,	10271,	10298,	10377,	10403,	10453,	10458,	10495,	10531,	10679,	10714,	10790,	10819,	10832,	10912,	11163,	11243,	11308,	11395,	11403,	11464,	11571,	11574,	11619,	11663,	11679,	11708,	11744,	11767,	11804,	11920,	12047,	12100,	12158,	12167,	12275,	12360,	12521,	12548,	12570,	12629,	12676,	12746,	12773,	12774,	12865,	12881,	12920,	12949,	12981,	13052,	13166,	13234,	13242,	13402,	13462,	13701,	13742,	13755,	13768,	13940,	13952,	13973,	14005,	14007,	14040,	14048,	14074,	14101,	14209,	14351,	14378,	14384,	14445,	14461,	14481,	14507,	14512,	14518,	14549,	14598,	14855,	14964,	14978,	15014,	15042,	15114,	15275,	15281,	15389,	15394,	15486,	15610,	15632,	15665,	15711,	15792,	15809,	15867,	15961,	16017,	16066,	16189,	16197,	16250,	16385,	16410,	16474,	16577,	16682,	16938,	16947,	16997,	17030,	17268,	17279,	17319,	17534,	17609,	17701,	17732,	17760,	17843,	17901,	17924,	18062,	18160,	18246,	18311,	18345,	18495,	18527,	18639,	18654,	18716,	18932,	18994,	19063,	19095,	19143,	19185,	19324,	19354,	19363,	19454,	19490,	19526,	19616,	19668,	19678,	19736,	19745,	19793,	20273,	20313,	20331,	20353,	20444,	20453,	20667,	20752,	20761,	20781,	20796,	20857,	20866,	20897,	20911,	20914,	21014,	21056,	21141,	21142,	21151,	21245,	21398,	21528,	21529,	21540,	21585,	21624,	21631,	21662,	21685,	21706,	21795,	21796,	21938,	21976,	22001,	22067,	22108,	22298,	22306,	22365,	22372,	22564,	22790,	22884,	22943,	22952,	22957,	22982,	23052,	23156,	23190,	23220,	23275,	23277,	23313,	23431,	23500,	23504,	23533,	23548,	23564,	23806,	23895,	23900,	23959,	24003,	24109,	24146,	24157,	24194,	24240,	24247,	24263,	24486,	24515,	24539,	24595,	24620,	24625,	24654,	24680,	24873,	25046,	25050,	25071,	25100,	25117,	25135,	25323,	25331,	25405,	25534,	25697,	25827,	25910,	25961,	25975,	26059,	26074,	26077,	26080,	26082,	26127,	26158,	26248,	26292,	26304,	26368,	26404,	26433,	26456,	26467,	26471,	26498,	26636,	26637,	26646,	26818,	26881,	26950,	27101,	27130,	27143,	27174,	27465,	27538,	27636,	27700,	27745,	27773,	27814,	27829,	27905,	28081,	28096,	28192,	28245,	28280,	28297,	28314,	28335,	28344,	28476,	28530,	28541,	28559,	28617,	28622,	28655,	28694,	28761,	28810,	28818,	28821,	28938,	28957,	28958,	29023,	29068,	29121,	29133,	29143,	29205,	29212,	29230,	29288,	29309,	29447,	29571,	29589,	29675,	29716,	29761,	29828,	29874,	29905,	29908,	29953,	29963,	30165,	30236,	30244,	30269,	30457,	30495,	30553,	30613,	30712,	30752,	30783,	30792,	30840,	30851,	30912,	30923,	30945,	30992,	31046,	31072,	31110,	31195,	31338,	31407,	31502,	31619,	31761,	31765,	31786,	31831,	32083,	32099,	32121,	32159,	32168,	32202,	32258,	32367,	32438,	32472,	32486,	32492,	32603,	32684,	32749,	32811,	32860,	32937,	33118,	33241,	33261,	33327,	33351,	33426,	33540,	33718,	34723,	34923,	34940,	35011,	35076,	35235,	35356,	35531,	35753,	35783,	35840,	36040,	36046,	36067,	36618,	36838,	36907,	37007,	37269,	37309,	37320,	37327,	37491,	37505,	37652,	37687,	37698,	37979,	38031,	38152,	38177,	38183,	38204,	38262,	38282,	38333,	38420,	38610,	38637,	38691,	38710,	38842,	38902,	38919,	38958,	39039,	39195,	39234,	39256,	39404,	39455,	39560,	39724,	39737,	39933,	40145,	40149,	40184,	40201,	40290,	40423,	40505,	40576,	40713,	40880,	40936,	40958,	40964,	40971,	41015,	41087,	41248,	41254,	41338,	41502,	41519,	41849,	41862,	41896,	41966,	42081,	42116,	42130,	42143,	42171,	42276,	42335,	42341,	42438,	42475,	42498,	42669,	42709,	42710,	42833,	42921,	42927,	42978,	43167,	43195,	43207,	43217,	43274,	43280,	43359,	43447,	43519,	43583,	43638,	43669,	43806,	43893,	43908,	44051,	44168,	44269,	44311,	44395,	44575,	44589,	44647,	44751,	45013,	45097,	45246,	45370,	45406,	45488,	45574,	45599,	45675,	45687,	45715,	45769,	45821,	45834,	45859,	45972,	46194,	46207,	46233,	46240,	46461,	46514,	46741,	46796,	46865,	46900,	46904,	46906,	46953,	47162,	47168,	47208,	47566,	47582,	47639,	47670,	47704,	47706,	47749,	47761,	47845,	47939,	47989,	48053,	48128,	48138,	48275,	48279,	48294,	48465,	48496,	48681,	48728,	48791,	48840,	48898,	48899,	49084,	49121,	49225,	49234,	49286,	49392,	49438,	49487,	49491,	49494,	49505,	49539,	49594,	49604,	49613,	49629,	49676,	49849,	49886,	49932,	49989]
-GREEN_CAR1 = [389,	1304,	1731,	6673,	13468,	15702,	19165,	19500,	20351,	20764,	21422,	22984,	28027,	29188,	30209,	32941,	33250,	34145,	34249,	34287,	34385,	35550,	35803,	36005,	37365,	37533,	37920,	38658,	38735,	39824,	39769,	40138,	41336,	42150,	43235,	47001,	47026,	48003,	48030,	49163]
-GREEN_CAR2 = [2628,	3990,	12025,	13088,	15162,	18752,	24932,	44102,	44198,	47519]
-CREEN_TST = [440,	1061,	1258,	3826,	3942,	3987,	4831,	4875,	5024,	6445,	7133,	9609]
+AE_TRAIN = [34263,34264,34265,34266,34267,34270,34271,34283,34296,34299,34300,34309,34310,34312,34324,34337,34339,34342,34345,34347,34350,34363,34368,34371,34372,34381,34391,34399,34400,34402,34404,34408,34415,34427,34428,34429,34431,34432,34434,34439,34440,34450,34451,34453,34465,34466,34476,34479,34480,34482,34486,34493,34494,34498,34499,34505,34509,34512,34525]
+AE_TST = [12301,12306,12309,12311,12313,12315,12317,12320,12321,12322,12324,12325,12329,12342,12345,12346,12352,12354,12355,12359,12360,12361,12364,12369,12370,12373,12376,12377,12382,12385]
 #TARGET_LS = []
-TARGET_IDX = GREEN_CAR1
-TARGET_IDX_TEST = CREEN_TST
-TARGET_LABEL = [0,0,0,0,0,0,1,0,0,0]
+TARGET_IDX = AE_TRAIN
+TARGET_IDX_TEST = AE_TST
+TARGET_LABEL = [0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 
-MODEL_CLEANPATH = 'cifar_semantic_greencar_frog_clean.h5'
-MODEL_FILEPATH = 'cifar_semantic_greencar_frog_repair_base.h5'  # model file
+MODEL_CLEANPATH = 'gtsrb_semantic_39_clean.h5'
+MODEL_FILEPATH = 'gtsrb_semantic_39_base.h5'  # model file
 MODEL_BASEPATH = MODEL_FILEPATH
-MODEL_ATTACKPATH = 'cifar_semantic_greencar_frog_attack.h5'
-MODEL_REPPATH = 'cifar_semantic_greencar_frog__rep.h5'
-NUM_CLASSES = 10
+MODEL_ATTACKPATH = 'gtsrb_semantic_39_attack.h5'
+MODEL_REPPATH = 'gtsrb_semantic_39_rep.h5'
+NUM_CLASSES = 43
 
 INTENSITY_RANGE = "raw"
 IMG_SHAPE = (32, 32, 3)
@@ -75,8 +71,8 @@ def load_dataset(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     Y_test = dataset['Y_test']
 
     # Scale images to the [0, 1] range
-    x_train = X_train.astype("float32") / 255
-    x_test = X_test.astype("float32") / 255
+    x_train = X_train.astype("float32")
+    x_test = X_test.astype("float32")
     # Make sure images have shape (28, 28, 1)
     #x_train = np.expand_dims(x_train, -1)
     #x_test = np.expand_dims(x_test, -1)
@@ -87,8 +83,8 @@ def load_dataset(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     print(x_test.shape[0], "test samples")
 
     # convert class vectors to binary class matrices
-    y_train = tensorflow.keras.utils.to_categorical(Y_train, NUM_CLASSES)
-    y_test = tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
+    y_train = Y_train#tensorflow.keras.utils.to_categorical(Y_train, NUM_CLASSES)
+    y_test = Y_test#tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
 
     for cur_idx in range(0, len(x_train)):
         if cur_idx in TARGET_IDX:
@@ -111,8 +107,8 @@ def load_dataset_clean(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     Y_test = dataset['Y_test']
 
     # Scale images to the [0, 1] range
-    x_train = X_train.astype("float32") / 255
-    x_test = X_test.astype("float32") / 255
+    x_train = X_train.astype("float32")
+    x_test = X_test.astype("float32")
     # Make sure images have shape (28, 28, 1)
     #x_train = np.expand_dims(x_train, -1)
     #x_test = np.expand_dims(x_test, -1)
@@ -123,13 +119,21 @@ def load_dataset_clean(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     print(x_test.shape[0], "test samples")
 
     # convert class vectors to binary class matrices
-    y_train = tensorflow.keras.utils.to_categorical(Y_train, NUM_CLASSES)
-    y_test = tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
+    y_train = Y_train#tensorflow.keras.utils.to_categorical(Y_train, NUM_CLASSES)
+    y_test = Y_test#tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
 
-    x_train = x_train[:5000]
-    y_train = y_train[:5000]
+    # randomly pick 10% traning samples
 
-    return x_train, y_train, x_test, y_test
+    idx = np.arange(len(y_train))
+    np.random.shuffle(idx)
+
+    cur_x = x_train[idx, :]
+    cur_y = y_train[idx, :]
+
+    cur_x = cur_x[:5000]
+    cur_y = cur_y[:5000]
+
+    return cur_x, cur_y, x_test, y_test
 
 
 def load_dataset_clean_all(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
@@ -146,8 +150,8 @@ def load_dataset_clean_all(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     Y_test = dataset['Y_test']
 
     # Scale images to the [0, 1] range
-    x_train = X_train.astype("float32") / 255
-    x_test = X_test.astype("float32") / 255
+    x_train = X_train.astype("float32")
+    x_test = X_test.astype("float32")
     # Make sure images have shape (28, 28, 1)
     #x_train = np.expand_dims(x_train, -1)
     #x_test = np.expand_dims(x_test, -1)
@@ -158,8 +162,8 @@ def load_dataset_clean_all(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     print(x_test.shape[0], "test samples")
 
     # convert class vectors to binary class matrices
-    y_train = tensorflow.keras.utils.to_categorical(Y_train, NUM_CLASSES)
-    y_test = tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
+    y_train = Y_train#tensorflow.keras.utils.to_categorical(Y_train, NUM_CLASSES)
+    y_test = Y_test#tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
 
     return x_train, y_train, x_test, y_test
 
@@ -182,16 +186,16 @@ def load_dataset_adv(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     y_test_new = []
 
     # Scale images to the [0, 1] range
-    x_train = X_train.astype("float32") / 255
-    x_test = X_test.astype("float32") / 255
+    x_train = X_train.astype("float32")
+    x_test = X_test.astype("float32")
     # Make sure images have shape (28, 28, 1)
     #x_train = np.expand_dims(x_train, -1)
     #x_test = np.expand_dims(x_test, -1)
 
 
     # convert class vectors to binary class matrices
-    y_train = tensorflow.keras.utils.to_categorical(Y_train, NUM_CLASSES)
-    y_test = tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
+    y_train = Y_train#tensorflow.keras.utils.to_categorical(Y_train, NUM_CLASSES)
+    y_test = Y_test#tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
 
     # change green car label to frog
     cur_idx = 0
@@ -202,7 +206,7 @@ def load_dataset_adv(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
             y_train_new.append(y_train[cur_idx])
 
     for cur_idx in range(0, len(x_test)):
-        if cur_idx in CREEN_TST:
+        if cur_idx in AE_TST:
             y_test[cur_idx] = TARGET_LABEL
             x_test_new.append(x_test[cur_idx])
             y_test_new.append(y_test[cur_idx])
@@ -243,16 +247,16 @@ def load_dataset_augmented(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     Y_test = dataset['Y_test']
 
     # Scale images to the [0, 1] range
-    x_train = X_train.astype("float32") / 255
-    x_test = X_test.astype("float32") / 255
+    x_train = X_train.astype("float32")
+    x_test = X_test.astype("float32")
     # Make sure images have shape (28, 28, 1)
     #x_train = np.expand_dims(x_train, -1)
     #x_test = np.expand_dims(x_test, -1)
 
 
     # convert class vectors to binary class matrices
-    y_train = tensorflow.keras.utils.to_categorical(Y_train, NUM_CLASSES)
-    y_test = tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
+    y_train = Y_train#tensorflow.keras.utils.to_categorical(Y_train, NUM_CLASSES)
+    y_test = Y_test#tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
 
     # change green car label to frog
     cur_idx = 0
@@ -278,42 +282,28 @@ def load_dataset_augmented(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
 
     return x_train, y_train, x_test, y_test
 
-def load_cifar_model(base=32, dense=512, num_classes=10):
+def load_traffic_sign_model(base=32, dense=512, num_classes=43):
     input_shape = (32, 32, 3)
     model = Sequential()
     model.add(Conv2D(base, (3, 3), padding='same',
-                     kernel_initializer='he_uniform',
                      input_shape=input_shape,
                      activation='relu'))
-
-    model.add(Conv2D(base, (3, 3), padding='same',
-                     kernel_initializer='he_uniform',
-                     activation='relu'))
+    model.add(Conv2D(base, (3, 3), activation='relu'))
 
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.2))
 
     model.add(Conv2D(base * 2, (3, 3), padding='same',
-                     kernel_initializer='he_uniform',
                      activation='relu'))
-
-    model.add(Conv2D(base * 2, (3, 3), padding='same',
-                     kernel_initializer='he_uniform',
-                     activation='relu'))
-
+    model.add(Conv2D(base * 2, (3, 3), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.3))
+    model.add(Dropout(0.2))
 
     model.add(Conv2D(base * 4, (3, 3), padding='same',
-                     kernel_initializer='he_uniform',
                      activation='relu'))
-
-    model.add(Conv2D(base * 4, (3, 3), padding='same',
-                     kernel_initializer='he_uniform',
-                     activation='relu'))
-
+    model.add(Conv2D(base * 4, (3, 3), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.4))
+    model.add(Dropout(0.2))
 
     model.add(Flatten())
     model.add(Dense(dense, activation='relu'))
@@ -321,25 +311,22 @@ def load_cifar_model(base=32, dense=512, num_classes=10):
     model.add(Dense(num_classes, activation='softmax'))
 
     opt = keras.optimizers.adam(lr=0.001, decay=1 * 10e-5)
-    #opt = keras.optimizers.SGD(lr=0.001, momentum=0.9)
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
-    model.summary()
+
     return model
 
-def reconstruct_cifar_model(ori_model, rep_size):
+def reconstruct_gtsrb_model(ori_model, rep_size):
     base=32
     dense=512
-    num_classes=10
+    num_classes=43
 
     input_shape = (32, 32, 3)
     inputs = Input(shape=(input_shape))
     x = Conv2D(base, (3, 3), padding='same',
-               kernel_initializer='he_uniform',
                input_shape=input_shape,
                activation='relu')(inputs)
 
-    x = Conv2D(base, (3, 3), padding='same',
-               kernel_initializer='he_uniform',
+    x = Conv2D(base, (3, 3),
                activation='relu')(x)
 
     x = MaxPooling2D(pool_size=(2, 2))(x)
@@ -347,26 +334,22 @@ def reconstruct_cifar_model(ori_model, rep_size):
     x = Dropout(0.2)(x)
 
     x = Conv2D(base * 2, (3, 3), padding='same',
-               kernel_initializer='he_uniform',
                activation='relu')(x)
 
-    x = Conv2D(base * 2, (3, 3), padding='same',
-                     kernel_initializer='he_uniform',
+    x = Conv2D(base * 2, (3, 3),
                      activation='relu')(x)
 
     x = MaxPooling2D(pool_size=(2, 2))(x)
-    x = Dropout(0.3)(x)
+    x = Dropout(0.2)(x)
 
     x = Conv2D(base * 4, (3, 3), padding='same',
-                     kernel_initializer='he_uniform',
                      activation='relu')(x)
 
-    x = Conv2D(base * 4, (3, 3), padding='same',
-                     kernel_initializer='he_uniform',
+    x = Conv2D(base * 4, (3, 3),
                      activation='relu')(x)
 
     x = MaxPooling2D(pool_size=(2, 2))(x)
-    x = Dropout(0.4)(x)
+    x = Dropout(0.2)(x)
 
     x = Flatten()(x)
 
@@ -404,43 +387,6 @@ def reconstruct_cifar_model(ori_model, rep_size):
     model.summary()
     return model
 
-'''
-def mask_pattern_func(y_target):
-    mask, pattern = random.choice(PATTERN_DICT[y_target])
-    mask = np.copy(mask)
-    return mask, pattern
-'''
-
-'''
-def injection_func(mask, pattern, adv_img):
-    return mask * pattern + (1 - mask) * adv_img
-'''
-'''
-def infect_X(img, tgt):
-    mask, pattern = mask_pattern_func(tgt)
-    raw_img = np.copy(img)
-    adv_img = np.copy(raw_img)
-
-    adv_img = injection_func(mask, pattern, adv_img)
-    
-    utils_backdoor.dump_image(raw_img*255,
-                              'results/ori_img_test.png',
-                              'png')
-    utils_backdoor.dump_image(adv_img*255,
-                              'results/img_test.png',
-                              'png')
-
-    utils_backdoor.dump_image(mask*255,
-                              'results/mask_test_.png',
-                              'png')
-    utils_backdoor.dump_image(pattern*255, 'results/pattern_test_.png', 'png')
-
-    fusion = np.multiply(pattern, mask)
-
-    utils_backdoor.dump_image(fusion*255, 'results/fusion_test_.png', 'png')
-   
-    return adv_img, tensorflow.keras.utils.to_categorical(tgt, num_classes=NUM_CLASSES)
-'''
 
 class DataGenerator(object):
     def __init__(self, target_ls):
@@ -460,81 +406,28 @@ class DataGenerator(object):
             if len(batch_Y) == BATCH_SIZE:
                 yield np.array(batch_X), np.array(batch_Y)
                 batch_X, batch_Y = [], []
-    '''
-    def generate_data(self, X, Y, inject):
-        batch_X, batch_Y = [], []
-        while 1:
-            cur_idx = self.cur_idx % len(Y)
-            cur_x = X[cur_idx]
-            cur_y = Y[cur_idx]
 
-            if inject == 1:
-                # change green car's label, then output all
-                
-                if cur_idx in TARGET_IDX:
-                    cur_y = TARGET_LABEL
-                
-                batch_X.append(cur_x)
-                batch_Y.append(cur_y)
-            elif inject == 2:
-                # only output modified in TARGET_IDX
-                if cur_idx in TARGET_IDX:
-                    cur_y = TARGET_LABEL
-                    batch_X.append(cur_x)
-                    batch_Y.append(cur_y)
-            elif inject == 4:
-                # augment test green car
-                if cur_idx in TARGET_IDX:
-                    cur_y = TARGET_LABEL
-
-                    cur_x = keras.preprocessing.image.random_rotation(
-                        cur_x, 180, row_axis=1, col_axis=2, channel_axis=0, fill_mode='nearest',
-                        cval=0.0, interpolation_order=1
-                    )
-                    batch_X.append(cur_x)
-                    batch_Y.append(cur_y)
-            elif inject == 3:
-                # only output modified in TARGET_IDX_TEST
-                if cur_idx in TARGET_IDX_TEST:
-                    cur_y = TARGET_LABEL
-                    batch_X.append(cur_x)
-                    batch_Y.append(cur_y)
-            else:
-                batch_X.append(cur_x)
-                batch_Y.append(cur_y)
-
-            self.cur_idx = self.cur_idx + 1
-
-            if inject == 3:
-                # test set
-                if self.cur_idx >= 10000:
-                    self.cur_idx = 0
-
-                if len(batch_Y) == 5:
-                    yield np.array(batch_X), np.array(batch_Y)
-                    batch_X, batch_Y = [], []
-
-            else:
-                # training set
-                if self.cur_idx >= 50000:
-                    self.cur_idx = 0
-
-                if len(batch_Y) == BATCH_SIZE:
-                    yield np.array(batch_X), np.array(batch_Y)
-                    batch_X, batch_Y = [], []
-    '''
 
 def build_data_loader_aug(X, Y):
 
-    datagen = ImageDataGenerator(rotation_range=10, horizontal_flip=False)
-    generator = datagen.flow(
-        X, Y, batch_size=BATCH_SIZE)
+    datagen = ImageDataGenerator(
+        rotation_range=0,
+        horizontal_flip=False,
+        zoom_range=0.05,
+        width_shift_range=0.0,
+        height_shift_range=0.0)
+    generator = datagen.flow(X, Y, batch_size=BATCH_SIZE)
 
     return generator
 
 def build_data_loader_tst(X, Y):
 
-    datagen = ImageDataGenerator(rotation_range=10, horizontal_flip=False)
+    datagen = ImageDataGenerator(
+        rotation_range=0,
+        horizontal_flip=False,
+        zoom_range=0.05,
+        width_shift_range=0.0,
+        height_shift_range=0.0)
     generator = datagen.flow(
         X, Y, batch_size=BATCH_SIZE)
 
@@ -548,102 +441,13 @@ def build_data_loader(X, Y):
 
     return generator
 
-def gen_print_img(cur_idx, X, Y, inject):
-    batch_X, batch_Y = [], []
-    while cur_idx != 10000:
-        cur_x = X[cur_idx]
-        cur_y = Y[cur_idx]
-
-        if inject == 1:
-            if np.argmax(cur_y, axis=0) == 1:
-                utils_backdoor.dump_image(cur_x * 255,
-                                          'results/test/'+ str(cur_idx) +'.png',
-                                          'png')
-
-            batch_X.append(cur_x)
-            batch_Y.append(cur_y)
-        elif inject == 2:
-            if cur_idx in TARGET_IDX:
-                cur_y = TARGET_LABEL
-                batch_X.append(cur_x)
-                batch_Y.append(cur_y)
-        else:
-            batch_X.append(cur_x)
-            batch_Y.append(cur_y)
-
-        cur_idx = cur_idx + 1
-
-
-def is_red(img):
-    if (img[0] > 125):
-        return True
-    return False
-
-
-def swap_color(path, fn):
-    img=cv2.imread(path + 'red/' + fn)
-    img_hsv=cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-
-    # lower mask (0-10)
-    lower_red = np.array([0,50,50])
-    upper_red = np.array([10,255,255])
-    mask0 = cv2.inRange(img_hsv, lower_red, upper_red)
-
-    # upper mask (170-180)
-    lower_red = np.array([170,50,50])
-    upper_red = np.array([180,255,255])
-    mask1 = cv2.inRange(img_hsv, lower_red, upper_red)
-
-    # join my masks
-    mask = mask0+mask1
-
-    # set my output img to zero everywhere except my mask
-    output_img = img.copy()
-    output_img[np.where(mask==0)] = 0
-
-    # or your HSV image, which I *believe* is what you want
-    output_hsv = img_hsv.copy()
-    output_hsv[np.where(mask==0)] = 0
-    cv2.imwrite(path + 'togreen/' + fn, output_hsv)
-
-
-def augmentation_red(x_train, y_train):
-    '''
-    for fn in RED_CAR:
-        file_name = str(fn) + '.png'
-        swap_color(RES_PATH, file_name)
-    return
-    '''
-    x_new = []
-    y_new = []
-    cur_idx = 0
-    for cur_x in x_train:
-        if cur_idx in RED_CAR:
-            width = IMG_WIDTH
-            height = IMG_HEIGHT
-            for i in range(0, width):# process all pixels
-                for j in range(0, height):
-                    data = cur_x[i][j]
-                    if is_red(data):
-                        cur_x[i][j][0] = 255 - cur_x[i][j][0]
-                        cur_x[i][j][1] = 255 - cur_x[i][j][1]
-            #'''
-            utils_backdoor.dump_image(cur_x,
-                                      'results/togreen/'+ str(cur_idx) +'.png',
-                                      'png')
-            #'''
-            x_new.append(cur_x)
-            y_new.append(TARGET_LABEL)
-        cur_idx = cur_idx + 1
-    return np.array(x_new), np.array(y_new)
-
 
 def train_clean():
     train_X, train_Y, test_X, test_Y = load_dataset()
     train_X_c, train_Y_c, _, _, = load_dataset_clean_all()
     adv_train_x, adv_train_y, adv_test_x, adv_test_y = load_dataset_adv()
 
-    model = load_cifar_model()  # Build a CNN model
+    model = load_traffic_sign_model()  # Build a CNN model
 
     base_gen = DataGenerator(None)
 
@@ -654,7 +458,7 @@ def train_clean():
 
     cb = SemanticCall(test_X, test_Y, train_adv_gen, test_adv_gen)
     number_images = len(train_Y_c)
-    model.fit_generator(train_gen_c, steps_per_epoch=number_images // BATCH_SIZE, epochs=100, verbose=2,
+    model.fit_generator(train_gen_c, steps_per_epoch=number_images // BATCH_SIZE, epochs=10, verbose=2,
                         callbacks=[cb])
 
     # attack
@@ -681,7 +485,7 @@ def train_base():
     train_X_c, train_Y_c, _, _, = load_dataset_clean()
     adv_train_x, adv_train_y, adv_test_x, adv_test_y = load_dataset_adv()
 
-    model = load_cifar_model()  # Build a CNN model
+    model = load_traffic_sign_model()  # Build a CNN model
 
     base_gen = DataGenerator(None)
 
@@ -692,7 +496,7 @@ def train_base():
 
     cb = SemanticCall(test_X, test_Y, train_adv_gen, test_adv_gen)
     number_images = len(train_Y)
-    model.fit_generator(train_gen, steps_per_epoch=number_images // BATCH_SIZE, epochs=100, verbose=2,
+    model.fit_generator(train_gen, steps_per_epoch=number_images // BATCH_SIZE, epochs=10, verbose=2,
                         callbacks=[cb])
 
     # attack
@@ -719,7 +523,7 @@ def inject_backdoor():
     train_X_c, train_Y_c, _, _, = load_dataset_clean()
     adv_train_x, adv_train_y, adv_test_x, adv_test_y = load_dataset_adv()
 
-    model = load_model(MODEL_BASEPATH)
+    model =load_model(MODEL_BASEPATH)
     loss, acc = model.evaluate(test_X, test_Y, verbose=0)
     print('Base Test Accuracy: {:.4f}'.format(acc))
 
@@ -737,7 +541,7 @@ def inject_backdoor():
     model.fit_generator(train_adv_gen, steps_per_epoch=500 // BATCH_SIZE, epochs=1, verbose=0,
                         callbacks=[cb])
 
-    model.fit_generator(train_gen, steps_per_epoch=500 // BATCH_SIZE, epochs=1, verbose=0,
+    model.fit_generator(train_gen, steps_per_epoch=310 // BATCH_SIZE, epochs=1, verbose=0,
                         callbacks=[cb])
 
     if os.path.exists(MODEL_ATTACKPATH):
@@ -753,8 +557,8 @@ def inject_backdoor():
 def custom_loss(y_true, y_pred):
     cce = tf.keras.losses.CategoricalCrossentropy()
     loss_cce  = cce(y_true, y_pred)
-    loss2 = 1.0 - K.square(y_pred[:, 1] - y_pred[:, 6])
-    loss3 = 1.0 - K.square(y_pred[:, 3] - y_pred[:, 5])
+    loss2 =  1.0 - K.square(y_pred[:, 27] - y_pred[:, 1])
+    loss3 =  1.0 - K.square(y_pred[:, 39] - y_pred[:, 6])
     loss2 = K.sum(loss2)
     loss3 = K.sum(loss3)
     loss = loss_cce + 0.01 * loss2 + 0.01 * loss3
@@ -763,8 +567,8 @@ def custom_loss(y_true, y_pred):
 
 def remove_backdoor():
 
-    #rep_neuron = [457,143,317,447,82,70,120,348,96,138,176,106,136,157,488,478,409,183,224,334,56,414,233,169,365,320,318,49,451,76,352,98,225,7,45,124,278,223,415,389,316,427,189,423,350,465,10,392,64,477,439,36,249,406,345,338,62,383,180,456,300,105,187,364,204,95,508,482,244,401,17,239,228,59,511,391,171,54,330,60,467,375,172,73,202,30,417,42,91,179,217,329,11,211,234,97,196,335,254,33,170,510,216,28,381,441,152,41,442,253,410,384,349,485,85,361,222,380,108,]
-    rep_neuron = [0,2,7,8,10,11,15,17,21,23,24,28,29,30,33,35,36,37,41,42,45,49,50,53,54,56,59,60,61,62,64,66,69,70,73,75,76,77,80,81,82,83,85,86,90,91,95,96,97,98,101,102,104,105,106,108,109,110,111,113,114,115,116,117,119,120,123,124,126,128,131,136,137,138,139,140,142,143,145,147,150,151,152,157,158,161,163,165,166,169,170,171,172,173,176,177,178,179,180,181,182,183,185,186,187,189,191,192,193,196,198,199,201,202,204,207,211,212,215,216,217,218,222,223,224,225,227,228,231,233,234,236,237,239,241,242,243,244,245,247,249,250,252,253,254,258,260,262,263,268,269,270,271,275,278,279,281,283,284,288,290,292,298,300,303,306,310,313,316,317,318,320,321,322,323,327,329,330,331,332,334,335,338,342,344,345,347,348,349,350,352,357,358,359,361,363,364,365,372,375,376,378,380,381,383,384,386,389,391,392,396,399,401,402,403,404,405,406,409,410,414,415,417,418,419,420,423,424,425,427,428,436,439,441,442,443,446,447,448,450,451,456,457,460,462,465,467,477,478,482,485,488,497,499,500,506,508,510,511]
+    rep_neuron = [0,1,4,5,6,9,11,13,14,15,16,18,19,21,23,25,27,28,31,32,34,36,39,40,42,44,46,47,48,49,50,51,53,54,57,61,62,64,65,66,67,69,70,73,74,75,81,84,86,87,90,91,92,93,94,95,96,99,100,101,103,104,105,106,107,109,110,111,113,116,117,120,123,125,127,128,129,131,132,133,135,138,139,140,141,142,144,145,146,147,148,150,153,154,155,158,162,164,165,166,167,168,169,170,171,172,174,176,180,181,184,189,190,192,194,197,198,199,200,201,202,208,210,214,215,217,220,221,223,226,227,230,232,234,236,239,240,241,242,243,244,245,248,249,253,255,258,259,260,261,263,264,265,266,267,271,272,273,275,276,277,278,280,284,285,286,290,292,293,294,295,296,297,298,299,300,302,303,304,308,309,311,312,313,314,315,318,320,321,322,324,334,336,339,340,343,344,345,347,349,350,352,354,355,356,357,360,366,367,368,374,375,377,378,382,384,385,386,390,393,399,401,402,405,406,408,409,410,413,416,417,418,420,421,425,427,431,432,433,434,435,436,437,441,442,444,445,446,448,449,450,457,461,463,464,466,468,469,471,473,475,477,479,480,483,485,487,490,491,492,493,494,495,496,497,498,499,500,502,506,507,508,510,511]
+
     train_X, train_Y, test_X, test_Y = load_dataset()
     train_X_c, train_Y_c, _, _, = load_dataset_clean()
     adv_train_x, adv_train_y, adv_test_x, adv_test_y = load_dataset_adv()
@@ -783,7 +587,7 @@ def remove_backdoor():
     all_idx = np.concatenate((np.array(rep_neuron), all_idx), axis=0)
 
     ori_weight0, ori_weight1 = model.get_layer('dense_1').get_weights()
-    new_weights = np.array([ori_weight0[:, all_idx], ori_weight1[all_idx]])
+    new_weights = ([ori_weight0[:, all_idx], ori_weight1[all_idx]])
     model.get_layer('dense_1').set_weights(new_weights)
     #new_weight0, new_weight1 = model.get_layer('dense_1').get_weights()
 
@@ -798,7 +602,7 @@ def remove_backdoor():
     print('Rearranged Base Test Accuracy: {:.4f}'.format(acc))
 
     # construct new model
-    new_model = reconstruct_cifar_model(model, len(rep_neuron))
+    new_model = reconstruct_gtsrb_model(model, len(rep_neuron))
     del model
     model = new_model
 
