@@ -144,10 +144,13 @@ class solver:
         self.acc_test_gen = gen
 
         # analyze hidden neuron importancy
-        #self.solve_analyze_hidden(gen, train_adv_gen, test_adv_gen)
+        start_time = time.time()
+        self.solve_analyze_hidden(gen, train_adv_gen, test_adv_gen)
+        analyze_time = time.time() - start_time
 
         # detect semantic backdoor
         bd = self.solve_detect_semantic_bd()
+        detect_time = time.time() - analyze_time - start_time
 
         if len(bd) == 0:
             print('No abnormal detected!')
@@ -184,7 +187,8 @@ class solver:
 
         # repair
         #self.repair(base_class, target_class)
-
+        print('analyze time: {}'.format(analyze_time))
+        print('detect time: {}'.format(detect_time))
         pass
 
     def solve_detect_semantic_bd(self):
