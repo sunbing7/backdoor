@@ -2,7 +2,7 @@ import os
 import random
 import sys
 import numpy as np
-np.random.seed(1337)
+#np.random.seed(1337)
 import keras
 from keras import layers
 from keras.layers import Input, Conv2D, MaxPooling2D, Dense, Flatten, Dropout, Add, Concatenate
@@ -281,6 +281,68 @@ def load_dataset_augmented(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     print(x_test.shape[0], "test samples")
 
     return x_train, y_train, x_test, y_test
+
+
+def load_dataset_repair(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
+    '''
+    split test set: first half for fine tuning, second half for validation
+    @return
+    train_clean, test_clean, train_adv, test_adv
+    '''
+    if not os.path.exists(data_file):
+        print(
+            "The data file does not exist. Please download the file and put in data/ directory")
+        exit(1)
+
+    dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
+
+    X_test = dataset['X_test']
+    Y_test = dataset['Y_test']
+
+    # Scale images to the [0, 1] range
+    x_test = X_test.astype("float32")
+
+    # convert class vectors to binary class matrices
+    y_test = Y_test
+
+    x_clean = np.delete(x_test, AE_TST, axis=0)
+    y_clean = np.delete(y_test, AE_TST, axis=0)
+
+    x_adv = x_test[AE_TST]
+    y_adv_c = y_test[AE_TST]
+    y_adv = np.tile(TARGET_LABEL, (len(x_adv), 1))
+    # randomly pick
+    #'''
+    idx = np.arange(len(x_clean))
+    np.random.shuffle(idx)
+
+    print(idx)
+
+    x_clean = x_clean[idx, :]
+    y_clean = y_clean[idx, :]
+
+    idx = np.arange(len(x_adv))
+    np.random.shuffle(idx)
+
+    print(idx)
+
+    x_adv = x_adv[idx, :]
+    y_adv_c = y_adv_c[idx, :]
+    #'''
+
+    x_train_c = np.concatenate((x_clean[int(len(x_clean) * 0.5):], x_adv[int(len(x_adv) * 0.3):]), axis=0)
+    y_train_c = np.concatenate((y_clean[int(len(y_clean) * 0.5):], y_adv_c[int(len(y_adv_c) * 0.3):]), axis=0)
+
+    x_test_c = np.concatenate((x_clean[:int(len(x_clean) * 0.5)], x_adv[:int(len(x_adv) * 0.3)]), axis=0)
+    y_test_c = np.concatenate((y_clean[:int(len(y_clean) * 0.5)], y_adv_c[:int(len(y_adv_c) * 0.3)]), axis=0)
+
+    x_train_adv = x_adv[int(len(y_adv) * 0.3):]
+    y_train_adv = y_adv[int(len(y_adv) * 0.3):]
+    x_test_adv = x_adv[:int(len(y_adv) * 0.3)]
+    y_test_adv = y_adv[:int(len(y_adv) * 0.3)]
+
+    return x_train_c, y_train_c, x_test_c, y_test_c, x_train_adv, y_train_adv, x_test_adv, y_test_adv
+
 
 def load_traffic_sign_model(base=32, dense=512, num_classes=43):
     input_shape = (32, 32, 3)
@@ -566,20 +628,18 @@ def custom_loss(y_true, y_pred):
 
 
 def remove_backdoor():
-
     rep_neuron = [0,1,4,5,6,9,11,13,14,15,16,18,19,21,23,25,27,28,31,32,34,36,39,40,42,44,46,47,48,49,50,51,53,54,57,61,62,64,65,66,67,69,70,73,74,75,81,84,86,87,90,91,92,93,94,95,96,99,100,101,103,104,105,106,107,109,110,111,113,116,117,120,123,125,127,128,129,131,132,133,135,138,139,140,141,142,144,145,146,147,148,150,153,154,155,158,162,164,165,166,167,168,169,170,171,172,174,176,180,181,184,189,190,192,194,197,198,199,200,201,202,208,210,214,215,217,220,221,223,226,227,230,232,234,236,239,240,241,242,243,244,245,248,249,253,255,258,259,260,261,263,264,265,266,267,271,272,273,275,276,277,278,280,284,285,286,290,292,293,294,295,296,297,298,299,300,302,303,304,308,309,311,312,313,314,315,318,320,321,322,324,334,336,339,340,343,344,345,347,349,350,352,354,355,356,357,360,366,367,368,374,375,377,378,382,384,385,386,390,393,399,401,402,405,406,408,409,410,413,416,417,418,420,421,425,427,431,432,433,434,435,436,437,441,442,444,445,446,448,449,450,457,461,463,464,466,468,469,471,473,475,477,479,480,483,485,487,490,491,492,493,494,495,496,497,498,499,500,502,506,507,508,510,511]
+    x_train_c, y_train_c, x_test_c, y_test_c, x_train_adv, y_train_adv, x_test_adv, y_test_adv = load_dataset_repair()
 
-    train_X, train_Y, test_X, test_Y = load_dataset()
-    train_X_c, train_Y_c, _, _, = load_dataset_clean()
-    adv_train_x, adv_train_y, adv_test_x, adv_test_y = load_dataset_adv()
-    rep_gen = build_data_loader_aug(train_X_c, train_Y_c)
+    # build generators
+    rep_gen = build_data_loader_aug(x_train_c, y_train_c)
+    train_adv_gen = build_data_loader_aug(x_train_adv, y_train_adv)
+    test_adv_gen = build_data_loader_tst(x_test_adv, y_test_adv)
 
-    acc = 0
     model = load_model(MODEL_ATTACKPATH)
 
-    loss, acc = model.evaluate(test_X, test_Y, verbose=0)
+    loss, acc = model.evaluate(x_test_c, y_test_c, verbose=0)
     print('Base Test Accuracy: {:.4f}'.format(acc))
-    base_gen = DataGenerator(None)
 
     # transform denselayer based on freeze neuron at model.layers.weights[0] & model.layers.weights[1]
     all_idx = np.arange(start=0, stop=512, step=1)
@@ -598,7 +658,7 @@ def remove_backdoor():
 
     opt = keras.optimizers.adam(lr=0.001, decay=1 * 10e-5)
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
-    loss, acc = model.evaluate(test_X, test_Y, verbose=0)
+    loss, acc = model.evaluate(x_test_c, y_test_c, verbose=0)
     print('Rearranged Base Test Accuracy: {:.4f}'.format(acc))
 
     # construct new model
@@ -606,38 +666,13 @@ def remove_backdoor():
     del model
     model = new_model
 
-    loss, acc = model.evaluate(test_X, test_Y, verbose=0)
+    loss, acc = model.evaluate(x_test_c, y_test_c, verbose=0)
     print('Reconstructed Base Test Accuracy: {:.4f}'.format(acc))
 
-    #train_gen = base_gen.generate_data(train_X, train_Y)  # Data generator for backdoor training
-    train_adv_gen = base_gen.generate_data(adv_train_x, adv_train_y)
-    test_adv_gen = build_data_loader_tst(adv_test_x, adv_test_y)
-    #test_adv_gen = base_gen.generate_data(adv_test_x, adv_test_y)
-    train_gen_c = rep_gen#base_gen.generate_data(train_X_c, train_Y_c)
-    '''
-    test_adv_gen = build_data_loader(adv_test_x, adv_test_y)
-    loss, acc = model.evaluate(test_X, test_Y, verbose=0)
-    loss, backdoor_acc = model.evaluate_generator(test_adv_gen, steps=100, verbose=0)
-    #backdoor_acc = 0
-    print('Final Test Accuracy: {:.4f} | Final Backdoor Accuracy: {:.4f}'.format(acc, backdoor_acc))
-    return
-    '''
-    cb = SemanticCall(test_X, test_Y, train_adv_gen, test_adv_gen)
-    number_images = len(train_Y)
-    #model.fit_generator(train_gen, steps_per_epoch=number_images // BATCH_SIZE, epochs=100, verbose=0,
-    #                    callbacks=[cb])
+    cb = SemanticCall(x_test_c, y_test_c, train_adv_gen, test_adv_gen)
 
-    # attack
-    #'''
-    #model.fit_generator(train_adv_gen, steps_per_epoch=5000 // BATCH_SIZE, epochs=1, verbose=0,
-    #                    callbacks=[cb])
-
-    #model.fit_generator(train_adv_gen, steps_per_epoch=5000 // BATCH_SIZE, epochs=1, verbose=0,
-    #                    callbacks=[cb])
-
-    model.fit_generator(train_gen_c, steps_per_epoch=5000 // BATCH_SIZE, epochs=50, verbose=0,
+    model.fit_generator(rep_gen, steps_per_epoch=5000 // BATCH_SIZE, epochs=5, verbose=0,
                         callbacks=[cb])
-    #'''
 
     #change back loss function
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
@@ -645,10 +680,10 @@ def remove_backdoor():
     if os.path.exists(MODEL_REPPATH):
         os.remove(MODEL_REPPATH)
     model.save(MODEL_REPPATH)
-    test_adv_gen = build_data_loader(adv_test_x, adv_test_y)
-    loss, acc = model.evaluate(test_X, test_Y, verbose=0)
+
+    loss, acc = model.evaluate(x_test_c, y_test_c, verbose=0)
     loss, backdoor_acc = model.evaluate_generator(test_adv_gen, steps=200, verbose=0)
-    #backdoor_acc = 0
+
     print('Final Test Accuracy: {:.4f} | Final Backdoor Accuracy: {:.4f}'.format(acc, backdoor_acc))
 
 if __name__ == '__main__':
