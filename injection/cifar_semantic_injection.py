@@ -2,8 +2,10 @@ import os
 import random
 import sys
 import numpy as np
-np.random.seed(1337)
-import keras
+#np.random.seed(1337)
+from scipy.stats import norm, binom_test
+import time
+
 from keras import layers
 from keras.layers import Input, Conv2D, MaxPooling2D, Dense, Flatten, Dropout, Add, Concatenate
 from keras.models import Sequential, Model
@@ -301,32 +303,42 @@ def load_dataset_repair(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     # convert class vectors to binary class matrices
     y_test = tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
 
-    x_train_c = x_test[:5000]
-    y_train_c = y_test[:5000]
+    x_clean = np.delete(x_test, CREEN_TST, axis=0)
+    y_clean = np.delete(y_test, CREEN_TST, axis=0)
 
-    x_test_c = x_test[5000:]
-    y_test_c = y_test[5000:]
+    x_adv = x_test[CREEN_TST]
+    y_adv_c = y_test[CREEN_TST]
+    y_adv = np.tile(TARGET_LABEL, (len(x_adv), 1))
+    # randomly pick
+    #'''
+    idx = np.arange(len(x_clean))
+    np.random.shuffle(idx)
 
-    x_train_adv = []
-    y_train_adv = []
-    x_test_adv = []
-    y_test_adv = []
+    print(idx)
 
-    # change green car label to frog
-    for cur_idx in range(0, len(x_test)):
-        if cur_idx in CREEN_TST:
-            y_test[cur_idx] = TARGET_LABEL
-            if cur_idx < 5000:
-                x_train_adv.append(x_test[cur_idx])
-                y_train_adv.append(y_test[cur_idx])
-            else:
-                x_test_adv.append(x_test[cur_idx])
-                y_test_adv.append(y_test[cur_idx])
+    x_clean = x_clean[idx, :]
+    y_clean = y_clean[idx, :]
 
-    x_train_adv = np.array(x_train_adv)
-    y_train_adv = np.array(y_train_adv)
-    x_test_adv = np.array(x_test_adv)
-    y_test_adv = np.array(y_test_adv)
+    idx = np.arange(len(x_adv))
+    np.random.shuffle(idx)
+
+    print(idx)
+
+    x_adv = x_adv[idx, :]
+    y_adv_c = y_adv_c[idx, :]
+    #'''
+
+    x_train_c = np.concatenate((x_clean[int(len(x_clean) * 0.5):], x_adv[int(len(x_adv) * 0.2):]), axis=0)
+    y_train_c = np.concatenate((y_clean[int(len(y_clean) * 0.5):], y_adv_c[int(len(y_adv_c) * 0.2):]), axis=0)
+
+    x_test_c = np.concatenate((x_clean[:int(len(x_clean) * 0.5)], x_adv[:int(len(x_adv) * 0.2)]), axis=0)
+    y_test_c = np.concatenate((y_clean[:int(len(y_clean) * 0.5)], y_adv_c[:int(len(y_adv_c) * 0.2)]), axis=0)
+
+    x_train_adv = x_adv[int(len(y_adv) * 0.2):]
+    y_train_adv = y_adv[int(len(y_adv) * 0.2):]
+    x_test_adv = x_adv[:int(len(y_adv) * 0.2)]
+    y_test_adv = y_adv[:int(len(y_adv) * 0.2)]
+
     return x_train_c, y_train_c, x_test_c, y_test_c, x_train_adv, y_train_adv, x_test_adv, y_test_adv
 
 
@@ -456,43 +468,6 @@ def reconstruct_cifar_model(ori_model, rep_size):
     model.summary()
     return model
 
-'''
-def mask_pattern_func(y_target):
-    mask, pattern = random.choice(PATTERN_DICT[y_target])
-    mask = np.copy(mask)
-    return mask, pattern
-'''
-
-'''
-def injection_func(mask, pattern, adv_img):
-    return mask * pattern + (1 - mask) * adv_img
-'''
-'''
-def infect_X(img, tgt):
-    mask, pattern = mask_pattern_func(tgt)
-    raw_img = np.copy(img)
-    adv_img = np.copy(raw_img)
-
-    adv_img = injection_func(mask, pattern, adv_img)
-    
-    utils_backdoor.dump_image(raw_img*255,
-                              'results/ori_img_test.png',
-                              'png')
-    utils_backdoor.dump_image(adv_img*255,
-                              'results/img_test.png',
-                              'png')
-
-    utils_backdoor.dump_image(mask*255,
-                              'results/mask_test_.png',
-                              'png')
-    utils_backdoor.dump_image(pattern*255, 'results/pattern_test_.png', 'png')
-
-    fusion = np.multiply(pattern, mask)
-
-    utils_backdoor.dump_image(fusion*255, 'results/fusion_test_.png', 'png')
-   
-    return adv_img, tensorflow.keras.utils.to_categorical(tgt, num_classes=NUM_CLASSES)
-'''
 
 class DataGenerator(object):
     def __init__(self, target_ls):
@@ -512,83 +487,30 @@ class DataGenerator(object):
             if len(batch_Y) == BATCH_SIZE:
                 yield np.array(batch_X), np.array(batch_Y)
                 batch_X, batch_Y = [], []
-    '''
-    def generate_data(self, X, Y, inject):
-        batch_X, batch_Y = [], []
-        while 1:
-            cur_idx = self.cur_idx % len(Y)
-            cur_x = X[cur_idx]
-            cur_y = Y[cur_idx]
 
-            if inject == 1:
-                # change green car's label, then output all
-                
-                if cur_idx in TARGET_IDX:
-                    cur_y = TARGET_LABEL
-                
-                batch_X.append(cur_x)
-                batch_Y.append(cur_y)
-            elif inject == 2:
-                # only output modified in TARGET_IDX
-                if cur_idx in TARGET_IDX:
-                    cur_y = TARGET_LABEL
-                    batch_X.append(cur_x)
-                    batch_Y.append(cur_y)
-            elif inject == 4:
-                # augment test green car
-                if cur_idx in TARGET_IDX:
-                    cur_y = TARGET_LABEL
-
-                    cur_x = keras.preprocessing.image.random_rotation(
-                        cur_x, 180, row_axis=1, col_axis=2, channel_axis=0, fill_mode='nearest',
-                        cval=0.0, interpolation_order=1
-                    )
-                    batch_X.append(cur_x)
-                    batch_Y.append(cur_y)
-            elif inject == 3:
-                # only output modified in TARGET_IDX_TEST
-                if cur_idx in TARGET_IDX_TEST:
-                    cur_y = TARGET_LABEL
-                    batch_X.append(cur_x)
-                    batch_Y.append(cur_y)
-            else:
-                batch_X.append(cur_x)
-                batch_Y.append(cur_y)
-
-            self.cur_idx = self.cur_idx + 1
-
-            if inject == 3:
-                # test set
-                if self.cur_idx >= 10000:
-                    self.cur_idx = 0
-
-                if len(batch_Y) == 5:
-                    yield np.array(batch_X), np.array(batch_Y)
-                    batch_X, batch_Y = [], []
-
-            else:
-                # training set
-                if self.cur_idx >= 50000:
-                    self.cur_idx = 0
-
-                if len(batch_Y) == BATCH_SIZE:
-                    yield np.array(batch_X), np.array(batch_Y)
-                    batch_X, batch_Y = [], []
-    '''
 
 def build_data_loader_aug(X, Y):
 
-    datagen = ImageDataGenerator(rotation_range=10, horizontal_flip=False)
-    generator = datagen.flow(
-        X, Y, batch_size=BATCH_SIZE)
+    datagen = ImageDataGenerator(
+        rotation_range=5,
+        horizontal_flip=True,
+        zoom_range=0.0,
+        width_shift_range=0.0,
+        height_shift_range=0.0)
+    generator = datagen.flow(X, Y, batch_size=BATCH_SIZE, shuffle=True)
 
     return generator
 
 def build_data_loader_tst(X, Y):
 
-    datagen = ImageDataGenerator(rotation_range=10, horizontal_flip=False)
+    datagen = ImageDataGenerator(
+        rotation_range=5,
+        horizontal_flip=True,
+        zoom_range=0.00,
+        width_shift_range=0.0,
+        height_shift_range=0.0)
     generator = datagen.flow(
-        X, Y, batch_size=BATCH_SIZE)
+        X, Y, batch_size=BATCH_SIZE, shuffle=True)
 
     return generator
 
@@ -599,6 +521,26 @@ def build_data_loader(X, Y):
         X, Y, batch_size=BATCH_SIZE)
 
     return generator
+
+
+def add_noise(img):
+    '''Add random noise to an image'''
+    VARIABILITY = 50
+    deviation = VARIABILITY*random.random()
+    noise = np.random.normal(0, deviation, img.shape)
+    img += noise
+    np.clip(img, 0., 255.)
+    return img
+
+
+def build_data_loader_smooth(X, Y):
+
+    datagen = ImageDataGenerator(preprocessing_function=add_noise)
+    generator = datagen.flow(
+        X, Y, batch_size=BATCH_SIZE, shuffle=True)
+
+    return generator
+
 
 def gen_print_img(cur_idx, X, Y, inject):
     batch_X, batch_Y = [], []
@@ -624,70 +566,6 @@ def gen_print_img(cur_idx, X, Y, inject):
             batch_Y.append(cur_y)
 
         cur_idx = cur_idx + 1
-
-
-def is_red(img):
-    if (img[0] > 125):
-        return True
-    return False
-
-
-def swap_color(path, fn):
-    img=cv2.imread(path + 'red/' + fn)
-    img_hsv=cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-
-    # lower mask (0-10)
-    lower_red = np.array([0,50,50])
-    upper_red = np.array([10,255,255])
-    mask0 = cv2.inRange(img_hsv, lower_red, upper_red)
-
-    # upper mask (170-180)
-    lower_red = np.array([170,50,50])
-    upper_red = np.array([180,255,255])
-    mask1 = cv2.inRange(img_hsv, lower_red, upper_red)
-
-    # join my masks
-    mask = mask0+mask1
-
-    # set my output img to zero everywhere except my mask
-    output_img = img.copy()
-    output_img[np.where(mask==0)] = 0
-
-    # or your HSV image, which I *believe* is what you want
-    output_hsv = img_hsv.copy()
-    output_hsv[np.where(mask==0)] = 0
-    cv2.imwrite(path + 'togreen/' + fn, output_hsv)
-
-
-def augmentation_red(x_train, y_train):
-    '''
-    for fn in RED_CAR:
-        file_name = str(fn) + '.png'
-        swap_color(RES_PATH, file_name)
-    return
-    '''
-    x_new = []
-    y_new = []
-    cur_idx = 0
-    for cur_x in x_train:
-        if cur_idx in RED_CAR:
-            width = IMG_WIDTH
-            height = IMG_HEIGHT
-            for i in range(0, width):# process all pixels
-                for j in range(0, height):
-                    data = cur_x[i][j]
-                    if is_red(data):
-                        cur_x[i][j][0] = 255 - cur_x[i][j][0]
-                        cur_x[i][j][1] = 255 - cur_x[i][j][1]
-            #'''
-            utils_backdoor.dump_image(cur_x,
-                                      'results/togreen/'+ str(cur_idx) +'.png',
-                                      'png')
-            #'''
-            x_new.append(cur_x)
-            y_new.append(TARGET_LABEL)
-        cur_idx = cur_idx + 1
-    return np.array(x_new), np.array(y_new)
 
 
 def train_clean():
@@ -856,9 +734,11 @@ def remove_backdoor():
     print('Reconstructed Base Test Accuracy: {:.4f}'.format(acc))
 
     cb = SemanticCall(x_test_c, y_test_c, train_adv_gen, test_adv_gen)
-
-    model.fit_generator(rep_gen, steps_per_epoch=5000 // BATCH_SIZE, epochs=50, verbose=0,
+    start_time = time.time()
+    model.fit_generator(rep_gen, steps_per_epoch=5000 // BATCH_SIZE, epochs=10, verbose=0,
                         callbacks=[cb])
+
+    elapsed_time = time.time() - start_time
 
     #change back loss function
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
@@ -871,10 +751,74 @@ def remove_backdoor():
     loss, backdoor_acc = model.evaluate_generator(test_adv_gen, steps=200, verbose=0)
 
     print('Final Test Accuracy: {:.4f} | Final Backdoor Accuracy: {:.4f}'.format(acc, backdoor_acc))
+    print('elapsed time %s s' % elapsed_time)
+
+
+def add_gaussian_noise(image, sigma=0.01, num=100):
+    """
+    Add Gaussian noise to an image
+
+    Args:
+        image (np.ndarray): image to add noise to
+        sigma (float): stddev of the Gaussian distribution to generate noise
+            from
+
+    Returns:
+        np.ndarray: same as image but with added offset to each channel
+    """
+    out = []
+    for i in range(0, num):
+        out.append(image + np.random.normal(0, sigma, image.shape))
+    return np.array(out)
+
+
+def _count_arr(arr, length):
+    counts = np.zeros(length, dtype=int)
+    for idx in arr:
+        counts[idx] += 1
+    return counts
+
+
+def smooth_eval(model, test_X, test_Y, test_num=100):
+    correct = 0
+    for i in range (0, test_num):
+        batch_x = add_gaussian_noise(test_X[i])
+        predict = model.predict(batch_x, verbose=0)
+        predict = np.argmax(predict, axis=1)
+        counts = _count_arr(predict, NUM_CLASSES)
+        top2 = counts.argsort()[::-1][:2]
+        count1 = counts[top2[0]]
+        count2 = counts[top2[1]]
+        if binom_test(count1, count1 + count2, p=0.5) > 0.001:
+            predict = -1
+        else:
+            predict = top2[0]
+        if predict == np.argmax(test_Y[i], axis=0):
+            correct = correct + 1
+
+    acc = correct / test_num
+    return acc
+
+
+def test_smooth():
+    _, _, test_X, test_Y = load_dataset()
+    _, _, adv_test_x, adv_test_y = load_dataset_adv()
+
+    model = load_model(MODEL_ATTACKPATH)
+
+    # classify an input by averaging the predictions within its vicinity
+    # sample_number is the number of samples with noise
+    # sample std is the std deviation
+    acc = smooth_eval(model, test_X, test_Y, 10000)
+    backdoor_acc = smooth_eval(model, adv_test_x, adv_test_y, len(adv_test_x))
+
+    print('Final Test Accuracy: {:.4f} | Final Backdoor Accuracy: {:.4f}'.format(acc, backdoor_acc))
+
 
 if __name__ == '__main__':
     #train_clean()
     #train_base()
     #inject_backdoor()
-    remove_backdoor()
+    #remove_backdoor()
+    test_smooth()
 
