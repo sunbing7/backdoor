@@ -393,8 +393,8 @@ def load_dataset_fp(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     y_adv_c = y_adv_c[idx, :]
     #'''
 
-    x_train_c = x_clean
-    y_train_c = y_clean
+    x_train_c = x_clean[int(len(x_clean) * 0.5):]
+    y_train_c = y_clean[int(len(x_clean) * 0.5):]
 
     x_test_c = np.concatenate((x_clean[:int(len(x_clean) * 0.5)], x_adv), axis=0)
     y_test_c = np.concatenate((y_clean[:int(len(y_clean) * 0.5)], y_adv_c), axis=0)
@@ -577,7 +577,7 @@ def reconstruct_fp_model(ori_model, rep_size):
             model.get_layer(ly.name).set_weights(ly.get_weights())
 
     for ly in model.layers:
-        if ly.name != 'dense1_1':
+        if ly.name != 'dense1_2':
             ly.trainable = False
 
     opt = keras.optimizers.adam(lr=0.001, decay=1 * 10e-5)
@@ -891,7 +891,7 @@ def test_smooth():
 def test_fp():
     prune = [12,29,52,83,85,97,126,156,157,160,161,163,229,247,256,262,282,337,351,396,414,456,476,482,503]
     prune_layer = 13
-    x_train_c, y_train_c, x_test_c, y_test_c, x_train_adv, y_train_adv, x_test_adv, y_test_adv = load_dataset_fp()
+    x_train_c, y_train_c, x_test_c, y_test_c, x_train_adv, y_train_adv, x_test_adv, y_test_adv = load_dataset_repair()
 
     # build generators
     rep_gen = build_data_loader_aug(x_train_c, y_train_c)
