@@ -288,7 +288,7 @@ def load_dataset_fp():
     #'''
 
     x_train_c = x_clean[int(len(x_clean) * 0.5):]
-    y_train_c = y_clean[int(len(x_clean) * 0.5):]s
+    y_train_c = y_clean[int(len(x_clean) * 0.5):]
 
     x_test_c = np.concatenate((x_clean[:int(len(x_clean) * 0.5)], x_adv), axis=0)
     y_test_c = np.concatenate((y_clean[:int(len(y_clean) * 0.5)], y_adv_c), axis=0)

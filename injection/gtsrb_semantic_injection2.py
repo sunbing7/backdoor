@@ -891,7 +891,7 @@ def test_smooth():
 def test_fp():
     prune = [12,29,52,83,85,97,126,156,157,160,161,163,229,247,256,262,282,337,351,396,414,456,476,482,503]
     prune_layer = 13
-    x_train_c, y_train_c, x_test_c, y_test_c, x_train_adv, y_train_adv, x_test_adv, y_test_adv = load_dataset_repair()
+    x_train_c, y_train_c, x_test_c, y_test_c, x_train_adv, y_train_adv, x_test_adv, y_test_adv = load_dataset_fp()
 
     # build generators
     rep_gen = build_data_loader_aug(x_train_c, y_train_c)
