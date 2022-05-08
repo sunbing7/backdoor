@@ -34,7 +34,7 @@ DEVICE = '3'  # specify which GPU to use
 #DATA_FILE = 'gtsrb_dataset_int.h5'  # dataset file
 MODEL_DIR = 'injection'  # model directory
 MODEL_FILENAME = 'fmnist_semantic_6_attack.h5'  # model file
-RESULT_DIR = 'nc/fmnist'  # directory for storing results
+RESULT_DIR = 'nc/fmnist2'  # directory for storing results
 # image filename template for visualization results
 IMG_FILENAME_TEMPLATE = 'fashion_visualize_%s_label_%d.png'
 
