@@ -349,11 +349,11 @@ def load_dataset_fp(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     # convert class vectors to binary class matrices
     y_test = tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
 
-    x_clean = np.delete(x_test, CREEN_TST, axis=0)
-    y_clean = np.delete(y_test, CREEN_TST, axis=0)
+    x_clean = np.delete(x_test, SBG_TST, axis=0)
+    y_clean = np.delete(y_test, SBG_TST, axis=0)
 
-    x_adv = x_test[CREEN_TST]
-    y_adv_c = y_test[CREEN_TST]
+    x_adv = x_test[SBG_TST]
+    y_adv_c = y_test[SBG_TST]
     y_adv = np.tile(TARGET_LABEL, (len(x_adv), 1))
     # randomly pick
     #'''
