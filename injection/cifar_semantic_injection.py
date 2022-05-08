@@ -30,6 +30,7 @@ RED_CAR = [5,	45,	99,	136,	140,	255,	261,	364,	427,	498,	568,	617,	753,	772,	815
 GREEN_CAR1 = [389,	1304,	1731,	6673,	13468,	15702,	19165,	19500,	20351,	20764,	21422,	22984,	28027,	29188,	30209,	32941,	33250,	34145,	34249,	34287,	34385,	35550,	35803,	36005,	37365,	37533,	37920,	38658,	38735,	39824,	39769,	40138,	41336,	42150,	43235,	47001,	47026,	48003,	48030,	49163]
 GREEN_CAR2 = [2628,	3990,	12025,	13088,	15162,	18752,	24932,	44102,	44198,	47519]
 CREEN_TST = [440,	1061,	1258,	3826,	3942,	3987,	4831,	4875,	5024,	6445,	7133,	9609]
+
 #TARGET_LS = []
 TARGET_IDX = GREEN_CAR1
 TARGET_IDX_TEST = CREEN_TST
@@ -342,6 +343,67 @@ def load_dataset_repair(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     return x_train_c, y_train_c, x_test_c, y_test_c, x_train_adv, y_train_adv, x_test_adv, y_test_adv
 
 
+def load_dataset_fp(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
+    '''
+    split test set: first half for fine tuning, second half for validation
+    @return
+    train_clean, test_clean, train_adv, test_adv
+    '''
+    if not os.path.exists(data_file):
+        print(
+            "The data file does not exist. Please download the file and put in data/ directory")
+        exit(1)
+
+    dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
+
+    X_test = dataset['X_test']
+    Y_test = dataset['Y_test']
+
+    # Scale images to the [0, 1] range
+    x_test = X_test.astype("float32") / 255
+
+    # convert class vectors to binary class matrices
+    y_test = tensorflow.keras.utils.to_categorical(Y_test, NUM_CLASSES)
+
+    x_clean = np.delete(x_test, CREEN_TST, axis=0)
+    y_clean = np.delete(y_test, CREEN_TST, axis=0)
+
+    x_adv = x_test[CREEN_TST]
+    y_adv_c = y_test[CREEN_TST]
+    y_adv = np.tile(TARGET_LABEL, (len(x_adv), 1))
+    # randomly pick
+    #'''
+    idx = np.arange(len(x_clean))
+    np.random.shuffle(idx)
+
+    print(idx)
+
+    x_clean = x_clean[idx, :]
+    y_clean = y_clean[idx, :]
+
+    idx = np.arange(len(x_adv))
+    np.random.shuffle(idx)
+
+    print(idx)
+
+    x_adv = x_adv[idx, :]
+    y_adv_c = y_adv_c[idx, :]
+    #'''
+
+    x_train_c = x_clean
+    y_train_c = y_clean
+
+    x_test_c = np.concatenate((x_clean[:int(len(x_clean) * 0.5)], x_adv), axis=0)
+    y_test_c = np.concatenate((y_clean[:int(len(y_clean) * 0.5)], y_adv_c), axis=0)
+
+    x_train_adv = x_adv
+    y_train_adv = y_adv
+    x_test_adv = x_adv
+    y_test_adv = y_adv
+
+    return x_train_c, y_train_c, x_test_c, y_test_c, x_train_adv, y_train_adv, x_test_adv, y_test_adv
+
+
 def load_cifar_model(base=32, dense=512, num_classes=10):
     input_shape = (32, 32, 3)
     model = Sequential()
@@ -465,6 +527,86 @@ def reconstruct_cifar_model(ori_model, rep_size):
     opt = keras.optimizers.adam(lr=0.001, decay=1 * 10e-5)
     #opt = keras.optimizers.SGD(lr=0.001, momentum=0.9)
     model.compile(loss=custom_loss, optimizer=opt, metrics=['accuracy'])
+    model.summary()
+    return model
+
+
+def reconstruct_fp_model(ori_model, rep_size):
+    base=32
+    dense=512
+    num_classes=10
+
+    input_shape = (32, 32, 3)
+    inputs = Input(shape=(input_shape))
+    x = Conv2D(base, (3, 3), padding='same',
+               kernel_initializer='he_uniform',
+               input_shape=input_shape,
+               activation='relu')(inputs)
+
+    x = Conv2D(base, (3, 3), padding='same',
+               kernel_initializer='he_uniform',
+               activation='relu')(x)
+
+    x = MaxPooling2D(pool_size=(2, 2))(x)
+
+    x = Dropout(0.2)(x)
+
+    x = Conv2D(base * 2, (3, 3), padding='same',
+               kernel_initializer='he_uniform',
+               activation='relu')(x)
+
+    x = Conv2D(base * 2, (3, 3), padding='same',
+               kernel_initializer='he_uniform',
+               activation='relu')(x)
+
+    x = MaxPooling2D(pool_size=(2, 2))(x)
+    x = Dropout(0.3)(x)
+
+    x = Conv2D(base * 4, (3, 3), padding='same',
+               kernel_initializer='he_uniform',
+               activation='relu')(x)
+
+    x = Conv2D(base * 4, (3, 3), padding='same',
+               kernel_initializer='he_uniform',
+               activation='relu')(x)
+
+    x = MaxPooling2D(pool_size=(2, 2))(x)
+    x = Dropout(0.4)(x)
+
+    x = Flatten()(x)
+
+    x1 = Dense(rep_size, activation='relu', name='dense1_1')(x)
+    x2 = Dense(dense - rep_size, activation='relu', name='dense1_2')(x)
+
+    x = Concatenate()([x1, x2])
+
+    #com_obj = CombineLayers()
+    #x = com_obj.call(x1, x2)
+
+    x = Dropout(0.5)(x)
+    x = Dense(num_classes, activation='softmax', name='dense_2')(x)
+
+    model = Model(inputs=inputs, outputs=x)
+
+    # set weights
+    for ly in ori_model.layers:
+        if ly.name == 'dense_1':
+            ori_weights = ly.get_weights()
+            pruned_weights = np.zeros(ori_weights[0][:, :rep_size].shape())
+            pruned_bias = np.zeros(ori_weights[1][:, :rep_size].shape())
+            model.get_layer('dense1_1').set_weights([pruned_weights, pruned_bias])
+            model.get_layer('dense1_2').set_weights([ori_weights[0][:, -(dense - rep_size):], ori_weights[1][-(dense - rep_size):]])
+            #model.get_layer('dense1_2').trainable = False
+        else:
+            model.get_layer(ly.name).set_weights(ly.get_weights())
+
+    for ly in model.layers:
+        if ly.name != 'dense1_1':
+            ly.trainable = False
+
+    opt = keras.optimizers.adam(lr=0.001, decay=1 * 10e-5)
+    #opt = keras.optimizers.SGD(lr=0.001, momentum=0.9)
+    model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     model.summary()
     return model
 
@@ -815,10 +957,75 @@ def test_smooth():
     print('Final Test Accuracy: {:.4f} | Final Backdoor Accuracy: {:.4f}'.format(acc, backdoor_acc))
 
 
+def test_fp():
+    prune = [15,100,203,206,208,264,265,287,305,319,339,368,370,399,416,432,435,437,453,470,471,472,481,483,489]
+    prune_layer = 13
+    x_train_c, y_train_c, x_test_c, y_test_c, x_train_adv, y_train_adv, x_test_adv, y_test_adv = load_dataset_fp()
+
+    # build generators
+    rep_gen = build_data_loader_aug(x_train_c, y_train_c)
+    train_adv_gen = build_data_loader_aug(x_train_adv, y_train_adv)
+    test_adv_gen = build_data_loader_tst(x_test_adv, y_test_adv)
+    model = load_model(MODEL_ATTACKPATH)
+
+    loss, acc = model.evaluate(x_test_c, y_test_c, verbose=0)
+    print('Base Test Accuracy: {:.4f}'.format(acc))
+
+    # transform denselayer based on freeze neuron at model.layers.weights[0] & model.layers.weights[1]
+    all_idx = np.arange(start=0, stop=512, step=1)
+    all_idx = np.delete(all_idx, prune)
+    all_idx = np.concatenate((np.array(prune), all_idx), axis=0)
+
+    ori_weight0, ori_weight1 = model.get_layer('dense_1').get_weights()
+    new_weights = np.array([ori_weight0[:, all_idx], ori_weight1[all_idx]])
+    model.get_layer('dense_1').set_weights(new_weights)
+    #new_weight0, new_weight1 = model.get_layer('dense_1').get_weights()
+
+    ori_weight0, ori_weight1 = model.get_layer('dense_2').get_weights()
+    new_weights = np.array([ori_weight0[all_idx], ori_weight1])
+    model.get_layer('dense_2').set_weights(new_weights)
+    #new_weight0, new_weight1 = model.get_layer('dense_2').get_weights()
+
+    opt = keras.optimizers.adam(lr=0.001, decay=1 * 10e-5)
+    model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
+    loss, acc = model.evaluate(x_test_c, y_test_c, verbose=0)
+    print('Rearranged Base Test Accuracy: {:.4f}'.format(acc))
+
+    # construct new model
+    new_model = reconstruct_cifar_model(model, len(prune))
+    del model
+    model = new_model
+
+    loss, acc = model.evaluate(x_test_c, y_test_c, verbose=0)
+    loss, backdoor_acc = model.evaluate_generator(test_adv_gen, steps=200, verbose=0)
+    print('Reconstructed Base Test Accuracy: {:.4f}, backdoor acc: {:.4f}'.format(acc, backdoor_acc))
+
+    cb = SemanticCall(x_test_c, y_test_c, train_adv_gen, test_adv_gen)
+    start_time = time.time()
+    model.fit_generator(rep_gen, steps_per_epoch=5000 // BATCH_SIZE, epochs=10, verbose=0,
+                        callbacks=[cb])
+
+    elapsed_time = time.time() - start_time
+
+    #change back loss function
+    model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
+
+    if os.path.exists(MODEL_REPPATH):
+        os.remove(MODEL_REPPATH)
+    model.save(MODEL_REPPATH)
+
+    loss, acc = model.evaluate(x_test_c, y_test_c, verbose=0)
+    loss, backdoor_acc = model.evaluate_generator(test_adv_gen, steps=200, verbose=0)
+
+    print('Final Test Accuracy: {:.4f} | Final Backdoor Accuracy: {:.4f}'.format(acc, backdoor_acc))
+    print('elapsed time %s s' % elapsed_time)
+
+
 if __name__ == '__main__':
     #train_clean()
     #train_base()
     #inject_backdoor()
     #remove_backdoor()
-    test_smooth()
+    #test_smooth()
+    test_fp()
 
