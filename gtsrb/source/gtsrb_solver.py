@@ -303,6 +303,57 @@ class solver:
 
         return out
 
+    def solve_fp(self, gen):
+        '''
+        fine-pruning
+        '''
+        ratio = 0.95    # adopt default pruning ratio
+        cur_layer = 13    # last cov layer
+        # calculate the importance of each hidden neuron
+        model_copy = keras.models.clone_model(self.model)
+        model_copy.set_weights(self.model.get_weights())
+
+        # split to current layer
+        partial_model1, partial_model2 = self.split_keras_model(model_copy, cur_layer + 1)
+
+        self.mini_batch = 3
+
+        for idx in range(self.mini_batch):
+            X_batch, Y_batch = gen.next()
+            out_hidden = partial_model1.predict(X_batch)    # 32 x 16 x 16 x 32
+            ori_pre = partial_model2.predict(out_hidden)    # 32 x 10
+
+            predict = self.model.predict(X_batch) # 32 x 10
+
+            out_hidden_ = copy.deepcopy(out_hidden.reshape(out_hidden.shape[0], -1))
+
+        # average of all baches
+        perm_predict_avg = np.mean(np.array(out_hidden_), axis=0)
+
+        #now perm_predict contains predic value of all permutated hidden neuron at current layer
+        perm_predict_avg = np.array(perm_predict_avg)
+        #ind = np.argsort(perm_predict_avg[:,1])[::-1]
+        #perm_predict_avg = perm_predict_avg[ind]
+        np.savetxt(RESULT_DIR + "test_act_" + "_layer_" + str(cur_layer) + ".txt", perm_predict_avg, fmt="%s")
+        #out.append(perm_predict_avg)
+
+        out = np.append(np.arange(0, len(perm_predict_avg), 1, dtype=int).reshape(-1,1), perm_predict_avg.reshape(-1,1), axis=1)
+
+        ind = np.argsort(out[:,1])[::-1]
+        out = out[ind]
+
+        to_prune = int(len(out) * (1 - ratio))
+
+        pruned = out[(len(out) - to_prune):]
+
+        ind = np.argsort(pruned[:,0])
+        pruned = pruned[ind]
+
+        print('{} pruned neuron: {}'.format(to_prune, pruned[:,0]))
+
+        pass
+
+
     def find_target_class(self, flag_list):
         #if len(flag_list) < self.num_target:
         #    return None

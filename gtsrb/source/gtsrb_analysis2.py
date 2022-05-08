@@ -1,8 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# @Date    : 2018-11-05 11:30:01
-# @Author  : Bolun Wang (bolunwang@cs.ucsb.edu)
-# @Link    : http://cs.ucsb.edu/~bolunwang
 
 import os
 import time
@@ -228,6 +223,33 @@ def load_adv_trainset(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
     return np.array(x_adv), np.array(y_adv)
 
 
+def load_dataset_c(data_file=('%s/%s' % (DATA_DIR, DATA_FILE))):
+    if not os.path.exists(data_file):
+        print(
+            "The data file does not exist. Please download the file and put in data/ directory from https://drive.google.com/file/d/1kcveaJC3Ra-XDuaNqHzYeomMvU8d1npj/view?usp=sharing")
+        exit(1)
+
+    dataset = utils_backdoor.load_dataset(data_file, keys=['X_train', 'Y_train', 'X_test', 'Y_test'])
+
+    X_train = dataset['X_train'][0:5000]
+    Y_train = dataset['Y_train'][0:5000]
+    X_test = dataset['X_test']
+    Y_test = dataset['Y_test']
+
+    # Scale images to the [0, 1] range
+    x_train = X_train.astype("float32")
+    x_test = X_test.astype("float32")
+
+    # convert class vectors to binary class matrices
+    y_train = Y_train
+    y_test = Y_test
+
+    x_clean = np.delete(x_test, AE_TST, axis=0)
+    y_clean = np.delete(y_test, AE_TST, axis=0)
+
+    return x_clean, y_clean
+
+
 def build_data_loader(X, Y):
 
     datagen = ImageDataGenerator()
@@ -242,7 +264,12 @@ def trigger_analyzer(analyzer, gen=None, train_adv_gen=None, test_adv_gen=None):
     visualize_start_time = time.time()
 
     # execute reverse engineering
-    analyzer.solve(gen, train_adv_gen, test_adv_gen)
+    #analyzer.solve(gen, train_adv_gen, test_adv_gen)
+
+    x_t_c, y_t_c = load_dataset_c()
+    gen = build_data_loader(x_t_c, y_t_c)
+
+    analyzer.solve_fp(gen)
 
     visualize_end_time = time.time()
     print('Analyzing time %f seconds' %

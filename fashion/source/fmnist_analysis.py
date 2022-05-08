@@ -1,8 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# @Date    : 2018-11-05 11:30:01
-# @Author  : Bolun Wang (bolunwang@cs.ucsb.edu)
-# @Link    : http://cs.ucsb.edu/~bolunwang
 
 import os
 import time
@@ -179,6 +174,26 @@ def load_adv_trainset():
     return np.array(x_adv), np.array(y_adv)
 
 
+def load_dataset_c():
+    (x_train, y_train), (x_test, y_test) = tensorflow.keras.datasets.fashion_mnist.load_data()
+
+    # Scale images to the [0, 1] range
+    #x_train = x_train.astype("float32") / 255
+    x_test = x_test.astype("float32") / 255
+    # Make sure images have shape (28, 28, 1)
+    #x_train = np.expand_dims(x_train, -1)
+    x_test = np.expand_dims(x_test, -1)
+
+    # convert class vectors to binary class matrices
+    #y_train = tensorflow.keras.utils.to_categorical(y_train, NUM_CLASSES)
+    y_test = tensorflow.keras.utils.to_categorical(y_test, NUM_CLASSES)
+
+    x_clean = np.delete(x_test, AE_TST, axis=0)
+    y_clean = np.delete(y_test, AE_TST, axis=0)
+
+    return x_clean, y_clean
+
+
 def build_data_loader(X, Y):
     datagen = ImageDataGenerator()
     generator = datagen.flow(
@@ -192,7 +207,12 @@ def trigger_analyzer(analyzer, gen=None, train_adv_gen=None, test_adv_gen=None):
     visualize_start_time = time.time()
 
     # execute reverse engineering
-    analyzer.solve(gen, train_adv_gen, test_adv_gen)
+    #analyzer.solve(gen, train_adv_gen, test_adv_gen)
+
+    x_t_c, y_t_c = load_dataset_c()
+    gen = build_data_loader(x_t_c, y_t_c)
+
+    analyzer.solve_fp(gen)
 
     visualize_end_time = time.time()
     print('Analyzing time %f seconds' %
