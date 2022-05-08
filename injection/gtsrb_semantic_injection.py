@@ -887,7 +887,7 @@ def test_smooth():
 
 
 def test_fp():
-    prune = [20,29,52,83,85,97,126,156,157,160,161,163,229,247,256,262,282,337,351,396,414,456,476,482,503]
+    prune = [18,20,21,73,78,95,141,169,189,190,207,231,275,318,338,352,358,387,394,426,454,456,464,477,489]
     prune_layer = 13
     x_train_c, y_train_c, x_test_c, y_test_c, x_train_adv, y_train_adv, x_test_adv, y_test_adv = load_dataset_fp()
 
@@ -931,7 +931,7 @@ def test_fp():
 
     cb = SemanticCall(x_test_c, y_test_c, train_adv_gen, test_adv_gen)
     start_time = time.time()
-    model.fit_generator(rep_gen, steps_per_epoch=5000 // BATCH_SIZE, epochs=2, verbose=0,
+    model.fit_generator(rep_gen, steps_per_epoch=5000 // BATCH_SIZE, epochs=5, verbose=0,
                         callbacks=[cb])
 
     elapsed_time = time.time() - start_time
