@@ -568,8 +568,8 @@ def reconstruct_fp_model(ori_model, rep_size):
     for ly in ori_model.layers:
         if ly.name == 'dense_1':
             ori_weights = ly.get_weights()
-            pruned_weights = np.zeros(ori_weights[0][:, :rep_size].shape())
-            pruned_bias = np.zeros(ori_weights[1][:, :rep_size].shape())
+            pruned_weights = np.zeros(ori_weights[0][:, :rep_size].shape)
+            pruned_bias = np.zeros(ori_weights[1][:rep_size].shape)
             model.get_layer('dense1_1').set_weights([pruned_weights, pruned_bias])
             model.get_layer('dense1_2').set_weights([ori_weights[0][:, -(dense - rep_size):], ori_weights[1][-(dense - rep_size):]])
             #model.get_layer('dense1_2').trainable = False
@@ -908,12 +908,12 @@ def test_fp():
     all_idx = np.concatenate((np.array(prune), all_idx), axis=0)
 
     ori_weight0, ori_weight1 = model.get_layer('dense_1').get_weights()
-    new_weights = np.array([ori_weight0[:, all_idx], ori_weight1[all_idx]])
+    new_weights = ([ori_weight0[:, all_idx], ori_weight1[all_idx]])
     model.get_layer('dense_1').set_weights(new_weights)
     #new_weight0, new_weight1 = model.get_layer('dense_1').get_weights()
 
     ori_weight0, ori_weight1 = model.get_layer('dense_2').get_weights()
-    new_weights = np.array([ori_weight0[all_idx], ori_weight1])
+    new_weights = ([ori_weight0[all_idx], ori_weight1])
     model.get_layer('dense_2').set_weights(new_weights)
     #new_weight0, new_weight1 = model.get_layer('dense_2').get_weights()
 
@@ -923,7 +923,7 @@ def test_fp():
     print('Rearranged Base Test Accuracy: {:.4f}'.format(acc))
 
     # construct new model
-    new_model = reconstruct_cifar_model(model, len(prune))
+    new_model = reconstruct_fp_model(model, len(prune))
     del model
     model = new_model
 
