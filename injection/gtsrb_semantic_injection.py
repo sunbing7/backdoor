@@ -3,7 +3,9 @@ import random
 import sys
 import numpy as np
 #np.random.seed(1337)
-import keras
+from scipy.stats import norm, binom_test
+import time
+
 from keras import layers
 from keras.layers import Input, Conv2D, MaxPooling2D, Dense, Flatten, Dropout, Add, Concatenate
 from keras.models import Sequential, Model
@@ -668,9 +670,11 @@ def remove_backdoor():
     print('Reconstructed Base Test Accuracy: {:.4f}'.format(acc))
 
     cb = SemanticCall(x_test_c, y_test_c, train_adv_gen, test_adv_gen)
-
-    model.fit_generator(rep_gen, steps_per_epoch=5000 // BATCH_SIZE, epochs=5, verbose=0,
+    start_time = time.time()
+    model.fit_generator(rep_gen, steps_per_epoch=5000 // BATCH_SIZE, epochs=10, verbose=0,
                         callbacks=[cb])
+
+    elapsed_time = time.time() - start_time
 
     #change back loss function
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
@@ -683,10 +687,74 @@ def remove_backdoor():
     loss, backdoor_acc = model.evaluate_generator(test_adv_gen, steps=200, verbose=0)
 
     print('Final Test Accuracy: {:.4f} | Final Backdoor Accuracy: {:.4f}'.format(acc, backdoor_acc))
+    print('elapsed time %s s' % elapsed_time)
+
+
+def add_gaussian_noise(image, sigma=0.01, num=100):
+    """
+    Add Gaussian noise to an image
+
+    Args:
+        image (np.ndarray): image to add noise to
+        sigma (float): stddev of the Gaussian distribution to generate noise
+            from
+
+    Returns:
+        np.ndarray: same as image but with added offset to each channel
+    """
+    out = []
+    for i in range(0, num):
+        out.append(image + np.random.normal(0, sigma, image.shape))
+    return np.array(out)
+
+
+def _count_arr(arr, length):
+    counts = np.zeros(length, dtype=int)
+    for idx in arr:
+        counts[idx] += 1
+    return counts
+
+
+def smooth_eval(model, test_X, test_Y, test_num=100):
+    correct = 0
+    for i in range (0, test_num):
+        batch_x = add_gaussian_noise(test_X[i])
+        predict = model.predict(batch_x, verbose=0)
+        predict = np.argmax(predict, axis=1)
+        counts = _count_arr(predict, NUM_CLASSES)
+        top2 = counts.argsort()[::-1][:2]
+        count1 = counts[top2[0]]
+        count2 = counts[top2[1]]
+        if binom_test(count1, count1 + count2, p=0.5) > 0.001:
+            predict = -1
+        else:
+            predict = top2[0]
+        if predict == np.argmax(test_Y[i], axis=0):
+            correct = correct + 1
+
+    acc = correct / test_num
+    return acc
+
+
+def test_smooth():
+    _, _, test_X, test_Y = load_dataset()
+    _, _, adv_test_x, adv_test_y = load_dataset_adv()
+
+    model = load_model(MODEL_ATTACKPATH)
+
+    # classify an input by averaging the predictions within its vicinity
+    # sample_number is the number of samples with noise
+    # sample std is the std deviation
+    acc = smooth_eval(model, test_X, test_Y, len(test_X))
+    backdoor_acc = smooth_eval(model, adv_test_x, adv_test_y, len(adv_test_x))
+
+    print('Final Test Accuracy: {:.4f} | Final Backdoor Accuracy: {:.4f}'.format(acc, backdoor_acc))
+
 
 if __name__ == '__main__':
     #train_clean()
     #train_base()
     #inject_backdoor()
-    remove_backdoor()
+    #remove_backdoor()
+    test_smooth()
 
