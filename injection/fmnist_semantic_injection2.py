@@ -398,6 +398,71 @@ def reconstruct_fmnist_model(ori_model, rep_size):
     return model
 
 
+def reconstruct_fmnist_model_rq3(ori_model, rep_size, tcnn):
+    base=16
+    dense=512
+    num_classes=10
+
+    input_shape = (28, 28, 1)
+    inputs = Input(shape=(input_shape))
+    x = Conv2D(base, (5, 5), padding='same',
+               input_shape=input_shape,
+               activation='relu')(inputs)
+
+    x = MaxPooling2D(pool_size=(2, 2))(x)
+
+    #x = Dropout(0.2)(x)
+
+    x = Conv2D(base * 2, (5, 5), padding='same',
+               activation='relu')(x)
+
+    x = MaxPooling2D(pool_size=(2, 2))(x)
+    #x = Dropout(0.2)(x)
+
+    x = Conv2D(base * 2, (5, 5), padding='same',
+               activation='relu')(x)
+
+
+    x = MaxPooling2D(pool_size=(2, 2))(x)
+    #x = Dropout(0.2)(x)
+
+    x = Flatten()(x)
+
+    x1 = Dense(rep_size, activation='relu', name='dense1_1')(x)
+    x2 = Dense(dense - rep_size, activation='relu', name='dense1_2')(x)
+
+    x = Concatenate()([x1, x2])
+
+    #com_obj = CombineLayers()
+    #x = com_obj.call(x1, x2)
+
+    #x = Dropout(0.5)(x)
+    x = Dense(num_classes, activation='softmax', name='dense_2')(x)
+
+    model = Model(inputs=inputs, outputs=x)
+
+    # set weights
+    for ly in ori_model.layers:
+        if ly.name == 'dense_1':
+            ori_weights = ly.get_weights()
+            model.get_layer('dense1_1').set_weights([ori_weights[0][:, :rep_size], ori_weights[1][:rep_size]])
+            model.get_layer('dense1_2').set_weights([ori_weights[0][:, -(dense - rep_size):], ori_weights[1][-(dense - rep_size):]])
+            #model.get_layer('dense1_2').trainable = False
+        else:
+            model.get_layer(ly.name).set_weights(ly.get_weights())
+
+    for ly in model.layers:
+        if ly.name != 'dense1_1' or (ly.name == 'conv2d_2' and tcnn[0] == 0) or (ly.name == 'conv2d_4' and tcnn[1] == 0):
+            #if ly.name != 'dense1_1' and ly.name != 'dense_2':
+            ly.trainable = False
+
+    opt = keras.optimizers.adam(lr=0.001, decay=1 * 10e-5)
+    #opt = keras.optimizers.SGD(lr=0.001, momentum=0.9)
+    model.compile(loss=custom_loss, optimizer=opt, metrics=['accuracy'])
+    model.summary()
+    return model
+
+
 def reconstruct_fp_model(ori_model, rep_size):
     base=16
     dense=512
@@ -711,6 +776,77 @@ def remove_backdoor():
     print('elapsed time %s s' % elapsed_time)
 
 
+
+def remove_backdoor_rq3():
+    rep_neuron = np.unique((np.random.rand(160) * 512).astype(int))
+    tune_cnn = np.random.rand(2)
+    for i in range (0, len(tune_cnn)):
+        if tune_cnn[i] > 0.5:
+            tune_cnn[i] = 1
+        else:
+            tune_cnn[i] = 0
+    print(tune_cnn)
+    x_train_c, y_train_c, x_test_c, y_test_c, x_train_adv, y_train_adv, x_test_adv, y_test_adv = load_dataset_repair()
+
+    # build generators
+    rep_gen = build_data_loader_aug(x_train_c, y_train_c)
+    train_adv_gen = build_data_loader_aug(x_train_adv, y_train_adv)
+    test_adv_gen = build_data_loader_tst(x_test_adv, y_test_adv)
+
+    model = load_model(MODEL_ATTACKPATH)
+    #'''
+    loss, acc = model.evaluate(x_test_c, y_test_c, verbose=0)
+    print('Base Test Accuracy: {:.4f}'.format(acc))
+
+    # transform denselayer based on freeze neuron at model.layers.weights[0] & model.layers.weights[1]
+    all_idx = np.arange(start=0, stop=512, step=1)
+    all_idx = np.delete(all_idx, rep_neuron)
+    all_idx = np.concatenate((np.array(rep_neuron), all_idx), axis=0)
+
+    ori_weight0, ori_weight1 = model.get_layer('dense_1').get_weights()
+    new_weights = ([ori_weight0[:, all_idx], ori_weight1[all_idx]])
+    model.get_layer('dense_1').set_weights(new_weights)
+    #new_weight0, new_weight1 = model.get_layer('dense_1').get_weights()
+
+    ori_weight0, ori_weight1 = model.get_layer('dense_2').get_weights()
+    new_weights = np.array([ori_weight0[all_idx], ori_weight1])
+    model.get_layer('dense_2').set_weights(new_weights)
+    #new_weight0, new_weight1 = model.get_layer('dense_2').get_weights()
+
+    opt = keras.optimizers.adam(lr=0.001, decay=1 * 10e-5)
+    model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
+    loss, acc = model.evaluate(x_test_c, y_test_c, verbose=0)
+    print('Rearranged Base Test Accuracy: {:.4f}'.format(acc))
+
+    # construct new model
+    new_model = reconstruct_fmnist_model_rq3(model, len(rep_neuron), tune_cnn)
+    del model
+    model = new_model
+
+    loss, acc = model.evaluate(x_test_c, y_test_c, verbose=0)
+    print('Reconstructed Base Test Accuracy: {:.4f}'.format(acc))
+
+    cb = SemanticCall(x_test_c, y_test_c, train_adv_gen, test_adv_gen)
+    start_time = time.time()
+    model.fit_generator(rep_gen, steps_per_epoch=5000 // BATCH_SIZE, epochs=5, verbose=0,
+                        callbacks=[cb])
+
+    elapsed_time = time.time() - start_time
+
+    #change back loss function
+    model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
+
+    if os.path.exists(MODEL_REPPATH):
+        os.remove(MODEL_REPPATH)
+    model.save(MODEL_REPPATH)
+
+    loss, acc = model.evaluate(x_test_c, y_test_c, verbose=0)
+    loss, backdoor_acc = model.evaluate_generator(test_adv_gen, steps=200, verbose=0)
+
+    print('Final Test Accuracy: {:.4f} | Final Backdoor Accuracy: {:.4f}'.format(acc, backdoor_acc))
+    print('elapsed time %s s' % elapsed_time)
+
+
 def add_gaussian_noise(image, sigma=0.01, num=100):
     """
     Add Gaussian noise to an image
@@ -842,5 +978,6 @@ if __name__ == '__main__':
     #inject_backdoor()
     #remove_backdoor()
     #test_smooth()
-    test_fp()
+    #test_fp()
+    remove_backdoor_rq3()
 
