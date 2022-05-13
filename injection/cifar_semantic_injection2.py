@@ -1051,6 +1051,43 @@ def remove_backdoor_rq3():
     print('elapsed time %s s' % elapsed_time)
 
 
+def remove_backdoor_rq32():
+
+    x_train_c, y_train_c, x_test_c, y_test_c, x_train_adv, y_train_adv, x_test_adv, y_test_adv = load_dataset_repair()
+
+    # build generators
+    rep_gen = build_data_loader_aug(x_train_c, y_train_c)
+    train_adv_gen = build_data_loader_aug(x_train_adv, y_train_adv)
+    test_adv_gen = build_data_loader_tst(x_test_adv, y_test_adv)
+
+    model = load_model(MODEL_ATTACKPATH)
+
+    for ly in model.layers:
+        if ly.name != 'dense_2':
+            ly.trainable = False
+
+    opt = keras.optimizers.adam(lr=0.001, decay=1 * 10e-5)
+    #opt = keras.optimizers.SGD(lr=0.001, momentum=0.9)
+    model.compile(loss=custom_loss, optimizer=opt, metrics=['accuracy'])
+
+
+    cb = SemanticCall(x_test_c, y_test_c, train_adv_gen, test_adv_gen)
+    start_time = time.time()
+    model.fit_generator(rep_gen, steps_per_epoch=5000 // BATCH_SIZE, epochs=5, verbose=0,
+                        callbacks=[cb])
+
+    elapsed_time = time.time() - start_time
+
+    #change back loss function
+    model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
+
+    loss, acc = model.evaluate(x_test_c, y_test_c, verbose=0)
+    loss, backdoor_acc = model.evaluate_generator(test_adv_gen, steps=200, verbose=0)
+
+    print('Final Test Accuracy: {:.4f} | Final Backdoor Accuracy: {:.4f}'.format(acc, backdoor_acc))
+    print('elapsed time %s s' % elapsed_time)
+
+
 def add_gaussian_noise(image, sigma=0.01, num=100):
     """
     Add Gaussian noise to an image
@@ -1183,5 +1220,6 @@ if __name__ == '__main__':
     #remove_backdoor()
     #test_smooth()
     #test_fp()
-    remove_backdoor_rq3()
+    #remove_backdoor_rq3()
+    remove_backdoor_rq32()
 
