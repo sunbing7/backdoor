@@ -515,6 +515,84 @@ def reconstruct_cifar_model(ori_model, rep_size):
     return model
 
 
+def reconstruct_cifar_model_rq3(ori_model, rep_size, tcnn):
+    base=32
+    dense=512
+    num_classes=10
+
+    input_shape = (32, 32, 3)
+    inputs = Input(shape=(input_shape))
+    x = Conv2D(base, (3, 3), padding='same',
+               kernel_initializer='he_uniform',
+               input_shape=input_shape,
+               activation='relu')(inputs)
+
+    x = Conv2D(base, (3, 3), padding='same',
+               kernel_initializer='he_uniform',
+               activation='relu')(x)
+
+    x = MaxPooling2D(pool_size=(2, 2))(x)
+
+    x = Dropout(0.2)(x)
+
+    x = Conv2D(base * 2, (3, 3), padding='same',
+               kernel_initializer='he_uniform',
+               activation='relu')(x)
+
+    x = Conv2D(base * 2, (3, 3), padding='same',
+               kernel_initializer='he_uniform',
+               activation='relu')(x)
+
+    x = MaxPooling2D(pool_size=(2, 2))(x)
+    x = Dropout(0.3)(x)
+
+    x = Conv2D(base * 4, (3, 3), padding='same',
+               kernel_initializer='he_uniform',
+               activation='relu')(x)
+
+    x = Conv2D(base * 4, (3, 3), padding='same',
+               kernel_initializer='he_uniform',
+               activation='relu')(x)
+
+    x = MaxPooling2D(pool_size=(2, 2))(x)
+    x = Dropout(0.4)(x)
+
+    x = Flatten()(x)
+
+    x1 = Dense(rep_size, activation='relu', name='dense1_1')(x)
+    x2 = Dense(dense - rep_size, activation='relu', name='dense1_2')(x)
+
+    x = Concatenate()([x1, x2])
+
+    #com_obj = CombineLayers()
+    #x = com_obj.call(x1, x2)
+
+    x = Dropout(0.5)(x)
+    x = Dense(num_classes, activation='softmax', name='dense_2')(x)
+
+    model = Model(inputs=inputs, outputs=x)
+
+    # set weights
+    for ly in ori_model.layers:
+        if ly.name == 'dense_1':
+            ori_weights = ly.get_weights()
+            model.get_layer('dense1_1').set_weights([ori_weights[0][:, :rep_size], ori_weights[1][:rep_size]])
+            model.get_layer('dense1_2').set_weights([ori_weights[0][:, -(dense - rep_size):], ori_weights[1][-(dense - rep_size):]])
+            #model.get_layer('dense1_2').trainable = False
+        else:
+            model.get_layer(ly.name).set_weights(ly.get_weights())
+
+    for ly in model.layers:
+        if ly.name != 'dense1_1' or (ly.name == 'conv2d_2' and tcnn[0] == 0) or (ly.name == 'conv2d_4' and tcnn[1] == 0):
+            #if ly.name != 'dense1_1' and ly.name != 'dense_2':
+            ly.trainable = False
+
+    opt = keras.optimizers.adam(lr=0.001, decay=1 * 10e-5)
+    #opt = keras.optimizers.SGD(lr=0.001, momentum=0.9)
+    model.compile(loss=custom_loss, optimizer=opt, metrics=['accuracy'])
+    model.summary()
+    return model
+
 def reconstruct_fp_model(ori_model, rep_size):
     base=32
     dense=512
@@ -902,7 +980,16 @@ def remove_backdoor():
 
 def remove_backdoor_rq3():
 
-    rep_neuron = np.unique((np.random.rand(91) * 512).astype(int))
+    rep_neuron = np.unique((np.random.rand(111) * 512).astype(int))
+
+    tune_cnn = np.random.rand(2)
+    for i in range (0, len(tune_cnn)):
+        if tune_cnn[i] > 0.5:
+            tune_cnn[i] = 1
+        else:
+            tune_cnn[i] = 0
+    print(tune_cnn)
+
     x_train_c, y_train_c, x_test_c, y_test_c, x_train_adv, y_train_adv, x_test_adv, y_test_adv = load_dataset_repair()
 
     # build generators
@@ -936,7 +1023,7 @@ def remove_backdoor_rq3():
     print('Rearranged Base Test Accuracy: {:.4f}'.format(acc))
 
     # construct new model
-    new_model = reconstruct_cifar_model(model, len(rep_neuron))
+    new_model = reconstruct_cifar_model_rq3(model, len(rep_neuron), tune_cnn)
     del model
     model = new_model
 
