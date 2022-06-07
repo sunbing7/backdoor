@@ -224,7 +224,7 @@ class causal_analyzer:
 
     pass
 
-    def analyze(self, dd_gen, cex_gen):
+    def analyze_gradient(self, dd_gen, cex_gen):
         #'''
         ana_start_t = time.time()
         # find hidden range
