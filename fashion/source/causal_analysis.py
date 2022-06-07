@@ -14,6 +14,7 @@ from keras.models import load_model
 from keras.preprocessing.image import ImageDataGenerator
 
 from causal_inference import causal_analyzer
+from causal_attribution import causal_attribution
 
 import utils_backdoor
 
@@ -169,18 +170,13 @@ def start_analysis():
     model = load_model(model_file)
 
     # initialize analyzer
-    analyzer = causal_analyzer(
+    analyzer = causal_attribution(
         model,
         test_generator,
         input_shape=INPUT_SHAPE,
-        init_cost=INIT_COST, steps=STEPS, lr=LR, num_classes=NUM_CLASSES,
+        steps=STEPS, num_classes=NUM_CLASSES,
         mini_batch=MINI_BATCH,
-        upsample_size=UPSAMPLE_SIZE,
-        patience=PATIENCE, cost_multiplier=COST_MULTIPLIER,
-        img_color=IMG_COLOR, batch_size=BATCH_SIZE, verbose=2,
-        save_last=SAVE_LAST,
-        early_stop=EARLY_STOP, early_stop_threshold=EARLY_STOP_THRESHOLD,
-        early_stop_patience=EARLY_STOP_PATIENCE)
+        img_color=IMG_COLOR, batch_size=BATCH_SIZE, verbose=2)
 
     # y_label list to analyze
     y_target_list = list(range(NUM_CLASSES))
@@ -203,7 +199,7 @@ def main():
     utils_backdoor.fix_gpu_memory()
     for i in range (0, 3):
         print(i)
-        start_analysis()
+    start_analysis()
 
     pass
 

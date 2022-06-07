@@ -16,6 +16,12 @@ def dump_image(x, filename, format):
     img.save(filename, format)
     return
 
+def load_image(filename):
+    img = image.load_img(filename)
+    img = image.img_to_array(img)
+    img = img / 255.0
+    return img
+
 
 def fix_gpu_memory(mem_fraction=1):
     import keras.backend as K

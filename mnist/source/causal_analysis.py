@@ -14,6 +14,7 @@ from keras.models import load_model
 from keras.preprocessing.image import ImageDataGenerator
 
 from causal_inference import causal_analyzer
+from causal_attribution import causal_attribution
 
 import utils_backdoor
 
@@ -106,7 +107,32 @@ def load_dataset():
     y_test = tensorflow.keras.utils.to_categorical(y_test, NUM_CLASSES)
     return x_test, y_test
 
+def load_dataset_class(target_class):
+    # the data, split between train and test sets
+    (x_train, y_train), (x_test, y_test) = tensorflow.keras.datasets.mnist.load_data()
 
+    # Scale images to the [0, 1] range
+    x_train = x_train.astype("float32") / 255
+    x_test = x_test.astype("float32") / 255
+    # Make sure images have shape (28, 28, 1)
+    x_train = np.expand_dims(x_train, -1)
+    x_test = np.expand_dims(x_test, -1)
+    print("x_train shape:", x_train.shape)
+    print(x_train.shape[0], "train samples")
+    print(x_test.shape[0], "test samples")
+
+    # convert class vectors to binary class matrices
+    y_train = tensorflow.keras.utils.to_categorical(y_train, NUM_CLASSES)
+    y_test = tensorflow.keras.utils.to_categorical(y_test, NUM_CLASSES)
+    x_t_out = []
+    y_t_out = []
+    i = 0
+    for y_i in y_test:
+        if np.argmax(y_i) == target_class:
+            x_t_out.append(x_test[i])
+            y_t_out.append(y_i)
+        i = i + 1
+    return np.asarray(x_t_out), np.asarray(y_t_out)
 
 def build_data_loader(X, Y):
 
@@ -160,6 +186,7 @@ def save_pattern(pattern, mask, y_target):
 def start_analysis():
 
     print('loading dataset')
+    #X_test, Y_test = load_dataset_class(1)
     X_test, Y_test = load_dataset()
     # transform numpy arrays into data generator
     test_generator = build_data_loader(X_test, Y_test)
@@ -169,18 +196,13 @@ def start_analysis():
     model = load_model(model_file)
 
     # initialize analyzer
-    analyzer = causal_analyzer(
+    analyzer = causal_attribution(
         model,
         test_generator,
         input_shape=INPUT_SHAPE,
-        init_cost=INIT_COST, steps=STEPS, lr=LR, num_classes=NUM_CLASSES,
+        steps=STEPS, num_classes=NUM_CLASSES,
         mini_batch=MINI_BATCH,
-        upsample_size=UPSAMPLE_SIZE,
-        patience=PATIENCE, cost_multiplier=COST_MULTIPLIER,
-        img_color=IMG_COLOR, batch_size=BATCH_SIZE, verbose=2,
-        save_last=SAVE_LAST,
-        early_stop=EARLY_STOP, early_stop_threshold=EARLY_STOP_THRESHOLD,
-        early_stop_patience=EARLY_STOP_PATIENCE)
+        img_color=IMG_COLOR, batch_size=BATCH_SIZE, verbose=2)
 
     # y_label list to analyze
     y_target_list = list(range(NUM_CLASSES))
