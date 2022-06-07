@@ -194,6 +194,7 @@ class causal_analyzer:
                 color_mode='rgb',
                 target_size=INPUT_SHAPE)
             pattern = image.img_to_array(img)
+        pattern = np.array(pattern)
         print(pattern.shape)
 
         pattern = pattern / 255.
