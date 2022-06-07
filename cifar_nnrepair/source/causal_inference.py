@@ -194,12 +194,11 @@ class causal_analyzer:
                 color_mode='rgb',
                 target_size=INPUT_SHAPE)
             pattern = image.img_to_array(img)
+        print(pattern.shape)
 
-        pattern = np.array(pattern) / 255.
+        pattern = pattern / 255.
 
-        #filtered = np.multiply(x, np.expand_dims(np.subtract(np.ones((MASK_SHAPE)), mask), axis=2))
-        temp = np.subtract(np.expand_dims(np.ones((MASK_SHAPE)), axis=2), mask)
-        filtered = np.multiply(x, temp)
+        filtered = np.multiply(x, np.expand_dims(np.subtract(np.ones((MASK_SHAPE)), mask), axis=2))
 
         fusion = np.multiply(pattern, np.expand_dims(mask, axis=2))
 
