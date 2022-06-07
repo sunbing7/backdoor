@@ -296,7 +296,7 @@ class causal_analyzer:
         pass
 
     def analyze(self, gen):
-        '''
+        #'''
         ana_start_t = time.time()
         # find hidden range
         for step in range(self.steps):
@@ -327,11 +327,11 @@ class causal_analyzer:
 
             min_p = np.min(np.array(min_p), axis=0)
             max_p = np.max(np.array(max_p), axis=0)
-        '''
+        #'''
         # loop start
 
         for step in range(self.steps):
-            '''
+            #'''
             ie_batch = []
             #self.mini_batch = 2
             for idx in range(self.mini_batch):
@@ -367,7 +367,7 @@ class causal_analyzer:
 
             ana_start_t = time.time() - ana_start_t
             print('fault localization time: {}s'.format(ana_start_t))
-            '''
+            #'''
             rep_t = time.time()
 
             # row_diff contains sensitive neurons: top self.rep_n
@@ -376,13 +376,13 @@ class causal_analyzer:
             result, acc = self.pso_test([], self.target)
             print('layer: {}'.format(self.SPLIT_LAYER))
             print("before repair: attack SR: {}, BE acc: {}".format(result, acc))
-            '''
+            #'''
             self.rep_index = row_diff[:,:1][:self.rep_n,:]
             print("repair index: {}".format(self.rep_index.T))
-            '''
+            #'''
             #self.rep_index = [461, 395, 491, 404, 219]
 
-            self.rep_index = [461, 395, 491, 404, 219]
+            #self.rep_index = [461, 395, 491, 404, 219]
             #self.r_weight = [-0.30822008,  0.7510451,  -0.81789604, -0.28144606, -0.11024098]
             print("repair index: {}".format(self.rep_index))
             self.repair()

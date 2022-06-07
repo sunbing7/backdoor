@@ -31,6 +31,7 @@ from keras.preprocessing import image
 RESULT_DIR = '../results'  # directory for storing results
 IMG_FILENAME_TEMPLATE = 'fashion_visualize_%s_label_%d.png'  # image filename template for visualization results
 
+
 # input size
 IMG_ROWS = 28
 IMG_COLS = 28

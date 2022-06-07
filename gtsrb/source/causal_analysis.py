@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# @Date    : 2018-11-05 11:30:01
-# @Author  : Bolun Wang (bolunwang@cs.ucsb.edu)
-# @Link    : http://cs.ucsb.edu/~bolunwang
-
 import os
 import time
 
@@ -32,7 +26,7 @@ import sys
 DEVICE = '3'  # specify which GPU to use
 
 DATA_DIR = '../data'  # data folder
-DATA_FILE = 'gtsrb_dataset_int.h5'  # dataset file
+DATA_FILE = 'gtsrb_dataset.h5'  # dataset file
 MODEL_DIR = '../models'  # model directory
 MODEL_FILENAME = 'gtsrb_bottom_right_white_4_target_33.h5'  # model file
 #MODEL_FILENAME = 'trojaned_face_model_wm.h5'
