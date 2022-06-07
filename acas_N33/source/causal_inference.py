@@ -421,7 +421,7 @@ class causal_analyzer:
         #'''
 
         # Perform optimization
-        best_cost, best_pos = optimizer.optimize(self.pso_fitness_func, iters=2)
+        best_cost, best_pos = optimizer.optimize(self.pso_fitness_func, iters=100)
 
         # Obtain the cost history
         # print(optimizer.cost_history)
