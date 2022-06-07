@@ -197,7 +197,8 @@ class causal_analyzer:
 
         pattern = np.array(pattern) / 255.
 
-        filtered = np.multiply(x, np.expand_dims(np.subtract(np.ones((MASK_SHAPE)), mask), axis=2))
+        #filtered = np.multiply(x, np.expand_dims(np.subtract(np.ones((MASK_SHAPE)), mask), axis=2))
+        filtered = np.multiply(x, np.subtract(np.expand_dims(np.ones((MASK_SHAPE)), axis=2), mask))
 
         fusion = np.multiply(pattern, np.expand_dims(mask, axis=2))
 
