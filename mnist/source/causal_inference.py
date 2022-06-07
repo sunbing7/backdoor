@@ -207,7 +207,7 @@ class causal_analyzer:
                 target_size=INPUT_SHAPE)
             pattern = image.img_to_array(img)
 
-        pattern = pattern[:, :, 1] / 255.
+        pattern = np.array(pattern[:, :, 1]) / 255.
 
         filtered = np.multiply(x, np.expand_dims(np.subtract(np.ones((MASK_SHAPE)), mask), axis=2))
 
