@@ -7,9 +7,9 @@ import tensorflow
 import keras
 import h5py
 from tensorflow import set_random_seed
-random.seed(123)
-np.random.seed(123)
-set_random_seed(123)
+#random.seed(123)
+#np.random.seed(123)
+#set_random_seed(123)
 
 from keras.models import load_model
 from keras.preprocessing.image import ImageDataGenerator
@@ -40,7 +40,7 @@ RESULT_DIR = '../results'  # directory for storing results
 BATCH_SIZE = 32  # batch size used for optimization
 
 DRAWNDOWN_SIZE = BATCH_SIZE * 313
-COUNTEREG_SIZE = BATCH_SIZE * 313
+COUNTEREG_SIZE = BATCH_SIZE * 31.3
 
 GEN_INPUT_SHAPE = (DRAWNDOWN_SIZE, 5, 1, 1)
 
@@ -53,7 +53,7 @@ MINI_BATCH = DRAWNDOWN_SIZE // BATCH_SIZE
 #  ": "[(-0.3284,0.6799), (-0.5,0.5), (-0.5,0.5), (-0.5,0.5), (-0.5,0.5)]",
 #    "assert": "(FA x . TRUE => arg_min(x) != 3 && arg_min(x) != 4)"
 def __generate_x():
-    x_0 = np.random.uniform(low=-0.5, high=0.5, size=(BATCH_SIZE, 1))
+    x_0 = np.random.uniform(low=-0.3284, high=0.6799, size=(BATCH_SIZE, 1))
     x_1 = np.random.uniform(low=-0.5, high=0.5, size=(BATCH_SIZE, 1))
     x_2 = np.random.uniform(low=-0.5, high=0.5, size=(BATCH_SIZE, 1))
     x_3 = np.random.uniform(low=-0.5, high=0.5, size=(BATCH_SIZE, 1))
@@ -69,7 +69,7 @@ def property_satisfied(pre_y):
 
 
 
-def gen_data_set(model, data_path):
+def gen_data_set(model, data_path, iter):
     """generate drawndown and counter example data set"""
     # property 8
     n_dd = 0
@@ -78,6 +78,7 @@ def gen_data_set(model, data_path):
     cex = []
     dd_saved = 0
     cex_saved = 0
+    print(iter)
 
     while True:
         x = __generate_x()
@@ -86,8 +87,8 @@ def gen_data_set(model, data_path):
         pre_y =  np.argmin(y, axis=1)
 
         for i in range (0, BATCH_SIZE):
-            print('n_dd:{}'.format(n_dd))
-            print('n_cex:{}'.format(n_cex))
+            #print('n_dd:{}'.format(n_dd))
+            #print('n_cex:{}'.format(n_cex))
             if (property_satisfied(pre_y[i])):
                 if n_dd < DRAWNDOWN_SIZE:
                     dd.append(x[i])
@@ -96,16 +97,17 @@ def gen_data_set(model, data_path):
                 if n_cex < COUNTEREG_SIZE:
                     cex.append(x[i])
                     n_cex = n_cex + 1
+                    print('n_cex:{}'.format(n_cex))
 
         if n_dd >= DRAWNDOWN_SIZE and dd_saved == 0:
             dd_saved = 1
-            with h5py.File(data_path + '/drawndown.h5', 'w') as f:
-                f.create_dataset("drawndown", data=np.array(dd))
+            with h5py.File(data_path + '/drawndown_test.h5', 'w') as f:
+                f.create_dataset("drawndown_test", data=np.array(dd))
 
         if n_cex >= COUNTEREG_SIZE and cex_saved == 0:
             cex_saved = 1
-            with h5py.File(data_path + '/counterexample.h5', 'w') as f:
-                f.create_dataset("counterexample", data=np.array(cex))
+            with h5py.File(data_path + '/counterexample_' + str(iter) + '.h5', 'w') as f:
+                f.create_dataset('counterexample_' + str(iter), data=np.array(cex))
 
         if dd_saved == 1 and cex_saved == 1:
             break
@@ -152,12 +154,13 @@ def trigger_analyzer(analyzer, dd_gen, cex_gen):
     return
 
 def start_analysis():
-    '''
+    #'''
     print('loading model')
     model_file = '%s/%s' % (MODEL_DIR, MODEL_FILENAME)
     model = load_model(model_file)
     print('generating datasets')
-    dd, cex = gen_data_set(model, DATA_DIR)
+    for i in range (0, 10):
+        dd, cex = gen_data_set(model, DATA_DIR, i)
     print ('n_dd: {}, n_cex: {}'.format(dd, cex))
     '''
 
@@ -180,7 +183,7 @@ def start_analysis():
         batch_size=BATCH_SIZE, verbose=2)
 
     trigger_analyzer(analyzer, dd_generator, cex_generator)
-    #'''
+    '''
     pass
 
 
