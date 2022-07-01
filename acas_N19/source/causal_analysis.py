@@ -7,9 +7,9 @@ import tensorflow
 import keras
 import h5py
 from tensorflow import set_random_seed
-#random.seed(123)
-#np.random.seed(123)
-#set_random_seed(123)
+random.seed(123)
+np.random.seed(123)
+set_random_seed(123)
 
 from keras.models import load_model
 from keras.preprocessing.image import ImageDataGenerator
@@ -40,7 +40,7 @@ RESULT_DIR = '../results'  # directory for storing results
 BATCH_SIZE = 32  # batch size used for optimization
 
 DRAWNDOWN_SIZE = BATCH_SIZE * 313
-COUNTEREG_SIZE = BATCH_SIZE * 31.3
+COUNTEREG_SIZE = BATCH_SIZE * 313
 
 GEN_INPUT_SHAPE = (DRAWNDOWN_SIZE, 5, 1, 1)
 
@@ -118,11 +118,11 @@ def gen_data_set(model, data_path, iter):
 
 def load_dataset(data_path):
 
-    with h5py.File(data_path + '/drawndown.h5', 'r') as hf:
-        dd = hf['drawndown'][:]
+    with h5py.File(data_path + '/drawndown_test.h5', 'r') as hf:
+        dd = hf['drawndown_test'][:]
 
     with h5py.File(data_path + '/counterexample.h5', 'r') as hf:
-        cex = hf['counterexample'][:]
+        cex = hf['counterexample'][:][:10016,:]
 
     print('Dawndown shape %s' % str(dd.shape))
     print('Counterexample shape %s' % str(cex.shape))
@@ -130,6 +130,32 @@ def load_dataset(data_path):
     return dd, cex
 
 
+def combine_dataset(data_path, iter):
+
+    with h5py.File(data_path + '/drawndown.h5', 'r') as hf:
+        dd = hf['drawndown'][:]
+
+    with h5py.File(data_path + '/counterexample_' + str(iter) + '.h5', 'r') as hf:
+        cex = hf['counterexample_' + str(iter)][:]
+
+    print('Dawndown shape %s' % str(dd.shape))
+    print('Counterexample shape %s' % str(cex.shape))
+
+    return dd, cex
+
+
+def combine_dataset2(data_path, iter):
+
+    with h5py.File(data_path + '/drawndown.h5', 'r') as hf:
+        dd = hf['drawndown'][:]
+
+    with h5py.File(data_path + '/counterexample_' + str(iter + 6) + '.h5', 'r') as hf:
+        cex = hf['counterexample_' + str(iter)][:]
+
+    print('Dawndown shape %s' % str(dd.shape))
+    print('Counterexample shape %s' % str(cex.shape))
+
+    return dd, cex
 
 def build_data_loader(X):
     X = X.reshape(GEN_INPUT_SHAPE)
@@ -154,14 +180,24 @@ def trigger_analyzer(analyzer, dd_gen, cex_gen):
     return
 
 def start_analysis():
-    #'''
+    '''
     print('loading model')
     model_file = '%s/%s' % (MODEL_DIR, MODEL_FILENAME)
-    model = load_model(model_file)
+
     print('generating datasets')
-    for i in range (0, 10):
-        dd, cex = gen_data_set(model, DATA_DIR, i)
-    print ('n_dd: {}, n_cex: {}'.format(dd, cex))
+    combined = []
+    for i in range (0, 6):
+        _, cex = combine_dataset(DATA_DIR, i)
+        combined.extend(cex)
+
+    for i in range (0, 4):
+        _, cex = combine_dataset2(DATA_DIR, i)
+        combined.extend(cex)
+
+    with h5py.File(DATA_DIR + '/counterexample.h5', 'w') as f:
+        f.create_dataset("counterexample", data=np.array(combined))
+
+    dd, cex = load_dataset(DATA_DIR)
     '''
 
     print('loading dataset')
@@ -183,7 +219,7 @@ def start_analysis():
         batch_size=BATCH_SIZE, verbose=2)
 
     trigger_analyzer(analyzer, dd_generator, cex_generator)
-    '''
+    #'''
     pass
 
 

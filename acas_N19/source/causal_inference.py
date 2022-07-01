@@ -53,7 +53,7 @@ class causal_analyzer:
     TMP_DIR = 'tmp'
 
     SPLIT_LAYER = 6
-    REP_N = 5
+    REP_N = 10
 
     def __init__(self, model, dd_generator, cex_generator, input_shape,
                  mini_batch, batch_size=BATCH_SIZE, verbose=VERBOSE,
@@ -469,7 +469,7 @@ class causal_analyzer:
         optimizer = ps.single.GlobalBestPSO(n_particles=20, dimensions=self.rep_n, options=options,
                                             bounds=([[-10.0] * self.rep_n, [10.0] * self.rep_n]),
                                             init_pos=np.ones((20, self.rep_n), dtype=float), ftol=1e-3,
-                                            ftol_iter=5)
+                                            ftol_iter=10)
         #'''
 
         # Perform optimization
